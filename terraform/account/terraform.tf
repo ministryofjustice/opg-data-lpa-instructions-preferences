@@ -14,17 +14,8 @@ terraform {
       source  = "hashicorp/aws"
       version = "3.40.0"
     }
-    github = {
-      source  = "integrations/github"
-      version = "4.11.0"
-    }
   }
   required_version = ">= 1.1.0"
-}
-
-provider "github" {
-  token        = var.github_token
-  organization = "ministryofjustice"
 }
 
 locals {
@@ -40,20 +31,9 @@ provider "aws" {
   }
 }
 
-
-variable "github_token" {
-}
-
-variable "aws_access_key_id" {
-}
-
-variable "aws_secret_access_key" {
-}
-
 variable "DEFAULT_ROLE" {
-  default = "gh-workflow-example-ci"
+  default = "integrations-ci"
 }
-
 
 data "aws_caller_identity" "current" {
   provider = aws.sandbox
