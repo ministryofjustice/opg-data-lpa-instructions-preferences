@@ -1,0 +1,33 @@
+---
+version: '3'
+
+services:
+  image-request-handler:
+    build:
+      context: ./lambda/image-request-handler
+      dockerfile: Dockerfile
+    ports:
+      - "9010:8080"
+    depends_on:
+      - localstack
+    volumes:
+      - ./lambda/.aws-lambda-rie:/aws-lambda
+      - ./lambda/image-request-handler/app:/function/app
+    entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
+
+  localstack:
+    build:
+      context: ./local-services/localstack
+      dockerfile: Dockerfile
+    ports:
+      - "4566-4599:4566-4599"
+      - "8080:8080"
+    environment:
+      - SERVICES=sqs,secretsmanager,s3,lambda
+      - DATA_DIR=/tmp/localstack/data
+      - DEFAULT_REGION=eu-west-1
+      - USE_SINGLE_REGION=1
+      - DEBUG=1
+      - LAMBDA_EXECUTOR=docker
+      - LAMBDA_REMOVE_CONTAINERS="true"
+      - LAMBDA_FORWARD_URL=http://image-request-handler:8080
