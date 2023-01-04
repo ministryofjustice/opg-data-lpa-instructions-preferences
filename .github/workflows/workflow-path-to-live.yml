@@ -1,0 +1,26 @@
+name: "[Workflow] Path to Live"
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: none
+  issues: none
+  packages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: none
+  statuses: none
+
+jobs:
+  workflow_complete:
+    name: Workflow Complete
+    runs-on: ubuntu-latest
+    steps:
+      - name: Completion message
+        run: echo "Workflow Complete - No path to live yet"
