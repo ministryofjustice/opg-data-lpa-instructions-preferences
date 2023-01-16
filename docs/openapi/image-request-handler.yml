@@ -13,7 +13,7 @@ tags:
     externalDocs:
       url: https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences
 paths:
-  /use-an-lpa/image-request-handler/{uid}:
+  /image-request/{uid}:
     description: Returns list of signed urls and adds message to SQS and file to S3 if required.
     get:
       security:
@@ -33,11 +33,11 @@ paths:
               examples:
                 lpa0047:
                   value:
-                    uId: 7000-0000-0047
+                    uId: 700000000047
                     signedUrls: ['https://my-bucket.s3.amazonaws.com/my_file_1.png4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAA%2F20230110%2Feu-west-1%2Fs3%2Faws4_request&X-Amz-Date=20230110T170414Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FwoGZXIvqfrfffffqB8ObHF9iK0Ae6ydwSr1R7ho%2BkIqn%2FOYVShw77vHhp5XuM945Z5uuqFQTUP128xAiCqgERWsuT7BSLhPeazeR6QjAm0jjH8JTa9YQ1OqBlF6BSY3o6oOvnagVxDwx1SzfEQK%2FMdoPpwOgPQ1qIN714YJfGe0Qp%2FbdAv%2F5tLGG5rgBX98CCuWTszpsWQnaFtfEWhfTG%2BvqUsjavsusT7TmPbHMv7gFqvSoU8Aos7LDt8vgUuA8TrD%2FQs9ZjkxyiOtfadBjItlHw%2BOq8%2BVp29uq0r4r4r22r424r24rkjxnisGe4K9cMD0hNr5PjCXa3c1QRo&X-Amz-Signature=fd5ec81d49482cc2b26aac02ffe94e9d82d3e29b00c368fb1bad707f6066ecf0','https://my-bucket.s3.amazonaws.com/my_file_2.png4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAA%2F20230110%2Feu-west-1%2Fs3%2Faws4_request&X-Amz-Date=20230110T170414Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FwoGZXIvYXdzEEsaDA9nffwerfrfrffqiK0Ae6ydwSr1R7ho%2BkIqn%2FOYVShw77vHhp5XuM945Z5uuqFQTUP128xAiCqgERWsuT7BSLhPeazeR6QjAm0jjH8JTa9YQ1OqBlF6BSY3o6oOvnagVxDwx1SzfEQK%2FMdoPpwOgPQ1qIN714YJfGe0Qp%2FbdAv%2F5tLGG5rgBX98CCuWTszpsWQnaFtfEWhfTG%2BvqUsjavsusT7TmPbHMv7gFqvSoU8Aos7LDt8vgUuA8TrD%2FQs9ZjkxyiOtfadBjItlHw%2BOq8%2BVpd24d24d24d24d42dZufWkjxnisGe4K9cMD0hNr5PjCXa3c1QRo&X-Amz-Signature=fd5ec81d49482cc2b26aac02ffe94e9d82d3e29b00c368fb1bad707f83929392']
                 lpa0138:
                   value:
-                    uId: 7000-0000-0138
+                    uId: 700000000138
                     signedUrls: ['https://my-bucket.s3.amazonaws.com/my_file_2.png4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AAAAAAAAAAAAA%2F20230110%2Feu-west-1%2Fs3%2Faws4_request&X-Amz-Date=20230110T170414Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&X-Amz-Security-Token=FwoGZXIvYXdzEEsaDA9nffwerfrfrffqiK0Ae6ydwSr1R7ho%2BkIqn%2FOYVShw77vHhp5XuM945Z5uuqFQTUP128xAiCqgERWsuT7BSLhPeazeR6QjAm0jjH8JTa9YQ1OqBlF6BSY3o6oOvnagVxDwx1SzfEQK%2FMdoPpwOgPQ1qIN714YJfGe0Qp%2FbdAv%2F5tLGG5rgBX98CCuWTszpsWQnaFtfEWhfTG%2BvqUsjavsusT7TmPbHMv7gFqvSoU8Aos7LDt8vgUuA8TrD%2FQs9ZjkxyiOtfadBjItlHw%2BOq8%2BVpd24d24d24d24d42dZufWkjxnisGe4K9cMD0hNr5PjCXa3c1QRo&X-Amz-Signature=fd5ec81d49482cc2b26aac02ffe94e9d82d3e29b00c368fb1bad707f83929392']
               schema:
                 $ref: '#/components/schemas/InstructionsPreferences'
@@ -83,7 +83,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error504'
-  /use-an-lpa/healthcheck:
+  /healthcheck:
     description: Checks health of the lambda, SQS queue and bucket
     get:
       security:
@@ -100,30 +100,12 @@ paths:
                     $ref: '#/components/schemas/Healthcheck'
                   meta:
                     type: object
-        400:
-          description: Bad request (either in parameter or payload)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error400'
-        401:
-          description: Unauthorised (no current user and there should be)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error401'
         403:
           description: Forbidden - The current user is forbidden from accessing this data (in this way)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error403'
-        404:
-          description: That URL is not a valid route, or the item resource does not exist
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error404'
         500:
           description: Something unexpected happened and it is the API's fault
           content:
@@ -171,7 +153,7 @@ components:
       type: string
       description: "Uid of LPA"
       pattern: '(^7\d{11}$)'
-      example: '7000-0000-0054'
+      example: '700000000054'
     SignedUrl:
       type: string
       pattern: '(^https:\/\/my-bucket\.s3\.amazonaws\.com\/[\w-]+\?(X-Amz-[\w-]+=[\S]+&?)+X-Amz-Signature=[\S]+$)'

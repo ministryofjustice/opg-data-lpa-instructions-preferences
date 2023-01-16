@@ -23,11 +23,11 @@ docker-compose up -d api-gateway
 Then to get a response:
 
 ```commandline
-curl -H 'Authorization: fakeauth' http://localhost:7010/v1/use-an-lpa/image-request-handler/700000000138
+curl -H 'Authorization: fakeauth' http://localhost:7010/v1/image-request/700000000138
 ```
 
 or
 
 ```commandline
-curl -H 'Authorization: fakeauth' http://localhost:7010/v1/use-an-lpa/healthcheck
+curl -H 'Authorization: fakeauth' http://localhost:7010/v1/healthcheck
 ```
