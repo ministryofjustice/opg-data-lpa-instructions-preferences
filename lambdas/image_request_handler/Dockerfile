@@ -3,6 +3,7 @@ ARG FUNCTION_DIR="/function"
 FROM python:3.10.9-alpine3.16 AS python-alpine
 RUN apk add --no-cache libstdc++
 
+
 # Build image
 FROM python-alpine as build-image
 # Install aws-lambda-cpp build dependencies
@@ -28,8 +29,9 @@ RUN python -m pip install \
         --target ${FUNCTION_DIR} \
         --requirement requirements.txt
 
+
 # Multi-stage build: grab a fresh copy of the base image
-FROM python-alpine
+FROM python-alpine as base
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set working directory to function root directory
