@@ -54,14 +54,14 @@ jobs:
   unit_tests:
     name: Build, Scan and Push
     needs: ['create_tags', 'branch_name']
-    uses: ./.github/workflows/sub-task-unit-test.yml
+    uses: ./.github/workflows/sub-task-unit-tests.yml
 
   docker_build_scan_push:
     name: Build, Scan and Push
     needs: ['create_tags', 'branch_name']
     uses: ./.github/workflows/sub-task-docker-build.yml
     with:
-      lambda_names: '[{"name": "image-request-handler", "path": "lambda/image-request-handler"}]'
+      lambda_names: '[{"name": "image-request-handler", "path": "lambdas/image_request_handler"}]'
       tag: ${{ needs.create_tags.outputs.version_tag }}
       branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:

@@ -31,7 +31,7 @@ RUN python -m pip install \
 
 
 # Multi-stage build: grab a fresh copy of the base image
-FROM python-alpine as base
+FROM python-alpine
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set working directory to function root directory
