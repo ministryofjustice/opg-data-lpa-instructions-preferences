@@ -54,7 +54,7 @@ jobs:
   unit_tests:
     name: Build, Scan and Push
     needs: ['create_tags', 'branch_name']
-    uses: ./.github/workflows/sub-task-unit-test.yml
+    uses: ./.github/workflows/sub-task-unit-tests.yml
 
   docker_build_scan_push:
     name: Build, Scan and Push
