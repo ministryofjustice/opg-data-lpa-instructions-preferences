@@ -18,7 +18,7 @@ permissions:
   statuses: none
 
 jobs:
-  pr-label:
+  pr_label:
     runs-on: ubuntu-latest
     name: Label PR
     steps:
@@ -51,12 +51,17 @@ jobs:
     secrets:
       source_github_token: ${{ secrets.GITHUB_TOKEN }}
 
+  unit_tests:
+    name: Build, Scan and Push
+    needs: ['create_tags', 'branch_name']
+    uses: ./.github/workflows/sub-task-unit-tests.yml
+
   docker_build_scan_push:
     name: Build, Scan and Push
     needs: ['create_tags', 'branch_name']
     uses: ./.github/workflows/sub-task-docker-build.yml
     with:
-      lambda_names: '[{"name": "image-request-handler", "path": "lambda/image-request-handler"}]'
+      lambda_names: '[{"name": "image-request-handler", "path": "lambdas/image_request_handler"}]'
       tag: ${{ needs.create_tags.outputs.version_tag }}
       branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
@@ -65,7 +70,12 @@ jobs:
 
   terraform_environment_plan_apply:
     name: Terraform Plan and Apply Environment
-    needs: ['docker_build_scan_push', 'create_tags', 'branch_name']
+    needs: [
+      'docker_build_scan_push',
+      'create_tags',
+      'branch_name',
+      'unit_tests'
+    ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
       terraform_path: 'terraform/environment'

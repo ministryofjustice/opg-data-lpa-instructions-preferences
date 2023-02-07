@@ -5,6 +5,7 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
+**/__pycache__/**
 secrets.auto.tfvars
 # editors
 .vscode/

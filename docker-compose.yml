@@ -4,16 +4,32 @@ version: '3'
 services:
   image-request-handler:
     build:
-      context: ./lambda/image-request-handler
+      context: lambdas/image_request_handler
       dockerfile: Dockerfile
     ports:
       - "9010:8080"
     depends_on:
       - localstack
     volumes:
-      - ./lambda/.aws-lambda-rie:/aws-lambda
-      - ./lambda/image-request-handler/app:/function/app
+      - ./lambdas/.aws-lambda-rie:/aws-lambda
+      - ./lambdas/image-request-handler/app:/function/app
+    environment:
+      AWS_ACCESS_KEY_ID: FAKE
+      AWS_SECRET_ACCESS_KEY: FAKE
+      ENVIRONMENT: local
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
+
+  unit-tests:
+    build:
+      context: lambdas/image_request_handler
+      dockerfile: Dockerfile-tests
+    volumes:
+      - ./lambdas/image_request_handler/app:/function/app
+      - ./lambdas/image_request_handler/tests:/function/tests
+    environment:
+      AWS_ACCESS_KEY_ID: FAKE
+      AWS_SECRET_ACCESS_KEY: FAKE
+      ENVIRONMENT: local
 
   localstack:
     build:
