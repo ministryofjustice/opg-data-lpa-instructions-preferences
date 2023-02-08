@@ -1,13 +1,12 @@
 # Define function directory
 ARG FUNCTION_DIR="/function"
 FROM python:3.10.9-alpine3.16 AS python-alpine
-RUN apk add --no-cache libstdc++
-
+RUN apk add libstdc++
 
 # Build image
 FROM python-alpine as build-image
 # Install aws-lambda-cpp build dependencies
-RUN apk add --no-cache \
+RUN apk add  --no-cache \
     build-base \
     libtool \
     autoconf \
@@ -16,6 +15,12 @@ RUN apk add --no-cache \
     make \
     cmake \
     libcurl
+# Upgrade insecure packages (can't use alpine 3.17 as no libexecinfo-dev)
+RUN apk upgrade libcrypto1.1 libssl1.1
+RUN pip install setuptools --upgrade
+# Update insecure dependencies
+RUN apk upgrade libcrypto libssl
+RUN pip install setuptools --upgrade
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Create function directory

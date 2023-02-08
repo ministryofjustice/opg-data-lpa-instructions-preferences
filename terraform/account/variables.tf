@@ -7,15 +7,12 @@ variable "default_role" {
   default = "integrations-ci"
 }
 
-variable "local_environment" {
-
-}
-
 variable "accounts" {
   type = map(
     object({
-      name = string
-      account_id           = string
+      name          = string
+      account_id    = string
+      is_production = bool
     })
   )
 }
