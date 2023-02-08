@@ -1,6 +1,6 @@
 set -e
 
-awslocal s3 mb s3://lpa-iap-bucket-local
+awslocal s3 mb s3://ual-iap-local
 awslocal s3 mb s3://sirius-bucket-local
 
 awslocal s3 cp /tmp/good.png s3://sirius-bucket-local/good.png
@@ -15,4 +15,4 @@ awslocal s3api put-bucket-policy \
 
 awslocal secretsmanager create-secret --name "jwt-token" --secret-string "FAKETOKEN"
 
-awslocal sqs create-queue --queue-name lpa-image-request --attributes '{"MaximumMessageSize": "102400"}'
+awslocal sqs create-queue --queue-name ual-iap-image-request-local --attributes '{"MaximumMessageSize": "102400"}'
