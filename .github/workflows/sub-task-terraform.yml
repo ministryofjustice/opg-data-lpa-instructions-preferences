@@ -42,9 +42,31 @@ jobs:
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
           aws-region: eu-west-1
           role-duration-seconds: 3600
-          role-session-name: OPGDeputyReportingGithubAction
+          role-session-name: OPGUALIaPGithubAction
 
-      - name: Lint Terraform
-        run: terraform fmt -check -recursive
+#      - name: Modify openapi specification
+#        id: open_api
+#        run: sed -i "s/\"\${allowed_roles}\"/\${allowed_roles}/" image-request-handler.yml
+#        working-directory: docs/openapi
+
+      - name: Terraform Init
+        run: terraform init -input=false
         working-directory: ./${{ inputs.terraform_path }}
-        continue-on-error: true
+
+      - name: Terraform Plan
+        env:
+          TF_WORKSPACE: ${{ inputs.workspace }}
+          TF_VAR_image_tag: ${{ inputs.image_tag }}
+          TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
+        run: |
+          terraform workspace show
+          terraform plan -input=false -parallelism=30
+        working-directory: ./${{ inputs.terraform_path }}
+
+      - name: Terraform Apply
+        env:
+          TF_WORKSPACE: ${{ inputs.workspace }}
+          TF_VAR_image_tag: ${{ inputs.image_tag }}
+          TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
+        run: terraform apply -lock-timeout=300s -input=false -auto-approve -parallelism=30
+        working-directory: ./${{ inputs.terraform_path }}

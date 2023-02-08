@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket         = "opg.terraform.state"
-    key            = "opg-data-lpa-instructions-preferences-account/terraform.tfstate"
+    key            = "opg-data-lpa-instructions-preferences/terraform.tfstate"
     encrypt        = true
     region         = "eu-west-1"
     role_arn       = "arn:aws:iam::311462405659:role/integrations-ci"
