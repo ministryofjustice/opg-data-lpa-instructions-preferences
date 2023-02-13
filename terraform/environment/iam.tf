@@ -1,47 +1,11 @@
-//===============Related to Task Execution Role===================
-
-//This is the executor role
-resource "aws_iam_role" "ual_iap_lambda_execution_role" {
-  name               = "ual-iap-lambda-execution-${local.environment}"
-  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
-}
-
-# Temp policy for testing purposes
-data "aws_iam_policy_document" "lambda_assume" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type = "AWS"
-      identifiers = [
-        "arn:aws:iam::367815980639:role/operator"
-      ]
-    }
-
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-
-# This is the real lambda assume policy but for testing purposes for this PR we will use the above assume policy
-#data "aws_iam_policy_document" "lambda_assume" {
-#  statement {
-#    actions = ["sts:AssumeRole"]
-#
-#    principals {
-#      type        = "Service"
-#      identifiers = ["lambda.amazonaws.com"]
-#    }
-#  }
-#}
-
+//===============Related to Lambda Task Execution Role===================
 resource "aws_iam_policy" "ual_iap_lambda_execution" {
-  name   = "ual-iap-s3-${local.environment}"
+  name   = "lpa-iap-s3-${local.environment}"
   policy = data.aws_iam_policy_document.ual_iap_lambda.json
 }
 
 resource "aws_iam_role_policy_attachment" "ual_iap_lambda_attachment" {
-  role       = aws_iam_role.ual_iap_lambda_execution_role.id
+  role       = module.request_handler_lamdba.lambda_execution_role.id
   policy_arn = aws_iam_policy.ual_iap_lambda_execution.arn
 }
 
@@ -54,6 +18,7 @@ data "aws_iam_policy_document" "ual_iap_lambda" {
     actions   = ["s3:ListBucket"]
   }
 
+  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
   statement {
     sid       = "AllowS3ActionsInBucket"
     effect    = "Allow"
@@ -64,10 +29,10 @@ data "aws_iam_policy_document" "ual_iap_lambda" {
   statement {
     sid    = "AllowKms"
     effect = "Allow"
+    resources = [module.ual_iap_s3.arn]
     actions = [
       "kms:Decrypt",
       "kms:GenerateDataKey",
     ]
-    resources = [module.ual_iap_s3.arn]
   }
 }

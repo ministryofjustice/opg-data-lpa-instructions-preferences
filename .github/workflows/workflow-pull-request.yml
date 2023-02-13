@@ -61,7 +61,7 @@ jobs:
     needs: ['create_tags', 'branch_name']
     uses: ./.github/workflows/sub-task-docker-build.yml
     with:
-      lambda_names: '[{"name": "image-request-handler", "path": "lambdas/image_request_handler"}]'
+      lambda_names: '[{"name": "lpa-iap-request-handler-lambda", "path": "lambdas/image_request_handler"}]'
       tag: ${{ needs.create_tags.outputs.version_tag }}
       branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:

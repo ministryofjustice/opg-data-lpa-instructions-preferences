@@ -7,6 +7,10 @@ variable "default_role" {
   default = "integrations-ci"
 }
 
+data "aws_caller_identity" "current" {}
+
+data "aws_region" "current" {}
+
 variable "accounts" {
   type = map(
     object({
