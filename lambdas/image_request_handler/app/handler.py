@@ -165,11 +165,11 @@ class ImageRequestHandler:
 
 def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
-
+    print(event['pathParameters'])
     s3_image_request_handler = ImageRequestHandler(
-        uid=event['uid'],
-        bucket=f'ual-iap-{environment}',
-        sqs_queue=f'ual-iap-image-request-{environment}'
+        uid=event['pathParameters']['uid'],
+        bucket=f'lpa-iap-s3-{environment}',
+        sqs_queue=f'{environment}-lpa-iap-requests'
     )
     message = s3_image_request_handler.process_request()
 
