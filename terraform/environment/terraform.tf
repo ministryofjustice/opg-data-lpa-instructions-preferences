@@ -9,18 +9,22 @@ terraform {
   }
 }
 
+locals {
+  tags = {
+    business-unit          = "OPG"
+    application            = "UAL-Instructions-and-Preferences"
+    environment-name       = local.environment
+    owner                  = "OPG Supervision"
+    infrastructure-support = "OPG WebOps: opgteam@digital.justice.gov.uk"
+    is-production          = local.account.is_production
+    source-code            = "https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences"
+  }
+}
+
 provider "aws" {
   region = "eu-west-1"
   default_tags {
-    tags = {
-      business-unit          = "OPG"
-      application            = "UAL-Instructions-and-Preferences"
-      environment-name       = local.environment
-      owner                  = "OPG Supervision"
-      infrastructure-support = "OPG WebOps: opgteam@digital.justice.gov.uk"
-      is-production          = local.account.is_production
-      source-code            = "https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences"
-    }
+    tags = local.tags
   }
   assume_role {
     role_arn     = "arn:aws:iam::${local.account.account_id}:role/${var.default_role}"
@@ -34,5 +38,8 @@ provider "aws" {
   assume_role {
     role_arn     = "arn:aws:iam::311462405659:role/${var.management_role}"
     session_name = "terraform-session"
+  }
+  default_tags {
+    tags = local.tags
   }
 }
