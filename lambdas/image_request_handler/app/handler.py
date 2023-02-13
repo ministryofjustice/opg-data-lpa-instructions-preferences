@@ -111,7 +111,7 @@ class ImageRequestHandler:
     def add_temp_images_to_bucket(self):
         for image in self.images_to_check:
             try:
-                self.s3.put_object(Bucket=self.bucket, Key=image)
+                self.s3.put_object(Bucket=self.bucket, Key=image, ServerSideEncryption='AES256')
                 logger.error(f"Empty file '{image}' added to the '{self.bucket}' bucket.")
             except Exception as e:
                 logger.error(f"Error: Failed to add empty file '{image}' to the '{self.bucket}' bucket. {e}")
@@ -164,10 +164,12 @@ class ImageRequestHandler:
 
 
 def lambda_handler(event, context):
+    environment = os.getenv("ENVIRONMENT")
+
     s3_image_request_handler = ImageRequestHandler(
         uid=event['uid'],
-        bucket='lpa-iap-bucket-local',
-        sqs_queue='lpa-image-request'
+        bucket=f'ual-iap-{environment}',
+        sqs_queue=f'ual-iap-image-request-{environment}'
     )
     message = s3_image_request_handler.process_request()
 
