@@ -14,7 +14,7 @@ provider "aws" {
   default_tags {
     tags = {
       business-unit          = "OPG"
-      application            = "UAL-Instructions-and-Preferences"
+      application            = "LPA-Instructions-and-Preferences"
       environment-name       = local.environment
       owner                  = "OPG Supervision"
       infrastructure-support = "OPG WebOps: opgteam@digital.justice.gov.uk"
