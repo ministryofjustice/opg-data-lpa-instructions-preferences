@@ -1,0 +1,91 @@
+import boto3
+import requests
+import os
+from requests_aws4auth import AWS4Auth
+import json
+
+
+def get_role_session(environment, role):
+    account = {"sirius-dev": "288342028542"}
+    client = boto3.client("sts")
+
+    role_to_assume = f"arn:aws:iam::{account[environment]}:role/{role}"
+    response = client.assume_role(
+        RoleArn=role_to_assume, RoleSessionName="IapConnectionScript"
+    )
+
+    session = boto3.Session(
+        aws_access_key_id=response["Credentials"]["AccessKeyId"],
+        aws_secret_access_key=response["Credentials"]["SecretAccessKey"],
+        aws_session_token=response["Credentials"]["SessionToken"],
+    )
+
+    return session
+
+
+def get_request_auth(credentials):
+    credentials = credentials.get_frozen_credentials()
+    access_key = credentials.access_key
+    secret_key = credentials.secret_key
+    token = credentials.token
+
+    auth = AWS4Auth(
+        access_key,
+        secret_key,
+        "eu-west-1",
+        "execute-api",
+        session_token=token,
+    )
+
+    return auth
+
+
+def handle_request(method, url, auth):
+    response = requests.request(
+        method=method, url=url, auth=auth
+    )
+    print(response.text)
+    print(response.status_code)
+
+    # return response.json(), response.status_code
+
+
+def validate_response(
+    status, expected_status, request_type, method, response, is_parent
+):
+    if status == expected_status:
+        print(f"Successfully performed {request_type} request")
+    else:
+        print(f"Stopping as {request_type} {method} failed")
+        os._exit(1)
+
+    parent_id = None
+    if is_parent:
+        if "data" in response and "id" in response["data"]:
+            parent_id = response["data"]["id"]
+        else:
+            print("Stopping as report response is invalid")
+            os._exit(1)
+
+    return parent_id
+
+
+def main():
+    headers = {
+        "Content-Type": "application/json",
+    }
+    branch_prefix = "uml2800"
+    uid = "700000000000"
+    # payload = {f"uid": uid}
+    ver = "v1"
+
+    session = get_role_session("sirius-dev", "operator")
+    credentials = session.get_credentials()
+    auth = get_request_auth(credentials)
+
+    # iap_request_url = f"https://{branch_prefix}.dev.lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
+    iap_request_url = "https://lambda.eu-west-1.amazonaws.com/2015-03-31/functions/arn:aws:lambda:eu-west-1:288342028542:function:lpa-iap-request-handler-uml2800/invocations"
+    handle_request("GET", iap_request_url, auth)
+
+if __name__ == "__main__":
+    main()
