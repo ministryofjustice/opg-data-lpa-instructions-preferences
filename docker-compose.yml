@@ -12,7 +12,7 @@ services:
       - localstack
     volumes:
       - ./lambdas/.aws-lambda-rie:/aws-lambda
-      - ./lambdas/image-request-handler/app:/function/app
+      - ./lambdas/image_request_handler/app:/function/app
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
@@ -24,8 +24,8 @@ services:
       context: lambdas/image_request_handler
       dockerfile: Dockerfile-tests
     volumes:
-      - ./lambdas/image_request_handler/app:/function/app
-      - ./lambdas/image_request_handler/tests:/function/tests
+      - ./lambdas/image_request_handler/app:/lambdas/image_request_handler/app
+      - ./lambdas/image_request_handler/tests:/lambdas/image_request_handler/tests
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE

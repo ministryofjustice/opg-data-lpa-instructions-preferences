@@ -94,4 +94,4 @@ jobs:
             docker tag ${{ matrix.lambda.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ inputs.tag }}
           fi
             echo "skipping push for now..."
-            # docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
