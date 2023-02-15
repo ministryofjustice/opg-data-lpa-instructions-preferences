@@ -60,7 +60,16 @@ class ImageRequestHandler:
 
         message = self.formatted_message(signed_urls, image_collection_status)
 
-        return message
+        status_code = 500 if message['status'] == 'COLLECTION_ERROR' else 200
+
+        response = {
+            "isBase64Encoded": False,
+            "statusCode": status_code,
+            "headers": {},
+            "body": json.dumps(message)
+        }
+
+        return response
 
     def images_to_check(self):
         return [
@@ -165,21 +174,13 @@ class ImageRequestHandler:
 
 def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
-    print(event['pathParameters'])
+    print(event)
+    print(context)
     s3_image_request_handler = ImageRequestHandler(
         uid=event['pathParameters']['uid'],
         bucket=f'lpa-iap-{environment}',
         sqs_queue=f'{environment}-lpa-iap-requests'
     )
-    message = s3_image_request_handler.process_request()
-
-    status_code = 500 if message['status'] == 'COLLECTION_ERROR' else 200
-
-    response = {
-        "isBase64Encoded": False,
-        "statusCode": status_code,
-        "headers": {},
-        "body": json.dumps(message)
-    }
+    response = s3_image_request_handler.process_request()
 
     return response
