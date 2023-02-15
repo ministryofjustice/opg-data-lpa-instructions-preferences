@@ -47,45 +47,19 @@ def handle_request(method, url, auth):
     print(response.text)
     print(response.status_code)
 
-    # return response.json(), response.status_code
-
-
-def validate_response(
-    status, expected_status, request_type, method, response, is_parent
-):
-    if status == expected_status:
-        print(f"Successfully performed {request_type} request")
-    else:
-        print(f"Stopping as {request_type} {method} failed")
-        os._exit(1)
-
-    parent_id = None
-    if is_parent:
-        if "data" in response and "id" in response["data"]:
-            parent_id = response["data"]["id"]
-        else:
-            print("Stopping as report response is invalid")
-            os._exit(1)
-
-    return parent_id
-
 
 def main():
-    headers = {
-        "Content-Type": "application/json",
-    }
     branch_prefix = "uml2800"
-    uid = "700000000000"
-    # payload = {f"uid": uid}
+    uid = "700000000002"
     ver = "v1"
 
     session = get_role_session("sirius-dev", "operator")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 
-    # iap_request_url = f"https://{branch_prefix}.dev.lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
-    iap_request_url = "https://lambda.eu-west-1.amazonaws.com/2015-03-31/functions/arn:aws:lambda:eu-west-1:288342028542:function:lpa-iap-request-handler-uml2800/invocations"
+    iap_request_url = f"https://{branch_prefix}.dev.lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
     handle_request("GET", iap_request_url, auth)
+
 
 if __name__ == "__main__":
     main()
