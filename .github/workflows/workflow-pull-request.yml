@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           echo "branch_raw=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}})" >> $GITHUB_OUTPUT
-          echo "branch_formatted=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]' | cut -b 1-12)" >> $GITHUB_OUTPUT
+          echo "branch_formatted=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]' | cut -c1-8)" >> $GITHUB_OUTPUT
         id: extract_branch
 
   create_tags:
@@ -47,9 +47,20 @@ jobs:
     needs: ['branch_name']
     uses: ./.github/workflows/sub-task-tags.yml
     with:
-      branch_name: ${{ needs.branch_name.outputs.raw_branch }}
+      branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       source_github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  terraform_lint:
+    name: lint terraform code
+    uses: ./.github/workflows/sub-task-lint.yml
+    needs: ['branch_name']
+    with:
+      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+    secrets:
+      source_github_token: ${{ secrets.GITHUB_TOKEN }}
+      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
   unit_tests:
     name: Build, Scan and Push
@@ -61,7 +72,7 @@ jobs:
     needs: ['create_tags', 'branch_name']
     uses: ./.github/workflows/sub-task-docker-build.yml
     with:
-      lambda_names: '[{"name": "image-request-handler", "path": "lambdas/image_request_handler"}]'
+      lambda_names: '[{"name": "lpa-iap-request-handler-lambda", "path": "lambdas/image_request_handler"}]'
       tag: ${{ needs.create_tags.outputs.version_tag }}
       branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
@@ -72,6 +83,7 @@ jobs:
     name: Terraform Plan and Apply Environment
     needs: [
       'docker_build_scan_push',
+      'terraform_lint',
       'create_tags',
       'branch_name',
       'unit_tests'
