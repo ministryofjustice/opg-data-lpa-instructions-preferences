@@ -1,0 +1,49 @@
+{
+	'resource': '/image-request/{uid}',
+	'path': '/image-request/700000000004',
+	'httpMethod': 'GET',
+	'headers': None,
+	'multiValueHeaders': None,
+	'queryStringParameters': None,
+	'multiValueQueryStringParameters': None,
+	'pathParameters': {
+		'uid': '700000000004'
+	},
+	'stageVariables': {
+		'app_name': 'lpa-iap-request-handler-uml1234'
+	},
+	'requestContext': {
+		'resourceId': 'v6fake',
+		'resourcePath': '/image-request/{uid}',
+		'httpMethod': 'GET',
+		'extendedRequestId': 'FakeFakeFakeZWQ=',
+		'requestTime': '15/Feb/2023:13:10:03 +0000',
+		'path': '/image-request/{uid}',
+		'accountId': '12345678',
+		'protocol': 'HTTP/1.1',
+		'stage': 'test-invoke-stage',
+		'domainPrefix': 'testPrefix',
+		'requestTimeEpoch': 1676466603450,
+		'requestId': 'fake-fake-fake-fake-3e81f5d989a5',
+		'identity': {
+			'cognitoIdentityPoolId': None,
+			'cognitoIdentityId': None,
+			'apiKey': 'test-invoke-api-key',
+			'principalOrgId': None,
+			'cognitoAuthenticationType': None,
+			'userArn': 'arn:aws:sts::12345678:assumed-role/operator/fake.user',
+			'apiKeyId': 'test-invoke-api-key-id',
+			'userAgent': 'aws-internal/3 aws-sdk-java/1.12.401 Linux/5.4.228-141.415.amzn2int.x86_64 OpenJDK_64-Bit_Server_VM/25.362-b09 java/1.8.0_362 vendor/Oracle_Corporation cfg/retry-mode/standard',
+			'accountId': '12345678',
+			'caller': 'FAKE:fake.user',
+			'sourceIp': 'test-invoke-source-ip',
+			'accessKey': 'FAKE',
+			'cognitoAuthenticationProvider': None,
+			'user': 'FAKE:fake.user'
+		},
+		'domainName': 'testPrefix.testDomainName',
+		'apiId': 'fake1234'
+	},
+	'body': None,
+	'isBase64Encoded': False
+}

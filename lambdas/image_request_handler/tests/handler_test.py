@@ -221,20 +221,26 @@ def test_process_request(image_request_handler):
 
     # Should not be started on first attempt
     response = image_request_handler.process_request()
+    response_body = json.loads(response['body'])
 
-    assert len(response['signed_urls'].items()) == 4
-    assert response['status'] == 'COLLECTION_NOT_STARTED'
-    assert response['uid'] == test_uid
+    assert response['statusCode'] == 200
+    assert len(response_body['signed_urls'].items()) == 4
+    assert response_body['status'] == 'COLLECTION_NOT_STARTED'
+    assert response_body['uid'] == test_uid
 
     # Check in progress on second attempt
     response = image_request_handler.process_request()
+    response_body = json.loads(response['body'])
 
-    assert len(response['signed_urls'].items()) == 4
-    assert response['status'] == 'COLLECTION_IN_PROGRESS'
-    assert response['uid'] == test_uid
+    assert response['statusCode'] == 200
+    assert len(response_body['signed_urls'].items()) == 4
+    assert response_body['status'] == 'COLLECTION_IN_PROGRESS'
+    assert response_body['uid'] == test_uid
 
     stubber = Stubber(image_request_handler.s3)
     stubber.add_client_error('put_object')
     stubber.activate()
     response = image_request_handler.process_request()
-    assert response['status'] == 'COLLECTION_ERROR'
+    response_body = json.loads(response['body'])
+    assert response['statusCode'] == 500
+    assert response_body['status'] == 'COLLECTION_ERROR'
