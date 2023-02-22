@@ -44,11 +44,6 @@ jobs:
           role-duration-seconds: 3600
           role-session-name: OPGUALIaPGithubAction
 
-#      - name: Modify openapi specification
-#        id: open_api
-#        run: sed -i "s/\"\${allowed_roles}\"/\${allowed_roles}/" image-request-handler.yml
-#        working-directory: docs/openapi
-
       - name: Terraform Init
         run: terraform init -input=false
         working-directory: ./${{ inputs.terraform_path }}

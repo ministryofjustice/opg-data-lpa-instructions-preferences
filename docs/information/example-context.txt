@@ -1,0 +1,11 @@
+LambdaContext(
+    [
+        aws_request_id=fakefake-fake-fake-fake-fakefakefake,
+        log_group_name=/aws/lambda/lpa-iap-request-handler-uml1234,
+        log_stream_name=2023/02/15/[$LATEST]11111111111111111111111111111111,
+        function_name=lpa-iap-request-handler-uml1234,memory_limit_in_mb=1024,
+        function_version=$LATEST,
+        invoked_function_arn=arn:aws:lambda:eu-west-1:12345678:function:lpa-iap-request-handler-uml1234,client_context=None,identity=CognitoIdentity([cognito_identity_id=None,cognito_identity_pool_id=None
+        ])
+    ]
+)
