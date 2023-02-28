@@ -1,0 +1,9 @@
+arrow_pd_parser
+pdf2image
+Pillow
+awswrangler
+pdfminer
+opencv-python
+mojap_metadata
+pydantic
+tesserocr
