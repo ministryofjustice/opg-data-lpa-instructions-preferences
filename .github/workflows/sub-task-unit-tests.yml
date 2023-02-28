@@ -24,8 +24,12 @@ jobs:
 
       - name: Build Unit Tests
         id: build_container
-        run: docker-compose build unit-tests
+        run: docker-compose build unit-tests-request-handler unit-tests-processor
 
-      - name: Run Unit Tests
-        id: unit_tests
-        run: docker-compose up unit-tests
+      - name: Run Unit Tests Request Handler
+        id: unit_tests_request_handler
+        run: docker-compose up unit-tests-request-handler
+
+      - name: Run Unit Tests Processor
+        id: unit_tests_processor
+        run: docker-compose up unit-tests-processor

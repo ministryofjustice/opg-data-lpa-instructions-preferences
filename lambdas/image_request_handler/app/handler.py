@@ -9,11 +9,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-# We shall be receiving event with the sirius uid in format of:
-# 700000000047
-# We will return an array of signed urls for images with following format:
-# iap-700000000047-1, iap-700000000047-2, iap-700000000047-3, iap-700000000047-4
-
 class ImageRequestHandler:
     def __init__(self, uid, bucket, sqs_queue):
         self.environment = os.getenv('ENVIRONMENT')
@@ -29,7 +24,7 @@ class ImageRequestHandler:
     def setup_sqs_connection(self):
         if self.environment == "local":
             sqs = boto3.client("sqs",
-                               endpoint_url="http://localstack:4566",
+                               endpoint_url="http://localstack-processor:4566",
                                region_name="eu-west-1")
         else:
             sqs = boto3.client("sqs", region_name="eu-west-1")
@@ -38,7 +33,7 @@ class ImageRequestHandler:
     def setup_s3_connection(self):
         if self.environment == "local":
             s3 = boto3.client("s3",
-                              endpoint_url="http://localstack:4566",
+                              endpoint_url="http://localstack-request-handler:4566",
                               region_name="eu-west-1")
         else:
             s3 = boto3.client("s3", region_name="eu-west-1")
@@ -54,7 +49,6 @@ class ImageRequestHandler:
             except Exception as e:
                 image_collection_status = 'COLLECTION_ERROR'
                 logger.error(f'Unexpected error {e}')
-
 
         signed_urls = self.generate_signed_urls(image_statuses)
 
@@ -73,10 +67,10 @@ class ImageRequestHandler:
 
     def images_to_check(self):
         return [
-            f'iap-{self.uid}-1',
-            f'iap-{self.uid}-2',
-            f'iap-{self.uid}-3',
-            f'iap-{self.uid}-4',
+            f'iap-{self.uid}-instructions',
+            f'iap-{self.uid}-preferences',
+            f'iap-{self.uid}-continuation-instructions',
+            f'iap-{self.uid}-continuation-preferences',
         ]
 
     def check_image_statuses(self, images_to_check):
@@ -183,10 +177,13 @@ def get_healthcheck_response():
 
 def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
+    version = os.getenv("VERSION")
 
-    if event['requestContext']['path'] == '/healthcheck':
+    print(event)
+
+    if event['requestContext']['resourcePath'] in ['/healthcheck', '/' + version + '/healthcheck']:
         response = get_healthcheck_response()
-    elif event['requestContext']['path'] == '/image-request/{uid}':
+    elif event['requestContext']['resourcePath'] in ['/image-request/{uid}', '/' + version + '/image-request/{uid}']:
         s3_image_request_handler = ImageRequestHandler(
             uid=event['pathParameters']['uid'],
             bucket=f'lpa-iap-{environment}',
@@ -198,7 +195,7 @@ def lambda_handler(event, context):
             "isBase64Encoded": False,
             "statusCode": 404,
             "headers": {},
-            "body": f"Not Found - Non existent path ({event['requestContext']['path']}) requested"
+            "body": f"Not Found - Non existent path ({event['requestContext']['resourcePath']}) requested"
         }
 
     return response
