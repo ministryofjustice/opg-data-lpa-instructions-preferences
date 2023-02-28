@@ -16,3 +16,6 @@ secrets.auto.tfvars
 venv/
 env/
 terraform/environment/.terraform.lock.hcl
+lambdas/image_processor/extraction/fail/**
+lambdas/image_processor/extraction/pass/**
+lambdas/image_processor/extraction/LP1H-Edited.pdf

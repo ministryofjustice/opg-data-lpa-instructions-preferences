@@ -31,10 +31,10 @@ def test_init(image_request_handler):
     assert image_request_handler.sqs_queue == "test-queue"
     assert image_request_handler.total_images == 4
     assert image_request_handler.images_to_check == [
-        'iap-700000001-1',
-        'iap-700000001-2',
-        'iap-700000001-3',
-        'iap-700000001-4',
+        'iap-700000001-instructions',
+        'iap-700000001-preferences',
+        'iap-700000001-continuation-instructions',
+        'iap-700000001-continuation-preferences',
     ]
     assert image_request_handler.url_expiration == 60
 
