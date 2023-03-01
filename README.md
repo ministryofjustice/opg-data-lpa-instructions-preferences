@@ -95,7 +95,7 @@ Bear in mind you will need boto3 installed. You should do this in a virtual env 
 
 ### Run the unit tests locally
 
-They can be run in docker to save you havign to set anything up. Simply run:
+They can be run in docker to save you having to set anything up. Simply run:
 
 ```commandline
 docker-compose up -d unit-tests

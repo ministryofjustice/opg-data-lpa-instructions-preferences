@@ -14,7 +14,7 @@ variable "tags" {
   default     = {}
 }
 
-variable "security_groups" {
+variable "security_group_ids" {
   description = "Security groups to use"
   type        = list(string)
   default     = []
