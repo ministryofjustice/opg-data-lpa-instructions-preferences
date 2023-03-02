@@ -13,3 +13,9 @@ module "iap_queues" {
     aws = aws
   }
 }
+
+resource "aws_lambda_event_source_mapping" "lpa_iap_processor" {
+  event_source_arn  = module.iap_queues.queue.arn
+  function_name     = module.processor_lamdba.lambda.function_name
+  starting_position = "LATEST"
+}
