@@ -179,8 +179,6 @@ def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
     version = os.getenv("VERSION")
 
-    print(event)
-
     if event['requestContext']['resourcePath'] in ['/healthcheck', '/' + version + '/healthcheck']:
         response = get_healthcheck_response()
     elif event['requestContext']['resourcePath'] in ['/image-request/{uid}', '/' + version + '/image-request/{uid}']:

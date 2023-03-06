@@ -41,7 +41,11 @@ services:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
+      TARGET_ENVIRONMENT: local
+      SECRET_PREFIX: local
       SIRIUS_URL: http://sirius-lb:5000
+      SESSION_DATA: publicapi@opgtest.com
+
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
   unit-tests-request-handler:
@@ -142,10 +146,19 @@ services:
     ports:
       - 7012:5000
 
+#  mock-sirius:
+#    image: stoplight/prism:4
+#    command: 'mock -h 0.0.0.0 /tmp/sirius.yml'
+#    volumes:
+#      - ./docs/openapi/sirius.yml:/tmp/sirius.yml:ro
+#    ports:
+#      - 7013:4010
+
   mock-sirius:
-    image: stoplight/prism:4
-    command: 'mock -h 0.0.0.0 /tmp/sirius.yml'
+    build:
+      context: ./mock-services/sirius
+      dockerfile: Dockerfile
     volumes:
-      - ./docs/openapi/sirius.yml:/tmp/sirius.yml:ro
+      - ./mock-services/sirius/sirius.yml:/app/sirius.yml:ro
     ports:
-      - 7013:4010
+      - "7013:80"
