@@ -2,10 +2,12 @@ import logging
 import os
 import json
 import shutil
-from datetime import datetime
+import datetime
+import jwt
 
 import boto3
 import requests
+from botocore.exceptions import ClientError
 from form_tools.form_operators import FormOperator
 
 logger = logging.getLogger()
@@ -15,36 +17,18 @@ logger.setLevel(logging.INFO)
 class ImageProcessor:
     def __init__(self, event):
         self.environment = os.getenv('ENVIRONMENT')
+        self.target_environment = os.getenv('TARGET_ENVIRONMENT')
+        self.secret_key_prefix = os.getenv('SECRET_PREFIX')
         self.sirius_url = os.getenv('SIRIUS_URL')
+        self.sirius_url_part = os.getenv('SIRIUS_URL_PART')
         self.event = event
         self.s3 = self.setup_s3_connection()
-        self.sirius_bucket = f'opg-backoffice-datastore-{self.environment}'
+        self.sirius_bucket = f'opg-backoffice-datastore-{self.target_environment}'
         self.iap_bucket = f'lpa-iap-{self.environment}'
         self.extraction_folder_path = 'extraction'
         self.folder_name = '9999'
+        self.secret_manager = self.setup_secret_manager_connection()
         self.uid = None
-
-    @staticmethod
-    def list_files(filepath, filetype):
-        paths = []
-        for root, dirs, files in os.walk(filepath):
-            for file in files:
-                if file.lower().endswith(filetype.lower()):
-                    paths.append(os.path.join(root, file))
-        return paths
-
-    @staticmethod
-    def get_timestamp_as_str():
-        return str(int(datetime.utcnow().timestamp()))
-
-    def setup_s3_connection(self):
-        if self.environment == "local":
-            s3 = boto3.client("s3",
-                              endpoint_url="http://localstack-request-handler:4566",
-                              region_name="eu-west-1")
-        else:
-            s3 = boto3.client("s3", region_name="eu-west-1")
-        return s3
 
     def process_request(self):
         """
@@ -57,16 +41,55 @@ class ImageProcessor:
         """
         self.uid = self.get_uid_from_event()
         logger.info(f'Starting processing on {self.uid}')
+
         s3_urls_dict = self.make_request_to_sirius(self.uid)
         logger.info(f'Response from Sirius: {str(s3_urls_dict)}')
+
         downloaded_scan_locations = self.download_scanned_images(s3_urls_dict)
         logger.info(f'Scan locations: {str(downloaded_scan_locations)}')
+
         paths_to_extracted_images = self.extract_instructions_and_preferences(downloaded_scan_locations)
         all_paths_to_extracted_images = self.add_blank_files_to_paths_with_no_match(paths_to_extracted_images)
         logger.info(f'Extracted images: {str(all_paths_to_extracted_images)}')
+
         self.put_images_to_bucket(all_paths_to_extracted_images)
         self.cleanup(downloaded_scan_locations)
         logger.info('Process Finished Successfully')
+
+    @staticmethod
+    def list_files(filepath, filetype):
+        paths = []
+        for root, dirs, files in os.walk(filepath):
+            for file in files:
+                if file.lower().endswith(filetype.lower()):
+                    paths.append(os.path.join(root, file))
+        return paths
+
+    @staticmethod
+    def get_timestamp_as_str():
+        return str(int(datetime.datetime.utcnow().timestamp()))
+
+    def setup_s3_connection(self):
+        if self.environment == "local":
+            s3 = boto3.client("s3",
+                              endpoint_url="http://localstack-request-handler:4566",
+                              region_name="eu-west-1")
+        else:
+            s3 = boto3.client("s3", region_name="eu-west-1")
+        return s3
+
+    def setup_secret_manager_connection(self):
+        if self.environment == "local":
+            sm = boto3.client(
+                service_name="secretsmanager",
+                region_name="eu-west-1",
+                endpoint_url="http://localstack:4567",
+                aws_access_key_id="fake",
+                aws_secret_access_key="fake",  # pragma: allowlist secret
+            )
+        else:
+            sm = boto3.client(service_name="secretsmanager", region_name="eu-west-1")
+        return sm
 
     def cleanup(self, downloaded_image_locations):
         pass_path = f"{self.extraction_folder_path}/pass/{self.folder_name}"
@@ -100,12 +123,19 @@ class ImageProcessor:
         return uid
 
     def make_request_to_sirius(self, uid):
-        url = f"{self.sirius_url}/v1/lpas/{uid}/scan"
+        url = f"{self.sirius_url}{self.sirius_url_part}/lpas/{uid}/scans"
+        headers = self.build_sirius_headers()
+        logger.info(f"URL: {url}")
+        logger.info(f"HEADERS: {headers}")
         try:
-            response = requests.get(url)
+            response = requests.get(url=url, headers=headers)
         except requests.exceptions.RequestException as e:
+            logger.error("bad response sirius")
             logger.exception(e)
             return {"error": "error getting response from Sirius"}
+
+        logger.info(f"STATUS: {response.status_code}")
+        logger.info(f"TEXT: {response.text}")
 
         # Parse the response and extract the values
         try:
@@ -201,6 +231,51 @@ class ImageProcessor:
             except Exception as e:
                 logger.error(f"Error: Failed to add file '{image}' to the '{self.iap_bucket}' bucket. {e}")
                 raise
+
+    def get_secret(self):
+        """
+        Gets and decrypts the JWT secret from AWS Secrets Manager for the chosen environment
+        Args:
+            environment: AWS environment name
+        Returns:
+            JWT secret
+        Raises:
+            ClientError
+        """
+        secret_name = f"{self.secret_key_prefix}/jwt-key"
+        try:
+            get_secret_value_response = self.secret_manager.get_secret_value(SecretId=secret_name)
+            secret = get_secret_value_response["SecretString"]
+        except ClientError as e:
+            logger.info("Unable to get secret from Secrets Manager")
+            raise e
+
+        return secret
+
+    def build_sirius_headers(self):
+        """
+        Builds headers for Sirius request, including JWT auth
+        Returns:
+            Header dictionary with content type and auth token
+        """
+        content_type = "application/json"
+        session_data = os.environ["SESSION_DATA"]
+        secret = self.get_secret()
+
+        encoded_jwt = jwt.encode(
+            {
+                "session-data": session_data,
+                "iat": datetime.datetime.utcnow(),
+                "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=3600),
+            },
+            secret,
+            algorithm="HS256",
+        )
+
+        return {
+            "Content-Type": content_type,
+            "Authorization": "Bearer " + encoded_jwt,
+        }
 
 
 def get_healthcheck_response():

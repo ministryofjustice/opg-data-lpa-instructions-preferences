@@ -20,6 +20,8 @@ locals {
     account_id    = local.account.account_id
     allowed_roles = join("\", \"", local.allowed_roles)
   }
+
+  session_data = local.account.name == "development" ? "publicapi@opgtest.com" : "opg+publicapi@digital.justice.gov.uk"
 }
 
 variable "default_role" {
@@ -35,6 +37,11 @@ variable "image_tag" {
   default = "latest"
 }
 
+variable "use_mock_sirius" {
+  type    = string
+  default = "0"
+}
+
 variable "accounts" {
   type = map(
     object({
@@ -47,6 +54,8 @@ variable "accounts" {
       extra_allowed_roles  = list(string)
       vpc_id               = string
       target_environment   = string
+      secret_prefix        = string
+      s3_vpc_endpoint_ids  = set(string)
     })
   )
 }

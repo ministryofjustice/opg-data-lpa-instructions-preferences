@@ -38,6 +38,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
+RUN chmod 777 ${FUNCTION_DIR}/extraction
 # Set the entrypoint for the Lambda function
 ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
 # Set the command to run the Lambda handler
