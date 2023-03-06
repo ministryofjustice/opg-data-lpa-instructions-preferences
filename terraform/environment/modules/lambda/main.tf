@@ -15,7 +15,7 @@ resource "aws_lambda_function" "lambda_function" {
 
   vpc_config {
     subnet_ids         = var.aws_subnet_ids
-    security_group_ids = var.security_groups
+    security_group_ids = var.security_group_ids
   }
 
   tracing_config {
