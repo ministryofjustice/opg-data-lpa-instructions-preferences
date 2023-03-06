@@ -1,6 +1,6 @@
 set -e
 
-awslocal secretsmanager create-secret --name "jwt-token" --secret-string "FAKETOKEN"
+awslocal secretsmanager create-secret --name "local/jwt-token" --secret-string "FAKETOKEN"
 
 echo "Creating SQS queue"
 
