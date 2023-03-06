@@ -17,6 +17,7 @@ event = {'Records': [{'body': '{\"uid\": \"700000000005\"}'}]}
 def setup_environment_variables():
     os.environ["SIRIUS_URL"] = "http://sirius-test"
     os.environ["ENVIRONMENT"] = "testing"
+    os.environ["TARGET_ENVIRONMENT"] = "target_testing"
 
 
 @pytest.fixture
@@ -27,6 +28,7 @@ def image_processor():
 def test_init(image_processor):
     assert image_processor.environment == os.getenv('ENVIRONMENT')
     assert image_processor.sirius_url == os.getenv('SIRIUS_URL')
+    assert image_processor.target_environment == os.getenv('TARGET_ENVIRONMENT')
     assert image_processor.event == event
     assert image_processor.sirius_bucket == f"opg-backoffice-datastore-{os.getenv('ENVIRONMENT')}"
     assert image_processor.iap_bucket == f"lpa-iap-{os.getenv('ENVIRONMENT')}"
