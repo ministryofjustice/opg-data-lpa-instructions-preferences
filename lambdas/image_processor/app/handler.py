@@ -227,7 +227,7 @@ class ImageProcessor:
             )
 
         # Find all the file paths that we have pulled out from the scanned documents
-        paths = self.list_files(f'{self.extraction_folder_path}/pass/{self.folder_name}', '.jpg')
+        paths = self.list_files(f'{self.output_folder_path}/pass/{self.folder_name}', '.jpg')
 
         path_selection = {}
         for path in paths:
@@ -261,7 +261,6 @@ class ImageProcessor:
         """
         secret_name = f"{self.secret_key_prefix}/jwt-key"
 
-        print(f"SECRET_NAME: {secret_name}")
         try:
             get_secret_value_response = self.secret_manager.get_secret_value(SecretId=secret_name)
             secret = get_secret_value_response["SecretString"]
