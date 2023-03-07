@@ -94,12 +94,9 @@ class ImageReader:
         Returns:
             (ByteString): Byte string for image
         """
-        print(f"FIlE PATHYO: {file_path}")
         raw_img = cls._read_bytes(file_path, **bytes_kwargs)
         nparr = np.frombuffer(raw_img, np.uint8)
-        print(f"LEN: {len(nparr)}")
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        print(f"LEN2: {len(img)}")
         return img
 
     @staticmethod

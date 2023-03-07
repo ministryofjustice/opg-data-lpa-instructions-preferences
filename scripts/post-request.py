@@ -48,7 +48,7 @@ def handle_request(method, url, auth):
 
 def main():
     branch_prefix = "uml2769"
-    uid = "700000000229"
+    uid = "700000000047"
     ver = "v1"
 
     session = get_role_session("sirius-dev", "operator")

@@ -39,7 +39,7 @@ variable "image_tag" {
 
 variable "use_mock_sirius" {
   type    = string
-  default = "0"
+  default = "1"
 }
 
 variable "accounts" {
