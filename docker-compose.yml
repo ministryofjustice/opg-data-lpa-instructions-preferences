@@ -8,11 +8,11 @@ services:
       context: lambdas/image_request_handler
       dockerfile: Dockerfile
     ports:
-      - "9010:8080"
+      - 9010:8080
     depends_on:
       - localstack-request-handler
       - image-processor
-      - sirius-lb
+      - mock-sirius-web
     volumes:
       - ./lambdas/.aws-lambda-rie:/aws-lambda
       - ./lambdas/image_request_handler/app:/function/app
@@ -29,7 +29,7 @@ services:
       context: lambdas/image_processor
       dockerfile: Dockerfile
     ports:
-      - "9011:8080"
+      - 9011:8080
     depends_on:
       - localstack-processor
     volumes:
@@ -41,7 +41,12 @@ services:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
-      SIRIUS_URL: http://sirius-lb:5000
+      TARGET_ENVIRONMENT: local
+      SECRET_PREFIX: local
+      SIRIUS_URL: http://mock-sirius-web:80
+      SIRIUS_URL_PART: /v1
+      SESSION_DATA: publicapi@opgtest.com
+
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
   unit-tests-request-handler:
@@ -88,7 +93,7 @@ services:
     volumes:
       - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
     ports:
-      - "4566:4566"
+      - 4566:4566
 
   localstack-processor:
     image: localstack-processor:latest
@@ -106,7 +111,7 @@ services:
       LAMBDA_FORWARD_URL: http://image-processor:8080
       DOCKER_HOST: unix:///var/run/docker.sock
     ports:
-      - "4567:4566"
+      - 4567:4566
 
 # Mock API gateway and image request handler
 # This will largely be replaced as we move forward and moved into use an LPA repo as it's mock.
@@ -131,21 +136,25 @@ services:
       - 7011:4010
 
 #Mock Sirius LB
-  sirius-lb:
+  mock-sirius-web:
+    build:
+      context: ./mock-services/sirius/web
+      dockerfile: Dockerfile
+    image: mock-sirius-web:latest
     container_name: api-gateway
-    image: nginx:stable-alpine
     depends_on:
       - mock-sirius
-    command: 'nginx -g "daemon off;"'
     volumes:
-      - ./mock-services/sirius/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./mock-services/sirius/web/nginx-local.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - 7012:5000
+      - 7012:80
 
   mock-sirius:
-    image: stoplight/prism:4
-    command: 'mock -h 0.0.0.0 /tmp/sirius.yml'
+    build:
+      context: ./mock-services/sirius/app
+      dockerfile: Dockerfile
+    image: mock-sirius:latest
     volumes:
-      - ./docs/openapi/sirius.yml:/tmp/sirius.yml:ro
+      - ./mock-services/sirius/app/sirius-local.yml:/app/sirius.yml:ro
     ports:
       - 7013:4010
