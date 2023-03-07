@@ -101,7 +101,7 @@ class ImageProcessor:
             sm = boto3.client(
                 service_name="secretsmanager",
                 region_name="eu-west-1",
-                endpoint_url="http://localstack:4567",
+                endpoint_url="http://localstack-processor:4566",
                 aws_access_key_id="fake",
                 aws_secret_access_key="fake",  # pragma: allowlist secret
             )
@@ -144,7 +144,6 @@ class ImageProcessor:
         url = f"{self.sirius_url}{self.sirius_url_part}/lpas/{uid}/scans"
         headers = self.build_sirius_headers()
         logger.info(f"URL: {url}")
-        logger.info(f"HEADERS: {headers}")
         try:
             response = requests.get(url=url, headers=headers)
         except requests.exceptions.RequestException as e:
@@ -261,6 +260,8 @@ class ImageProcessor:
             ClientError
         """
         secret_name = f"{self.secret_key_prefix}/jwt-key"
+
+        print(f"SECRET_NAME: {secret_name}")
         try:
             get_secret_value_response = self.secret_manager.get_secret_value(SecretId=secret_name)
             secret = get_secret_value_response["SecretString"]

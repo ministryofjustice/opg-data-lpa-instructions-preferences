@@ -31,6 +31,7 @@ resource "aws_lambda_function" "lambda_function" {
 }
 
 resource "aws_lambda_permission" "lambda_permission" {
+  count         = var.rest_api == "" ? 0 : 1
   statement_id  = "AllowApiLpaIapGatewayInvoke_${var.environment}_${var.api_version}"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function.function_name

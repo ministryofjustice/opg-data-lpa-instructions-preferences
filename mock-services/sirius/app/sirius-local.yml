@@ -25,15 +25,15 @@ paths:
                 lpa0047:
                   value:
                     lpaScan:
-                      location: 's3://opg-backoffice-datastore-integration/LP1H-Scan.pdf'
+                      location: 's3://opg-backoffice-datastore-local/LP1H-Scan.pdf'
                       template: 'LP1H'
                 lpa0138:
                   value:
                     lpaScan:
-                      location: 's3://opg-backoffice-datastore-integration/LP1F-Scan.pdf'
+                      location: 's3://opg-backoffice-datastore-local/LP1F-Scan.pdf'
                       template: 'LP1F'
                     continuationSheetScan:
-                      location: ['s3://opg-backoffice-datastore-integration/LPC-Scan.pdf','s3://opg-backoffice-datastore-integration/LPC2-Scan.pdf']
+                      location: ['s3://opg-backoffice-datastore-local/LPC-Scan.pdf','s3://opg-backoffice-datastore-local/LPC2-Scan.pdf']
               schema:
                 type: object
                 properties:
@@ -43,7 +43,7 @@ paths:
                       location:
                         type: string
                         format: uri
-                        example: 's3://opg-backoffice-datastore-integration/LP1H-Scan.pdf'
+                        example: 's3://opg-backoffice-datastore-local/LP1H-Scan.pdf'
                       template:
                         type: string
                         example: 'LP1H'
@@ -56,7 +56,7 @@ paths:
                           type: string
                           format: uri
                         example:
-                          - 's3://opg-backoffice-datastore-integration/LPC-Scan.pdf'
+                          - 's3://opg-backoffice-datastore-local/LPC-Scan.pdf'
                 required:
                   - lpaScan
                   - continuationSheetScan

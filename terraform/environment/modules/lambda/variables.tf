@@ -20,7 +20,9 @@ variable "security_group_ids" {
   default     = []
 }
 
-variable "rest_api" {}
+variable "rest_api" {
+  default = ""
+}
 
 variable "account" {
   description = "A map that defines account variables."
