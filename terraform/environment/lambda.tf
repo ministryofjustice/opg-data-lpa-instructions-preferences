@@ -45,7 +45,8 @@ module "processor_lamdba" {
   ecr_arn            = data.aws_ecr_repository.lpa_iap_request_handler.arn
   account            = local.account
   environment        = local.environment
-  rest_api           = aws_api_gateway_rest_api.lpa_iap
+  timeout            = 600
+  memory             = 4096
   aws_subnet_ids     = data.aws_subnets.private.ids
   security_group_ids = [data.aws_security_group.lambda_api_ingress.id]
   logs_kms_key       = data.aws_kms_key.lpa_iap_logs
