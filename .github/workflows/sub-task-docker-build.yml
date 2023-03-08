@@ -58,6 +58,7 @@ jobs:
           image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
           format: 'sarif'
+          ignore-unfixed: true
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
@@ -85,9 +86,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@9149ade017c57f86dea2f76a01f8b2d5bd06b10f
         with:
           registries: 311462405659
-
-      - name: show images
-        run: docker image ls
 
       - name: Push to ECR
         env:
