@@ -1,2 +1,2 @@
-moto
-pytest
+moto==1.3.16
+pytest==6.1.1

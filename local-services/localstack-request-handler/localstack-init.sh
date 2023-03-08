@@ -46,4 +46,4 @@ awslocal apigateway create-deployment \
     --variables account_id=000000000000,region=eu-west-1,app_name=function
 
 echo "API Gateway URL: http://localhost:4566/restapis/${API_ID}/v1/_user_request_/"
-echo "Example curl command: curl -XGET http://localhost:4566/restapis/${API_ID}/v1/_user_request_/image-request/700000000006"
+echo "Example curl command: curl -XGET http://localhost:4566/restapis/${API_ID}/v1/_user_request_/image-request/700000000047"

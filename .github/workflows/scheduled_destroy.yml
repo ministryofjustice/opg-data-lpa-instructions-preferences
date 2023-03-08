@@ -44,10 +44,10 @@ jobs:
           sudo chmod +x /usr/local/bin/terraform-workspace-manager
 
       - name: Terraform Init
-        working-directory: ./infrastructure/environment
+        working-directory: infrastructure/environment
         run: terraform init -input=false
 
       - name: Destroy PR Terraform Workspaces
-        working-directory: ./infrastructure/environment
+        working-directory: infrastructure/environment
         run: |
           ./scripts/workspace_cleanup.sh $(terraform-workspace-manager -protected-workspaces=true -aws-account-id=288342028542 -aws-iam-role=integrations-ci)
