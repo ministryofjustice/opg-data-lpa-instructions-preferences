@@ -36,7 +36,7 @@ services:
       - ./lambdas/.aws-lambda-rie:/aws-lambda
       - ./lambdas/image_processor/app:/function/app
       - ./lambdas/image_processor/extraction:/function/extraction
-      - ./lambdas/image_processor/form_tools:/function/form_tools
+#      - ./lambdas/image_processor/form_tools:/function/form_tools
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE

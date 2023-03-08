@@ -86,9 +86,6 @@ jobs:
         with:
           registries: 311462405659
 
-      - name: show images
-        run: docker image ls
-
       - name: Push to ECR
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
