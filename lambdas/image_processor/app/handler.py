@@ -143,7 +143,7 @@ class ImageProcessor:
     def make_request_to_sirius(self, uid):
         url = f"{self.sirius_url}{self.sirius_url_part}/lpas/{uid}/scans"
         headers = self.build_sirius_headers()
-        logger.info(f"URL: {url}")
+        logger.info(f"Sending request to sirius on url: {url}")
         try:
             response = requests.get(url=url, headers=headers)
         except requests.exceptions.RequestException as e:
@@ -151,8 +151,7 @@ class ImageProcessor:
             logger.exception(e)
             return {"error": "error getting response from Sirius"}
 
-        logger.info(f"STATUS: {response.status_code}")
-        logger.info(f"TEXT: {response.text}")
+        logger.info(f"Response from sirius: {response.text}, Status: {response.status_code}")
 
         # Parse the response and extract the values
         try:

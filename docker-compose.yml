@@ -36,7 +36,6 @@ services:
       - ./lambdas/.aws-lambda-rie:/aws-lambda
       - ./lambdas/image_processor/app:/function/app
       - ./lambdas/image_processor/extraction:/function/extraction
-      - ./lambdas/image_processor/form_tools:/function/form_tools
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
@@ -112,28 +111,6 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
     ports:
       - 4567:4566
-
-# Mock API gateway and image request handler
-# This will largely be replaced as we move forward and moved into use an LPA repo as it's mock.
-# Useful here for the time being.
-#  api-gateway:
-#    container_name: api-gateway
-#    image: nginx:stable-alpine
-#    depends_on:
-#      - mock-image-request-handler
-#    command: 'nginx -g "daemon off;"'
-#    volumes:
-#      - ./mock-services/image-request-handler/nginx.conf:/etc/nginx/conf.d/default.conf
-#    ports:
-#      - 7010:5000
-#
-#  mock-image-request-handler:
-#    image: stoplight/prism:4
-#    command: 'mock -h 0.0.0.0 /tmp/image-request-handler.yml'
-#    volumes:
-#      - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml:ro
-#    ports:
-#      - 7011:4010
 
 #Mock Sirius LB
   mock-sirius-web:
