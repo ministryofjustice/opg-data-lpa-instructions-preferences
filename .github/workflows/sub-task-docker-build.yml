@@ -59,11 +59,12 @@ jobs:
           severity: 'HIGH,CRITICAL'
           format: 'sarif'
           output: 'trivy-results.sarif'
+        if: matrix.name != 'lpa-iap-scan-processor-lambda'
 
       - name: Upload Trivy scan results to GitHub Security tab
         id: trivy_upload_sarif
         uses: github/codeql-action/upload-sarif@v2
-        if: always()
+        if: always() && matrix.name != 'lpa-iap-scan-processor-lambda'
         with:
           sarif_file: 'trivy-results.sarif'
 
@@ -85,9 +86,6 @@ jobs:
         uses: aws-actions/amazon-ecr-login@9149ade017c57f86dea2f76a01f8b2d5bd06b10f
         with:
           registries: 311462405659
-
-      - name: show images
-        run: docker image ls
 
       - name: Push to ECR
         env:
