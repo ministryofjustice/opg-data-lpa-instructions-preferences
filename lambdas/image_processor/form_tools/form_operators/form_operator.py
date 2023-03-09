@@ -423,7 +423,6 @@ class FormOperator(BaseModel):
         fp_op = self.form_page_operator
         form_meta_loc = form_meta.form_template
         template_files = os.listdir(form_meta_loc)
-
         aligned_image_mapping = {}
         for pn, imgs in image_page_mapping.items():
             tpt_file = [tpg for tpg in template_files if f"_{pn}" in tpg]
@@ -431,7 +430,6 @@ class FormOperator(BaseModel):
             _, template_image = ImageReader.read(
                 os.path.join(form_meta_loc, tpt_file[0])
             )
-
             if len(template_image) != 1:
                 raise ValueError(
                     "Template directory should contain\n"
