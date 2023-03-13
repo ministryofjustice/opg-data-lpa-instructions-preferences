@@ -13,6 +13,11 @@ on:
         description: 'Image tag to use'
         required: false
         type: string
+      mock_sirius:
+        description: 'Mock sirius'
+        default: '0'
+        required: false
+        type: string
     secrets:
       aws_access_key_id_actions:
         required: true

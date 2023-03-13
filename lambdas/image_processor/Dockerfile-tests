@@ -9,7 +9,6 @@ WORKDIR ${FUNCTION_DIR}
 # Copy the requirements file to the working directory
 COPY requirements.txt requirements.txt
 COPY requirements-tests.txt requirements-tests.txt
-COPY extraction/requirements.txt requirements-extraction.txt
 # Install tesseract build dependencies
 RUN apt-get update && \
     apt-get install -y libtesseract-dev libleptonica-dev tesseract-ocr build-essential && \
@@ -21,12 +20,8 @@ RUN python -m pip install \
         --requirement requirements.txt
 RUN python -m pip install \
         --target ${FUNCTION_DIR} \
-        --requirement requirements-extraction.txt
-RUN python -m pip install \
-        --target ${FUNCTION_DIR} \
         --requirement requirements-tests.txt
 COPY app ${FUNCTION_DIR}/app
-COPY form_tools ${FUNCTION_DIR}/form_tools
 COPY extraction ${FUNCTION_DIR}/extraction
 
 
