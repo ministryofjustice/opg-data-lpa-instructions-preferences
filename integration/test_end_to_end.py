@@ -1,6 +1,7 @@
 # Tests to perform
 import json
 import time
+import os
 
 import config
 import boto3
@@ -9,10 +10,8 @@ import pytest
 from requests_aws4auth import AWS4Auth
 from botocore.exceptions import ClientError
 
-env = 'local'
-
-def get_fake_creds():
-    return
+env = os.environ.get('ENVIRONMENT', 'local')
+workspace = os.environ.get('WORKSPACE', 'local')
 
 
 def get_request_auth(credentials):
@@ -51,9 +50,13 @@ def call_api_gateway(url):
 def make_calls_and_assertions(response_type, setup_rest_url_part):
     for template, template_data in config.templates.items():
         print(f'Asserting responses for template: {template} with response type: {response_type}')
-        url = f'{config.environment[env]["sirius_url"]}{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
 
-        print(f"URL: {url}")
+        if env == 'local':
+            url = f'http://localhost:4566{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
+        else:
+            url = f'https://{workspace}.dev.lpa-iap.api.opg.service.justice.gov.uk{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
+
+        print(f'url for api gateway: {url}')
         response = call_api_gateway(url)
 
         response_object = json.loads(response.text)
@@ -77,6 +80,7 @@ def get_s3():
     else:
         return boto3.client("s3")
 
+
 def get_localstack_rest_api():
     session = boto3.Session(
         region_name='eu-west-1',
@@ -95,7 +99,7 @@ def get_localstack_rest_api():
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_rest_url_part():
-    return get_localstack_rest_api() if env == 'local' else "/api/public/v1"
+    return get_localstack_rest_api() if env == 'local' else "/v1"
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -114,11 +118,11 @@ def cleanup_iap_buckets():
 
     s3 = get_s3()
 
-    bucket_name = config.environment[env]["iap_bucket"]
+    bucket_name = f"{config.environment[env]['iap_bucket']}-{workspace}"
 
     images_to_remove_deduped = list(set(images_to_remove))
     for image in images_to_remove_deduped:
-        print(f"trying {image}")
+        print(f"Trying {image}")
         try:
             s3.delete_object(Bucket=bucket_name, Key=image)
             print(f'Successfully deleted {image} from {bucket_name}')
@@ -128,9 +132,9 @@ def cleanup_iap_buckets():
             else:
                 print(f'Error deleting {image} from {bucket_name}: {e}')
 
+
 @pytest.mark.order(1)
 def test_collection_started(setup_rest_url_part):
-    # pass
     make_calls_and_assertions('expected_collection_started_response', setup_rest_url_part)
 
 
@@ -141,7 +145,7 @@ def test_collection_in_progress(setup_rest_url_part):
 
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
-    total_sleep_time = 4 * 60  # sleep for 4 minutes
+    total_sleep_time = 3 * 60  # sleep for 4 minutes
     time_remaining = total_sleep_time
 
     while time_remaining > 0:
@@ -149,7 +153,3 @@ def test_collection_completed(setup_rest_url_part):
         time.sleep(30)  # sleep for 30 seconds
         time_remaining -= 30
     make_calls_and_assertions('expected_collection_completed_response', setup_rest_url_part)
-
-
-# def collection_error_tests():
-#     pass

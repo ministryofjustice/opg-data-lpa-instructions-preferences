@@ -58,13 +58,13 @@ jobs:
           image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
           format: 'sarif'
+          ignore-unfixed: true
           output: 'trivy-results.sarif'
-        if: matrix.name != 'lpa-iap-scan-processor-lambda'
 
       - name: Upload Trivy scan results to GitHub Security tab
         id: trivy_upload_sarif
         uses: github/codeql-action/upload-sarif@v2
-        if: always() && matrix.name != 'lpa-iap-scan-processor-lambda'
+        if: always()
         with:
           sarif_file: 'trivy-results.sarif'
 

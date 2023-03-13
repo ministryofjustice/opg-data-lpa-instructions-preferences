@@ -18,9 +18,6 @@ RUN python -m pip install \
         --target ${FUNCTION_DIR} \
         --requirement requirements.txt
 COPY app ${FUNCTION_DIR}/app
-
-# Keeping this for development purposes for now
-# COPY form_tools ${FUNCTION_DIR}/form_tools
 COPY extraction ${FUNCTION_DIR}/extraction
 
 
