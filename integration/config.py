@@ -4,12 +4,12 @@ environment = {
     'local': {
         "sirius_url": "http://localhost:4566",
         "sirius_bucket": "opg-backoffice-datastore-local",
-        "iap_bucket": "lpa-iap-local"
+        "iap_bucket": "lpa-iap"
     },
     'development': {
         "sirius_url": "http://api.integration.ecs",
         "sirius_bucket": "opg-backoffice-datastore-integration",
-        "iap_bucket": "lpa-iap-development"
+        "iap_bucket": "lpa-iap"
     }
 }
 
