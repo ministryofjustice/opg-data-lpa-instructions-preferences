@@ -107,18 +107,36 @@ resource "aws_iam_role_policy" "execution_role" {
 
 data "aws_iam_policy_document" "execution_role" {
   statement {
+    sid       = "AllowECR"
+    effect    = "Allow"
+    resources = [data.aws_ecr_repository.mock_sirius_web.arn, data.aws_ecr_repository.mock_sirius.arn]
+
+    actions = [
+      "ecr:BatchCheckLayerAvailability",
+      "ecr:GetDownloadUrlForLayer",
+      "ecr:BatchGetImage"
+    ]
+  }
+
+  statement {
+    sid       = "AllowLogs"
+    effect    = "Allow"
+    resources = [aws_cloudwatch_log_group.lpa_iap.arn, "${aws_cloudwatch_log_group.lpa_iap.arn}:log-stream*"]
+
+    actions = [
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+  }
+
+  statement {
+    sid       = "AllowAll"
     effect    = "Allow"
     resources = ["*"]
 
     actions = [
-      "ecr:GetAuthorizationToken",
-      "ecr:BatchCheckLayerAvailability",
-      "ecr:GetDownloadUrlForLayer",
-      "ecr:BatchGetImage",
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
       "ssm:GetParameters",
-      "secretsmanager:GetSecretValue",
+      "ecr:GetAuthorizationToken",
     ]
   }
 }
