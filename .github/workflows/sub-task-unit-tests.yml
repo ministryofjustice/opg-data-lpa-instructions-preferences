@@ -28,8 +28,26 @@ jobs:
 
       - name: Run Unit Tests Request Handler
         id: unit_tests_request_handler
-        run: docker-compose up unit-tests-request-handler
+        run: |
+          docker-compose up unit-tests-request-handler
+          export DOCKER_EXIT_CODE=$(docker inspect $(docker ps -a | head -2 | tail -1 | awk '{print $1}') --format='{{.State.ExitCode}}')
+          if [ "$DOCKER_EXIT_CODE" = "0" ]
+          then
+            echo "Tests passed"
+          else
+            echo "Tests failed"
+            exit 1
+          fi
 
       - name: Run Unit Tests Processor
         id: unit_tests_processor
-        run: docker-compose up unit-tests-processor
+        run: |
+          docker-compose up unit-tests-processor
+          export DOCKER_EXIT_CODE=$(docker inspect $(docker ps -a | head -2 | tail -1 | awk '{print $1}') --format='{{.State.ExitCode}}')
+          if [ "$DOCKER_EXIT_CODE" = "0" ]
+          then
+            echo "Tests passed"
+          else
+            echo "Tests failed"
+            exit 1
+          fi
