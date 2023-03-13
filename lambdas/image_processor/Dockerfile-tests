@@ -22,7 +22,6 @@ RUN python -m pip install \
         --target ${FUNCTION_DIR} \
         --requirement requirements-tests.txt
 COPY app ${FUNCTION_DIR}/app
-COPY form_tools ${FUNCTION_DIR}/form_tools
 COPY extraction ${FUNCTION_DIR}/extraction
 
 
