@@ -51,41 +51,73 @@ jobs:
     secrets:
       source_github_token: ${{ secrets.GITHUB_TOKEN }}
 
-  terraform_lint:
-    name: lint terraform code
-    uses: ./.github/workflows/sub-task-lint.yml
-    needs: ['branch_name']
+#  terraform_lint:
+#    name: lint terraform code
+#    uses: ./.github/workflows/sub-task-lint.yml
+#    needs: ['branch_name']
+#    with:
+#      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+#    secrets:
+#      source_github_token: ${{ secrets.GITHUB_TOKEN }}
+#      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+#      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+#
+#  unit_tests:
+#    name: Build, Scan and Push
+#    needs: ['create_tags', 'branch_name']
+#    uses: ./.github/workflows/sub-task-unit-tests.yml
+#
+#  docker_build_scan_push:
+#    name: Build, Scan and Push
+#    needs: ['create_tags', 'branch_name']
+#    uses: ./.github/workflows/sub-task-docker-build.yml
+#    with:
+#      tag: ${{ needs.create_tags.outputs.version_tag }}
+#      branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
+#    secrets:
+#      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+#      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+#
+#  terraform_apply_with_mock_sirius:
+#    name: Terraform Plan and Apply Environment
+#    needs: [
+#      'docker_build_scan_push',
+#      'terraform_lint',
+#      'create_tags',
+#      'branch_name',
+#      'unit_tests'
+#    ]
+#    uses: ./.github/workflows/sub-task-terraform.yml
+#    with:
+#      terraform_path: 'terraform/environment'
+#      image_tag: ${{ needs.create_tags.outputs.version_tag }}
+#      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+#      mock_sirius: "1"
+#    secrets:
+#      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+#      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+
+  integration_tests:
+    name: Run integration tests
+    needs: [
+#      'terraform_apply_with_mock_sirius',
+      'create_tags',
+      'branch_name'
+    ]
+    uses: ./.github/workflows/sub-task-integration-tests.yml
     with:
+      environment: 'development'
       workspace: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
-      source_github_token: ${{ secrets.GITHUB_TOKEN }}
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
-  unit_tests:
-    name: Build, Scan and Push
-    needs: ['create_tags', 'branch_name']
-    uses: ./.github/workflows/sub-task-unit-tests.yml
-
-  docker_build_scan_push:
-    name: Build, Scan and Push
-    needs: ['create_tags', 'branch_name']
-    uses: ./.github/workflows/sub-task-docker-build.yml
-    with:
-      tag: ${{ needs.create_tags.outputs.version_tag }}
-      branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
-    secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
-
-  terraform_environment_plan_apply:
+  terraform_apply:
     name: Terraform Plan and Apply Environment
     needs: [
-      'docker_build_scan_push',
-      'terraform_lint',
+      'integration_tests',
       'create_tags',
-      'branch_name',
-      'unit_tests'
+      'branch_name'
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
@@ -99,7 +131,7 @@ jobs:
   workflow_complete:
     name: Workflow Complete
     runs-on: ubuntu-latest
-    needs: ['terraform_environment_plan_apply']
+    needs: ['terraform_apply']
     steps:
       - name: Completion message
         run: echo "Workflow Complete"
