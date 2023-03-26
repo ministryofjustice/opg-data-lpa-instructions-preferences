@@ -170,6 +170,7 @@ class FormOperator(BaseModel):
             valid, _ = self.form_identifier_match(form_images_as_strings, meta)
             if valid:
                 results[id] = meta
+        print(f"RESULTS: {results}")
         return results
 
     def preprocess_form_images(self, images: List[np.ndarray]) -> List[np.ndarray]:

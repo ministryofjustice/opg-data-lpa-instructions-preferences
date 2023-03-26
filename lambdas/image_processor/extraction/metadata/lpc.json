@@ -1,0 +1,166 @@
+{
+	"$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+	"name": "lpc.pdf",
+	"description": "",
+	"file_format": "",
+	"sensitive": false,
+	"columns": [{
+		"name": "continuation_sheet_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 115,
+			"width": 1423,
+			"top": 804,
+			"height": 717
+		},
+		"type": "string"
+	}, {
+		"name": "preferences_checkbox_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 679,
+			"height": 42
+		},
+		"type": "string"
+	}, {
+		"name": "instructions_checkbox_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 733,
+			"height": 42
+		},
+		"type": "string"
+	}, {
+		"name": "fullname_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 113,
+			"width": 1097,
+			"top": 1757,
+			"height": 59
+		},
+		"type": "string"
+	}, {
+		"name": "datesignedormarked_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 882,
+			"width": 104,
+			"top": 1888,
+			"height": 54
+		},
+		"type": "string"
+	}, {
+		"name": "not_relevant_1_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 757,
+			"width": 103,
+			"top": 1890,
+			"height": 53
+		},
+		"type": "string"
+	}, {
+		"name": "not_relevant_2_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 1008,
+			"width": 205,
+			"top": 1888,
+			"height": 54
+		},
+		"type": "string"
+	}, {
+		"name": "continuation_sheet_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 115,
+			"width": 1423,
+			"top": 804,
+			"height": 717
+		},
+		"type": "string"
+	}, {
+		"name": "fullname_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 113,
+			"width": 1097,
+			"top": 1757,
+			"height": 59
+		},
+		"type": "string"
+	}, {
+		"name": "datesignedormarked_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 882,
+			"width": 104,
+			"top": 1888,
+			"height": 54
+		},
+		"type": "string"
+	}, {
+		"name": "not_relevant_1_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 757,
+			"width": 103,
+			"top": 1890,
+			"height": 53
+		},
+		"type": "string"
+	}, {
+		"name": "not_relevant_2_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 1008,
+			"width": 205,
+			"top": 1888,
+			"height": 54
+		},
+		"type": "string"
+	}, {
+		"name": "preferences_checkbox_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 679,
+			"height": 42
+		},
+		"type": "string"
+	}, {
+		"name": "instructions_checkbox_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 733,
+			"height": 42
+		},
+		"type": "string"
+	}],
+	"primary_key": [],
+	"partitions": [],
+	"form_pages": [{
+		"page_number": 1,
+		"identifier": "(.*Only valid with the official stamp here LPC.*sheet 2.*)",
+		"required": true,
+		"duplicates": false
+	}, {
+		"page_number": 2,
+		"identifier": "(.*Only valid with the official stamp here Continuation sheet 2.*)",
+		"required": true,
+		"duplicates": false
+	}],
+	"form_formats": ["pdf"],
+	"form_identifier": "(.*Use this page if told to in section 3, 4 or 7 of the lasting power.*)",
+	"from_template": "",
+	"excluded_sections": [],
+	"form_template": "extraction/opg_images/lpc_images"
+}
