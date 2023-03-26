@@ -1,4 +1,4 @@
-FROM localstack/localstack:0.14 as localstack
+FROM localstack/localstack:1.3.1 as localstack
 
 RUN apt -yq install bash-completion bash jq
 
