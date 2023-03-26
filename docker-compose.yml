@@ -81,7 +81,7 @@ services:
       context: ./local-services/localstack-request-handler
       dockerfile: Dockerfile
     environment:
-      SERVICES: s3,secretsmanager,lambda,sqs,ecr,apigateway
+      SERVICES: s3,lambda,apigateway
       DEFAULT_REGION: eu-west-1
       USE_SINGLE_REGION: 1
       DEBUG: 1
@@ -101,7 +101,7 @@ services:
       context: ./local-services/localstack-processor
       dockerfile: Dockerfile
     environment:
-      SERVICES: s3,secretsmanager,lambda,sqs,ecr
+      SERVICES: secretsmanager,lambda,sqs
       DEFAULT_REGION: eu-west-1
       USE_SINGLE_REGION: 1
       DEBUG: 1

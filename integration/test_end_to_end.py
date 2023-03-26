@@ -163,7 +163,7 @@ def get_localstack_rest_api() -> str:
     return f"/restapis/{response['items'][0]['id']}/v1/_user_request_"
 
 
-def make_calls_and_assertions(response_type: str, setup_rest_url_part: str) -> None:
+def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
     """
     Make API calls and assert the response matches the expected response
     """

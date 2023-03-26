@@ -19,22 +19,12 @@ templates = {
         "expected_collection_started_response": {
             "uid": "700000000047",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {
-                "iap-700000000047-instructions": "",
-                "iap-700000000047-preferences": "",
-                "iap-700000000047-continuation-instructions": "",
-                "iap-700000000047-continuation-preferences": ""
-            }
+            "signed_urls": {}
         },
         "expected_collection_in_progress_response": {
             "uid": "700000000047",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {
-                "iap-700000000047-instructions": "",
-                "iap-700000000047-preferences": "",
-                "iap-700000000047-continuation-instructions": "",
-                "iap-700000000047-continuation-preferences": ""
-            }
+            "signed_urls": {}
         },
         "expected_collection_completed_response": {
             "uid": "700000000047",
@@ -42,8 +32,6 @@ templates = {
             "signed_urls": {
                 "iap-700000000047-instructions": "",
                 "iap-700000000047-preferences": "",
-                "iap-700000000047-continuation-instructions": "",
-                "iap-700000000047-continuation-preferences": ""
             }
         },
     },
