@@ -1,1 +1,61 @@
-{"$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json", "name": "lp1h.pdf", "description": "", "file_format": "", "sensitive": false, "columns": [{"name": "preferences\u00f6usewordslike\u017aprefer\u017aand\u017awouldlike_preferencesusewordslikepreferandwouldlike", "page_number": 1, "bounding_box": {"left": 115, "width": 1424, "top": 845, "height": 327}, "type": "string"}, {"name": "ineedmorespaceusecontinuationsheet2_ineedmorespaceusecontinuationsheet2", "page_number": 1, "bounding_box": {"left": 111, "width": 45, "top": 1200, "height": 45}, "type": "string"}, {"name": "instructions\u00f6usewordslike\u017amust\u017aand\u017ahaveto_instructionsusewordslikemustandhaveto", "page_number": 1, "bounding_box": {"left": 115, "width": 1424, "top": 1682, "height": 327}, "type": "string"}, {"name": "ineedmorespaceusecontinuationsheet2_ineedmorespaceusecontinuationsheet22", "page_number": 1, "bounding_box": {"left": 111, "width": 45, "top": 2032, "height": 45}, "type": "string"}], "primary_key": [], "partitions": [], "form_pages": [{"page_number": 1, "identifier": "(Section 7.*Preferences.*(I|i)nstructions)|(.*Preferences.*(I|i)nstructions.*LP1H)", "required": true, "duplicates": false}], "form_formats": ["pdf"], "form_identifier": "(Section 7.*Preferences.*(I|i)nstructions)|(.*Preferences.*(I|i)nstructions.*LP1H)", "from_template": "", "excluded_sections": [], "form_template": "extraction/opg_images"}
+{
+	"$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+	"name": "lp1h.pdf",
+	"description": "",
+	"file_format": "",
+	"sensitive": false,
+	"columns": [{
+		"name": "preferences",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 115,
+			"width": 1424,
+			"top": 845,
+			"height": 327
+		},
+		"type": "string"
+	}, {
+		"name": "continuation_checkbox_preferences",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 111,
+			"width": 45,
+			"top": 1200,
+			"height": 45
+		},
+		"type": "string"
+	}, {
+		"name": "instructions",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 115,
+			"width": 1424,
+			"top": 1682,
+			"height": 327
+		},
+		"type": "string"
+	}, {
+		"name": "continuation_checkbox_instructions",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 111,
+			"width": 45,
+			"top": 2032,
+			"height": 45
+		},
+		"type": "string"
+	}],
+	"primary_key": [],
+	"partitions": [],
+	"form_pages": [{
+		"page_number": 1,
+		"identifier": "(.*Preferences.*(I|i)nstructions.*LP1H)",
+		"required": true,
+		"duplicates": false
+	}],
+	"form_formats": ["pdf"],
+	"form_identifier": "(.*Preferences.*(I|i)nstructions.*LP1H)",
+	"from_template": "",
+	"excluded_sections": [],
+	"form_template": "extraction/opg_images/lp1h_images"
+}
