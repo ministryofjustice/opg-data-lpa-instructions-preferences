@@ -29,14 +29,13 @@ def test_init(image_request_handler):
     assert image_request_handler.uid == "700000001"
     assert image_request_handler.bucket == "test-bucket"
     assert image_request_handler.sqs_queue == "test-queue"
-    assert image_request_handler.total_images == 4
+    assert image_request_handler.total_images == 2
     assert image_request_handler.images_to_check == [
         'iap-700000001-instructions',
         'iap-700000001-preferences',
-        'iap-700000001-continuation-instructions',
-        'iap-700000001-continuation-preferences',
     ]
     assert image_request_handler.url_expiration == 60
+    assert image_request_handler.image_to_store_metadata_against == f'iap-700000001-instructions'
 
 
 @patch('boto3.client')
@@ -144,16 +143,21 @@ def test_generate_signed_urls_returns_correct_urls():
     s3 = boto3.client('s3', region_name='us-east-1')
     s3.create_bucket(Bucket=test_bucket)
     image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue)
-
+    collection_status = 'COLLECTION_COMPLETE'
     image_statuses = {'image1': 'FOUND', 'image2': 'FOUND'}
     expected_urls = {
         'image1': 'https://test-bucket.s3.amazonaws.com/image1',
         'image2': 'https://test-bucket.s3.amazonaws.com/image2'
     }
 
-    actual_urls = image_request_handler.generate_signed_urls(image_statuses)
+    actual_urls = image_request_handler.generate_signed_urls(image_statuses, collection_status)
     actual_urls['image1'] = actual_urls['image1'][0:43]
     actual_urls['image2'] = actual_urls['image2'][0:43]
+    assert (actual_urls == expected_urls)
+
+    # Where collection not complete don't return the signed URLs
+    actual_urls = image_request_handler.generate_signed_urls(image_statuses, 'IN_PROGRESS')
+    expected_urls = {}
     assert (actual_urls == expected_urls)
 
 
@@ -211,6 +215,7 @@ def test_get_image_collection_status_returns_collection_error(image_request_hand
     expected_status = 'COLLECTION_ERROR'
     assert actual_status == expected_status
 
+
 @mock_s3
 @mock_sqs
 def test_process_request(image_request_handler):
@@ -224,7 +229,7 @@ def test_process_request(image_request_handler):
     response_body = json.loads(response['body'])
 
     assert response['statusCode'] == 200
-    assert len(response_body['signed_urls'].items()) == 4
+    assert len(response_body['signed_urls'].items()) == 0
     assert response_body['status'] == 'COLLECTION_NOT_STARTED'
     assert response_body['uid'] == test_uid
 
@@ -233,7 +238,7 @@ def test_process_request(image_request_handler):
     response_body = json.loads(response['body'])
 
     assert response['statusCode'] == 200
-    assert len(response_body['signed_urls'].items()) == 4
+    assert len(response_body['signed_urls'].items()) == 0
     assert response_body['status'] == 'COLLECTION_IN_PROGRESS'
     assert response_body['uid'] == test_uid
 
@@ -244,3 +249,18 @@ def test_process_request(image_request_handler):
     response_body = json.loads(response['body'])
     assert response['statusCode'] == 500
     assert response_body['status'] == 'COLLECTION_ERROR'
+
+    # Mock that collection has now completed
+    image_statuses = {
+        'iap-700000000138-instructions': 'EXISTS',
+        'iap-700000000138-preferences': 'EXISTS',
+        'iap-700000000138-continuation_instructions_1': 'EXISTS',
+        'iap-700000000138-continuation_preferences_1': 'EXISTS',
+        'iap-700000000138-continuation_preferences_2': 'EXISTS'
+    }
+    with patch.object(image_request_handler, 'check_image_statuses', return_value=image_statuses):
+        response = image_request_handler.process_request()
+        response_body = json.loads(response['body'])
+        assert response['statusCode'] == 200
+        assert len(response_body['signed_urls'].items()) == 5
+        assert response_body['status'] == 'COLLECTION_COMPLETE'

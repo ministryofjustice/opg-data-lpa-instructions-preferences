@@ -2,8 +2,10 @@ import os
 import boto3
 import requests
 import pytest
+import jwt
 from unittest.mock import patch, Mock, MagicMock
-from moto import mock_s3, mock_sqs
+from botocore.exceptions import ClientError
+from moto import mock_secretsmanager, mock_s3
 from app.handler import ImageProcessor
 from form_tools.form_operators import FormOperator
 
@@ -19,6 +21,7 @@ def setup_environment_variables():
     os.environ["ENVIRONMENT"] = "testing"
     os.environ["TARGET_ENVIRONMENT"] = "target-testing"
     os.environ["SESSION_DATA"] = 'ops@email.com'
+    os.environ['SECRET_PREFIX'] = 'testing'
 
 
 @pytest.fixture
@@ -26,14 +29,23 @@ def image_processor():
     return ImageProcessor(event)
 
 
-def test_init(image_processor):
+def test_init_function(image_processor):
     assert image_processor.environment == os.getenv('ENVIRONMENT')
-    assert image_processor.sirius_url == os.getenv('SIRIUS_URL')
     assert image_processor.target_environment == os.getenv('TARGET_ENVIRONMENT')
+    assert image_processor.secret_key_prefix == os.getenv('SECRET_PREFIX')
+    assert image_processor.sirius_url == os.getenv('SIRIUS_URL')
+    assert image_processor.sirius_url_part == os.getenv('SIRIUS_URL_PART')
     assert image_processor.event == event
-    assert image_processor.sirius_bucket == f"opg-backoffice-datastore-{os.getenv('TARGET_ENVIRONMENT')}"
-    assert image_processor.iap_bucket == f"lpa-iap-{os.getenv('ENVIRONMENT')}"
-    assert image_processor.uid == None
+    assert image_processor.s3 is not None
+    assert image_processor.sirius_bucket == f'opg-backoffice-datastore-{os.getenv("TARGET_ENVIRONMENT")}'
+    assert image_processor.iap_bucket == f'lpa-iap-{os.getenv("ENVIRONMENT")}'
+    assert image_processor.extraction_folder_path == 'extraction'
+    assert image_processor.output_folder_path == '/tmp/output'
+    assert image_processor.folder_name == '9999'
+    assert image_processor.continuation_instruction_count == 0
+    assert image_processor.continuation_preference_count == 0
+    assert image_processor.secret_manager is not None
+    assert image_processor.uid is None
 
 
 @patch('boto3.client')
@@ -45,18 +57,18 @@ def test_setup_s3_connection(mock_boto3, image_processor):
         mock_boto3.assert_called_with("s3", region_name="eu-west-1")
 
 
-def test_add_blank_files_to_paths_with_no_match(image_processor):
-    initial_paths = {"instructions": "some/path/instructions.jpg"}
-    expected_paths = {
-        "instructions": "some/path/instructions.jpg",
-        "preferences": "extraction/blank.jpg",
-        "continuation-instructions": "extraction/blank.jpg",
-        "continuation-preferences": "extraction/blank.jpg",
-    }
+@mock_secretsmanager
+def test_setup_secret_manager_connection(image_processor):
+    sm = image_processor.setup_secret_manager_connection()
 
-    paths = image_processor.add_blank_files_to_paths_with_no_match(initial_paths)
+    # check that we can create a secret
+    secret_name = 'test-secret'
+    secret_value = 'my-secret-value'
+    sm.create_secret(Name=secret_name, SecretString=secret_value)
 
-    assert paths == expected_paths
+    # check that we can retrieve the secret
+    retrieved_secret = sm.get_secret_value(SecretId=secret_name)
+    assert retrieved_secret['SecretString'] == secret_value
 
 
 def test_get_uid_from_event(image_processor):
@@ -104,7 +116,7 @@ def test_make_request_to_sirius_exception(mock_get, monkeypatch):
     response_dict = image_processor.make_request_to_sirius(test_uid)
 
     # Verify the response
-    assert response_dict == {"error": "error getting response from Sirius"}
+    assert response_dict == {"error": "Error getting response from Sirius"}
 
 
 def test_make_request_to_sirius_decode_exception(mock_get, monkeypatch):
@@ -126,7 +138,7 @@ def test_make_request_to_sirius_decode_exception(mock_get, monkeypatch):
     response_dict = image_processor.make_request_to_sirius(test_uid)
 
     # Verify the response
-    assert response_dict == {"error": "error decoding response from Sirius"}
+    assert response_dict == {"error": "Error decoding response from Sirius"}
 
 
 def test_extract_s3_file_path(image_processor):
@@ -167,8 +179,10 @@ def test_download_scanned_images(image_processor, monkeypatch):
     # Check that the expected S3 files were downloaded
     assert len(mock_download_file.mock_calls) == 3
     mock_download_file.assert_any_call("my_bucket", "my_scan.pdf", "/tmp/output/my_scan.pdf")
-    mock_download_file.assert_any_call("my_bucket", "my_continuation_sheet1.pdf", "/tmp/output/my_continuation_sheet1.pdf")
-    mock_download_file.assert_any_call("my_bucket", "my_continuation_sheet2.pdf", "/tmp/output/my_continuation_sheet2.pdf")
+    mock_download_file.assert_any_call("my_bucket", "my_continuation_sheet1.pdf",
+                                       "/tmp/output/my_continuation_sheet1.pdf")
+    mock_download_file.assert_any_call("my_bucket", "my_continuation_sheet2.pdf",
+                                       "/tmp/output/my_continuation_sheet2.pdf")
 
     # Check that the function returned the expected file paths
     expected_result = {
@@ -180,8 +194,13 @@ def test_download_scanned_images(image_processor, monkeypatch):
 
 
 def test_extract_instructions_and_preferences(image_processor, monkeypatch):
+    """
+    Only the most basic test here as we are testing the nested functions
+    more thoroughly elsewhere - add more tests when time permits
+    """
     temp_output = "/tmp/output"
     extraction_folder_path = 'extraction'
+    folder_name = '1234'
     image_locations = {"scan": f"{extraction_folder_path}/test_image.jpg"}
 
     # Create a mock object for FormOperator
@@ -193,14 +212,14 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
 
     list_files_mock = MagicMock()
     list_files_mock.return_value = [
-            f"{temp_output}/pass/1234/field_name=instructions/image_instructions.jpg",
-            f"{temp_output}/pass/1234/field_name=preferences/image_preferences.jpg",
-        ]
+        f"{temp_output}/pass/{folder_name}/scan/meta=lp1h/field_name=instructions/image_instructions.jpg",
+        f"{temp_output}/pass/{folder_name}/scan/meta=lp1h/field_name=preferences/image_preferences.jpg",
+    ]
 
     monkeypatch.setattr(image_processor, "list_files", list_files_mock)
 
     get_timestamp_as_str_mock = MagicMock()
-    get_timestamp_as_str_mock.return_value = '1234'
+    get_timestamp_as_str_mock.return_value = folder_name
 
     monkeypatch.setattr(image_processor, "get_timestamp_as_str", get_timestamp_as_str_mock)
 
@@ -208,15 +227,15 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
 
     # Assert the output is as expected
     assert result == {
-        "instructions": f"{temp_output}/pass/1234/field_name=instructions/image_instructions.jpg",
-        "preferences": f"{temp_output}/pass/1234/field_name=preferences/image_preferences.jpg",
+        "instructions": f"{temp_output}/pass/{folder_name}/scan/meta=lp1h/field_name=instructions/image_instructions.jpg",
+        "preferences": f"{temp_output}/pass/{folder_name}/scan/meta=lp1h/field_name=preferences/image_preferences.jpg",
     }
 
     # Assert that the mocked functions were called as expected
     mock_form_operator.run_full_pipeline.assert_called_once_with(
         form_path=image_locations["scan"],
-        pass_dir=f"{temp_output}/pass/1234",
-        fail_dir=f"{temp_output}/fail/1234",
+        pass_dir=f"{temp_output}/pass/{folder_name}/scan",
+        fail_dir=f"{temp_output}/fail/{folder_name}/scan",
         form_meta_directory=f"{extraction_folder_path}/metadata",
     )
     list_files_mock.assert_called_once_with(
@@ -248,3 +267,362 @@ def test_put_images_to_bucket(image_processor):
     # Check that the file was uploaded to S3
     response = s3.get_object(Bucket=iap_bucket, Key=f'iap-{uid}-{test_file_key}')
     assert response['Body'].read() == test_file_content
+    head = s3.head_object(Bucket=iap_bucket, Key=f'iap-{uid}-{test_file_key}')
+    assert head['Metadata'] == {
+        "continuationsheetsinstructions": "0",
+        "continuationsheetspreferences": "0"
+    }
+
+
+def test_find_instruction_and_preference_paths(image_processor, monkeypatch):
+    # Test case where both instructions and preferences files are found
+    path_selection = {"instructions": "", "preferences": ""}
+    paths = [
+        "/path/to/instructions/meta=lp1f/field_name=instructions/",
+        "/path/to/preferences/meta=lp1f/field_name=preferences/"
+    ]
+    result = image_processor.find_instruction_and_preference_paths(path_selection, paths)
+    assert result["path_selection"]["instructions"] == "/path/to/instructions/meta=lp1f/field_name=instructions/"
+    assert result["path_selection"]["preferences"] == "/path/to/preferences/meta=lp1f/field_name=preferences/"
+    assert result["continuation_instructions"] == False
+    assert result["continuation_preferences"] == False
+
+    # Test case for continuation sheets
+    paths = [
+        "/path/to/instructions/meta=lp1h/field_name=instructions/",
+        "/path/to/preferences/meta=lp1h/field_name=preferences/",
+        "/path/to/instructions/meta=lp1h/field_name=continuation_checkbox_instructions",
+        "/path/to/preferences/meta=lp1h/field_name=continuation_checkbox_preferences"
+    ]
+    detect_marked_checkbox_mock = MagicMock()
+    detect_marked_checkbox_mock.return_value = True
+
+    monkeypatch.setattr(image_processor, "detect_marked_checkbox", detect_marked_checkbox_mock)
+    result = image_processor.find_instruction_and_preference_paths(path_selection, paths)
+    assert result["path_selection"]["instructions"] == "/path/to/instructions/meta=lp1h/field_name=instructions/"
+    assert result["path_selection"]["preferences"] == "/path/to/preferences/meta=lp1h/field_name=preferences/"
+    assert result["continuation_instructions"] == True
+    assert result["continuation_preferences"] == True
+
+
+def test_get_continuation_sheet_paths(image_processor, monkeypatch):
+    continuation_sheet_type = 'BOTH'
+    path_filter = 'continuation_2'
+
+    def mock_detect_marked_checkbox(path):
+        if 'preferences_checkbox_p1' in path:
+            return True
+        elif 'instructions_checkbox_p2' in path:
+            return True
+        else:
+            return False
+
+    monkeypatch.setattr(image_processor, 'detect_marked_checkbox', mock_detect_marked_checkbox)
+
+    # Test case for two paths that have marked checkboxes. Also check filter applies
+    paths = [
+        '/path/to/continuation_1/meta=lph1/field_name=preferences_checkbox_p1/a.jpg',
+        '/path/to/continuation_1/meta=lpc/field_name=preferences_checkbox_p1/b.jpg',
+        '/path/to/continuation_1/meta=lpc/field_name=instructions_checkbox_p2/c.jpg',
+        '/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p1/a.jpg',
+        '/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p2/b.jpg',
+        '/path/to/continuation_2/meta=lph1/field_name=preferences_checkbox_p1/a.jpg',
+        '/path/to/continuation_2/meta=lpc/field_name=preferences_checkbox_p1/b.jpg',
+        '/path/to/continuation_2/meta=lpc/field_name=instructions_checkbox_p2/c.jpg',
+        '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p1/a.jpg',
+        '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p2/b.jpg'
+    ]
+    result = image_processor.get_continuation_sheet_paths(paths, continuation_sheet_type, path_filter)
+
+    expected_result = {
+        'p1': {
+            'path': '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p1/a.jpg',
+            'type': 'preferences'
+        },
+        'p2': {
+            'path': '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p2/b.jpg',
+            'type': 'instructions'
+        }
+    }
+
+    assert result == expected_result
+
+    # Test case for no detected checkboxes
+    paths = [
+        '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p1/a.jpg',
+        '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p2/b.jpg'
+    ]
+    result = image_processor.get_continuation_sheet_paths(paths, continuation_sheet_type, path_filter)
+
+    expected_result = {
+        'p1': {
+            'path': '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p1/a.jpg',
+            'type': 'neither'
+        },
+        'p2': {
+            'path': '/path/to/continuation_2/meta=lpc/field_name=continuation_sheet_p2/b.jpg',
+            'type': 'neither'
+        }
+    }
+    assert result == expected_result
+
+
+def test_get_continuation_sheet_type(image_processor):
+    assert image_processor.get_continuation_sheet_type(True, True) == 'BOTH'
+    assert image_processor.get_continuation_sheet_type(True, False) == 'INSTRUCTIONS'
+    assert image_processor.get_continuation_sheet_type(False, True) == 'PREFERENCES'
+    assert image_processor.get_continuation_sheet_type(False, False) == 'NEITHER'
+
+
+def test_get_selected_paths_for_upload(image_processor):
+    # Mock input parameters
+    paths = [
+        "/path/to/instructions/meta=lp1h/field_name=instructions/",
+        "/path/to/preferences/meta=lp1h/field_name=preferences/",
+        "/path/to/instructions/meta=lph/field_name=continuation_checkbox_instructions",
+        "/path/to/preferences/meta=lph/field_name=continuation_checkbox_preferences",
+        "/path/to/continuation_1/meta=lpc/field_name=preferences_checkbox_p1",
+        "/path/to/continuation_1/meta=lpc/field_name=instructions_checkbox_p2",
+        "/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p1",
+        "/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p2"
+    ]
+    continuation_keys_to_use = ['continuation_1']
+
+    # Mock objects
+    mock_response = {
+        'path_selection': {
+            'instructions': "/path/to/instructions/meta=lp1h/field_name=instructions/",
+            'preferences': "/path/to/preferences/meta=lp1h/field_name=preferences/"
+        },
+        'continuation_instructions': True,
+        'continuation_preferences': False
+    }
+    mock_continuation_sheets = {
+        'p1': {
+            'path': '/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p1',
+            'type': 'preferences'
+        },
+        'p2': {
+            'path': '/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p2',
+            'type': 'instructions'
+        }
+    }
+
+    # Patch the mock methods
+    with patch.object(image_processor, 'find_instruction_and_preference_paths', return_value=mock_response):
+        with patch.object(image_processor, 'get_continuation_sheet_type', return_value='BOTH'):
+            with patch.object(image_processor, 'get_continuation_sheet_paths', return_value=mock_continuation_sheets):
+                # Call the method under test
+                result = image_processor.get_selected_paths_for_upload(paths, continuation_keys_to_use)
+
+    # Verify the expected output
+    expected_result = {
+        'instructions': '/path/to/instructions/meta=lp1h/field_name=instructions/',
+        'preferences': '/path/to/preferences/meta=lp1h/field_name=preferences/',
+        'continuation_instructions_1': '/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p2',
+        'continuation_preferences_1': '/path/to/continuation_1/meta=lpc/field_name=continuation_sheet_p1'
+    }
+    assert result == expected_result
+
+
+def test_update_continuation_sheet_counts(image_processor):
+    paths_to_extracted_images = {
+        'continuation_instructions_1': '/path/to/image1',
+        'continuation_instructions_2': '/path/to/image2',
+        'continuation_preferences_1': '/path/to/image3',
+    }
+
+    image_processor.update_continuation_sheet_counts(paths_to_extracted_images)
+
+    assert image_processor.continuation_instruction_count == 2
+    assert image_processor.continuation_preference_count == 1
+
+
+def test_update_continuation_sheet_counts_with_no_continuation_sheets(image_processor):
+    paths_to_extracted_images = {
+        'some_other_sheet_1': '/path/to/image1',
+        'some_other_sheet_2': '/path/to/image2',
+    }
+
+    image_processor.update_continuation_sheet_counts(paths_to_extracted_images)
+
+    assert image_processor.continuation_instruction_count == 0
+    assert image_processor.continuation_preference_count == 0
+
+
+def test_merge_continuation_images_into_path_selection(image_processor):
+    # Define inputs
+    path_selection = {
+        "preferences": "somepath/preferences",
+        "instructions": "somepath/instructions"
+    }
+    continuation_sheets = {
+        "continuation_1": {
+            "p1": {
+                "path": "somepath/continuation_1_preferences_p1",
+                "type": "preferences"
+            },
+            "p2": {
+                "path": "somepath/continuation_1_instructions_p2",
+                "type": "instructions"
+            }
+        },
+        "continuation_2": {
+            "p1": {
+                "path": "somepath/continuation_2_preferences_p1",
+                "type": "preferences"
+            },
+            "p2": {
+                "path": "somepath/continuation_2_random_p2",
+                "type": "neither"
+            }
+        }
+    }
+
+    # Define expected output
+    expected_output = {
+        "preferences": "somepath/preferences",
+        "instructions": "somepath/instructions",
+        "continuation_instructions_1": "somepath/continuation_1_instructions_p2",
+        "continuation_preferences_1": "somepath/continuation_1_preferences_p1",
+        "continuation_preferences_2": "somepath/continuation_2_preferences_p1"
+    }
+
+    # Ensure the function returns the expected output
+    output = image_processor.merge_continuation_images_into_path_selection(path_selection, continuation_sheets)
+    assert output == expected_output
+
+
+def test_merge_continuation_images_into_path_selection_edge_combo(image_processor):
+    # Define inputs
+    path_selection = {
+        "preferences": "somepath/preferences",
+        "instructions": "somepath/instructions"
+    }
+    continuation_sheets = {
+        "continuation_1": {
+            "p1": {
+                "path": "somepath/continuation_1/preferences_p1",
+                "type": "preferences"
+            },
+            "p2": {
+                "path": "somepath/continuation_1/preferences_p2",
+                "type": "preferences"
+            }
+        },
+        "continuation_2": {
+            "p1": {
+                "path": "somepath/continuation_2/random_p1",
+                "type": "neither"
+            },
+            "p2": {
+                "path": "somepath/continuation_2/random_p2",
+                "type": "neither"
+            }
+        }
+    }
+    # Define expected output
+    expected_output = {
+        "preferences": "somepath/preferences",
+        "instructions": "somepath/instructions",
+        "continuation_preferences_1": "somepath/continuation_1/preferences_p1",
+        "continuation_preferences_2": "somepath/continuation_1/preferences_p2"
+    }
+
+    # Ensure the function returns the expected output
+    output = image_processor.merge_continuation_images_into_path_selection(path_selection, continuation_sheets)
+    assert output == expected_output
+
+def test_all_mandatory_fragments_and_one_of_fragments_exist(image_processor):
+    # Case for mandatory fragments exist and one of
+    target_string = "This is a test string"
+    mandatory_fragments = ["test", "string"]
+    one_of_fragments = ["is", "a"]
+    result = image_processor.string_fragments_in_string(target_string, mandatory_fragments, one_of_fragments)
+    assert result == True
+
+    # Case for not all mandatory fragments exist
+    target_string = "This is a test"
+    mandatory_fragments = ["test", "string"]
+    one_of_fragments = ["is", "a"]
+    result = image_processor.string_fragments_in_string(target_string, mandatory_fragments, one_of_fragments)
+    assert result == False
+
+    # Case none of the one of fragments exist
+    target_string = "This is a test string"
+    mandatory_fragments = ["test", "string"]
+    one_of_fragments = ["not", "found"]
+    result = image_processor.string_fragments_in_string(target_string, mandatory_fragments, one_of_fragments)
+    assert result == False
+
+    # Case empty mandatory fragments
+    target_string = "This is a test string"
+    mandatory_fragments = []
+    one_of_fragments = ["is", "a"]
+    result = image_processor.string_fragments_in_string(target_string, mandatory_fragments, one_of_fragments)
+    assert result == True
+
+
+    # Case empty one of fragments
+    target_string = "This is a test string"
+    mandatory_fragments = ["test", "string"]
+    one_of_fragments = []
+    result = image_processor.string_fragments_in_string(target_string, mandatory_fragments, one_of_fragments)
+    assert result == False
+
+
+def test_detect_marked_checkbox(image_processor):
+    # Test a marked checkbox
+    unmarked_checkbox_path = "/function/tests/checkbox_images/checkbox_x.jpg"
+    assert image_processor.detect_marked_checkbox(unmarked_checkbox_path) == True
+
+    # Test an unmarked checkbox
+    marked_checkbox_path = "/function/tests/checkbox_images/checkbox_blank.jpg"
+    assert image_processor.detect_marked_checkbox(marked_checkbox_path) == False
+
+    # Test a marked grey checkbox
+    unmarked_checkbox_path = "/function/tests/checkbox_images/checkbox_tick_grey.jpg"
+    assert image_processor.detect_marked_checkbox(unmarked_checkbox_path) == True
+
+    # Test an unmarked checkbox
+    unmarked_checkbox_path = "/function/tests/checkbox_images/checkbox_tick_grey_blank.jpg"
+    assert image_processor.detect_marked_checkbox(unmarked_checkbox_path) == False
+
+
+@mock_secretsmanager
+def test_get_secret(image_processor):
+    # Create a mock Secrets Manager secret
+    secret_value = "my-secret-key"
+    secret_name = "testing/jwt-key"
+    client = boto3.client("secretsmanager", region_name="eu-west-1")
+    client.create_secret(Name=secret_name, SecretString=secret_value)
+    result = image_processor.get_secret()
+
+    # Check that the method returns the correct secret value
+    assert result == secret_value
+
+    # Test that an exception is raised when Secrets Manager cannot be accessed
+    client.delete_secret(SecretId=secret_name)
+    with pytest.raises(ClientError):
+        image_processor.get_secret()
+
+
+def test_build_sirius_headers(image_processor, monkeypatch):
+    # Mock environment variable and secret manager get_secret method
+    monkeypatch.setenv("SESSION_DATA", "test-session-data")
+    mock_secret = "my-test-secret"
+
+    with patch.object(image_processor, "get_secret", return_value=mock_secret):
+        # Call the build_sirius_headers method
+        headers = image_processor.build_sirius_headers()
+
+        # Check that the method returns the correct headers
+        assert headers["Content-Type"] == "application/json"
+        assert headers["Authorization"].startswith("Bearer ")
+
+        # Decode the JWT token and check its contents
+        token = headers["Authorization"][7:]
+        decoded_token = jwt.decode(token, mock_secret, algorithms=["HS256"])
+        assert decoded_token["session-data"] == "test-session-data"
+        assert "iat" in decoded_token
+        assert "exp" in decoded_token

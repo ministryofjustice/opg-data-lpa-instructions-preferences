@@ -17,8 +17,11 @@ class ImageRequestHandler:
         self.uid = uid
         self.bucket = bucket
         self.sqs_queue = sqs_queue
-        self.total_images = 4
         self.images_to_check = self.images_to_check()
+        self.total_images = len(self.images_to_check)
+        self.image_to_store_metadata_against = f'iap-{self.uid}-instructions'
+        self.continuation_sheet_instructions_count = 0
+        self.continuation_sheet_preferences_count = 0
         self.url_expiration = 60
 
     def setup_sqs_connection(self):
@@ -39,9 +42,21 @@ class ImageRequestHandler:
             s3 = boto3.client("s3", region_name="eu-west-1")
         return s3
 
-    def process_request(self):
+    def process_request(self) -> dict:
+        """
+        Processes the image request and returns an HTTP response with signed URLs for processed images.
+
+        Returns:
+        - dict: HTTP response with signed URLs for processed images.
+        """
+
+        # Check the statuses of the images to be processed
         image_statuses = self.check_image_statuses(self.images_to_check)
+
+        # Get the overall status of the image collection based on individual image statuses
         image_collection_status = self.get_image_collection_status(image_statuses)
+
+        # If image collection has not yet started, try to add temporary images to the bucket and add messages to SQS
         if image_collection_status == 'COLLECTION_NOT_STARTED':
             try:
                 self.add_temp_images_to_bucket()
@@ -50,10 +65,9 @@ class ImageRequestHandler:
                 image_collection_status = 'COLLECTION_ERROR'
                 logger.error(f'Unexpected error {e}')
 
-        signed_urls = self.generate_signed_urls(image_statuses)
-
+        # Generate signed URLs for images that were successfully processed and format a response message
+        signed_urls = self.generate_signed_urls(image_statuses, image_collection_status)
         message = self.formatted_message(signed_urls, image_collection_status)
-
         status_code = 500 if message['status'] == 'COLLECTION_ERROR' else 200
 
         response = {
@@ -68,28 +82,64 @@ class ImageRequestHandler:
     def images_to_check(self):
         return [
             f'iap-{self.uid}-instructions',
-            f'iap-{self.uid}-preferences',
-            f'iap-{self.uid}-continuation-instructions',
-            f'iap-{self.uid}-continuation-preferences',
+            f'iap-{self.uid}-preferences'
         ]
 
-    def check_image_statuses(self, images_to_check):
+    def check_image_statuses(self, images_to_check) -> dict:
+        """
+        Checks the status of images in a given list and returns a dictionary mapping each image to its status.
+
+        Args:
+        - images_to_check (list): A list of image names to check the status of.
+
+        Returns:
+        - dict: A dictionary mapping each image name to its status.
+        """
+
         image_statuses = {}
+        # Check the status of each image in the list
         for image in images_to_check:
-            print(f'checking image status for {image}')
+            logger.info(f'Checking image status for {image}')
             image_statuses[image] = self.image_status_in_bucket(image)
 
-        print(f'image statuses: {image_statuses}')
+        # Check the status of continuation instruction images
+        for index in range(self.continuation_sheet_instructions_count):
+            continuation_instruction_image = f'iap-{self.uid}-continuation_instructions_{index + 1}'
+            logger.info(f'Checking continuation instruction image status for: {continuation_instruction_image}')
+            image_statuses[continuation_instruction_image] = self.image_status_in_bucket(continuation_instruction_image)
+
+        # Check the status of continuation preference images
+        for index in range(self.continuation_sheet_preferences_count):
+            continuation_preference_image = f'iap-{self.uid}-continuation_preferences_{index + 1}'
+            logger.info(f'Checking continuation preference image status for: {continuation_preference_image}')
+            image_statuses[continuation_preference_image] = self.image_status_in_bucket(continuation_preference_image)
+
+        logger.info(f'Image statuses: {image_statuses}')
         return image_statuses
 
-    def image_status_in_bucket(self, image):
-        # returns one of ['NOT_FOUND', 'IN_PROGRESS', 'EXISTS', 'ERROR']
+    def image_status_in_bucket(self, image: str) -> str:
+        """
+        Returns the status of an image in a bucket. The status is one of
+        ['NOT_FOUND', 'IN_PROGRESS', 'EXISTS', 'ERROR'].
+
+        Args:
+        - image (str): The name of the image to check the status of.
+
+        Returns:
+        - str: The status of the image in the bucket.
+        """
+
         image_status = 'NOT_FOUND'
+
         try:
             file = self.s3.head_object(Bucket=self.bucket, Key=image)
             file_size = file['ContentLength']
+            if image == self.image_to_store_metadata_against:
+                self.continuation_sheet_instructions_count = int(file['Metadata']['continuationsheetsinstructions'])
+                self.continuation_sheet_preferences_count = int(file['Metadata']['continuationsheetspreferences'])
             image_status = 'EXISTS' if file_size > 0 else 'IN_PROGRESS'
         except botocore.exceptions.ClientError as e:
+            logger.info(f"CODE: {e.response['Error']['Code']}")
             if e.response['Error']['Code'] == '404':
                 logger.error(f"Error: {image} does not exist in the {self.bucket} bucket.")
             else:
@@ -101,20 +151,35 @@ class ImageRequestHandler:
 
         return image_status
 
-    def add_to_sqs(self):
+    def add_to_sqs(self) -> None:
+        """
+        Adds a message to an SQS queue.
+        """
         try:
             message = {'uid': self.uid}
-            # Send the message to the queue
             response = self.sqs.send_message(QueueUrl=self.sqs_queue, MessageBody=json.dumps(message))
             logger.info(f"Message sent successfully: {response}")
         except botocore.exceptions.ClientError as e:
             logger.error(f"Error occurred while sending message: {e}")
             raise
 
-    def add_temp_images_to_bucket(self):
+    def add_temp_images_to_bucket(self) -> bool:
+        """
+        Add temporary images to the bucket
+
+        Returns: bool
+        """
         for image in self.images_to_check:
             try:
-                self.s3.put_object(Bucket=self.bucket, Key=image, ServerSideEncryption='AES256')
+                self.s3.put_object(
+                    Bucket=self.bucket,
+                    Key=image,
+                    ServerSideEncryption='AES256',
+                    Metadata={
+                        'ContinuationSheetsInstructions': '0',
+                        'ContinuationSheetsPreferences': '0'
+                    }
+                )
                 logger.error(f"Empty file '{image}' added to the '{self.bucket}' bucket.")
             except Exception as e:
                 logger.error(f"Error: Failed to add empty file '{image}' to the '{self.bucket}' bucket. {e}")
@@ -122,16 +187,26 @@ class ImageRequestHandler:
 
         return True
 
-    def generate_signed_urls(self, image_statuses):
+    def generate_signed_urls(self, image_statuses, image_collection_status) -> dict:
+        """
+        Generate signed URLs for images that exist in the S3 bucket and have been collected successfully.
+        :param image_statuses: A dictionary containing the statuses of the images that have been checked
+        :param image_collection_status: A string representing the overall status of the image collection process
+        :return: A dictionary containing signed URLs for successful images that exist in the S3 bucket
+        """
         signed_urls = {}
-        for image, status in image_statuses.items():
-            url = self.s3.generate_presigned_url('get_object', Params={'Bucket': self.bucket, 'Key': image},
-                                                 ExpiresIn=self.url_expiration)
-            signed_urls[image] = url
+        if image_collection_status == 'COLLECTION_COMPLETE':
+            for image, status in image_statuses.items():
+                url = self.s3.generate_presigned_url('get_object', Params={'Bucket': self.bucket, 'Key': image},
+                                                     ExpiresIn=self.url_expiration)
+                signed_urls[image] = url
 
         return signed_urls
 
     def formatted_message(self, signed_urls, collection_status):
+        """
+        formats the message to be ingested by UAL
+        """
         message = {
             'uid': self.uid,
             'status': collection_status,
@@ -139,31 +214,40 @@ class ImageRequestHandler:
         }
         return message
 
-    def get_image_collection_status(self, image_statuses):
-        image_not_found_count = 0
-        image_found_count = 0
-        image_in_progress_count = 0
-        for image, status in image_statuses.items():
-            if status == 'NOT_FOUND':
-                image_not_found_count += 1
-            elif status == 'IN_PROGRESS':
-                image_in_progress_count += 1
-            elif status == 'EXISTS':
-                image_found_count += 1
-            elif status == 'ERROR':
-                logger.error(f'Unexpected error processing image: {image}')
+    def get_image_collection_status(self, image_statuses) -> str:
+        """
+            Determines the status of the image collection based on the statuses of its individual images.
+
+            Args:
+                image_statuses (Dict[str, str]): A dictionary containing the statuses of individual images:
+                    'NOT_FOUND': The image does not exist in the S3 bucket.
+                    'IN_PROGRESS': The image is still being processed.
+                    'EXISTS': The image exists in the S3 bucket and has been processed.
+                    'ERROR': There was an error processing the image.
+
+            Returns:
+                str: The status of the image collection. The status can be one of the following:
+                    'COLLECTION_IN_PROGRESS': At least one image is in progress
+                    'COLLECTION_COMPLETE': All images have been processed successfully.
+                    'COLLECTION_NOT_STARTED': None of the images have been processed yet.
+                    'COLLECTION_ERROR': There was an error processing at least one of the images.
+        """
+        status_counts = {'NOT_FOUND': 0, 'IN_PROGRESS': 0, 'EXISTS': 0, 'ERROR': 0}
+        self.total_images = len(image_statuses)
+        for status in image_statuses.values():
+            if status in status_counts:
+                status_counts[status] += 1
             else:
                 logger.error(f'Unexpected status encountered')
 
-        if image_not_found_count < self.total_images and image_found_count < self.total_images \
-                and (image_in_progress_count + image_found_count + image_not_found_count == self.total_images):
+        if status_counts['IN_PROGRESS'] > 0:
             return 'COLLECTION_IN_PROGRESS'
-        elif image_not_found_count == 0 and image_in_progress_count == 0 and image_found_count == self.total_images:
-            return 'COLLECTION_COMPLETE'
-        elif image_in_progress_count == 0 and image_found_count == 0 and image_not_found_count == self.total_images:
+        elif status_counts['NOT_FOUND'] == self.total_images:
             return 'COLLECTION_NOT_STARTED'
-        else:
+        elif status_counts['ERROR'] > 0:
             return 'COLLECTION_ERROR'
+        else:
+            return 'COLLECTION_COMPLETE'
 
 
 def get_healthcheck_response():
@@ -179,6 +263,7 @@ def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
     version = os.getenv("VERSION")
 
+    # Check what the path is and call different functions accordingly
     if event['requestContext']['resourcePath'] in ['/healthcheck', '/' + version + '/healthcheck']:
         response = get_healthcheck_response()
     elif event['requestContext']['resourcePath'] in ['/image-request/{uid}', '/' + version + '/image-request/{uid}']:
