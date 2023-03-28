@@ -45,6 +45,7 @@ services:
       SIRIUS_URL: http://mock-sirius-web:80
       SIRIUS_URL_PART: /v1
       SESSION_DATA: publicapi@opgtest.com
+      AWS_LAMBDA_FUNCTION_TIMEOUT: 900
 
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
@@ -67,8 +68,8 @@ services:
       context: lambdas/image_processor
       dockerfile: Dockerfile-tests
     volumes:
-      - ./lambdas/image_processor/app:/lambdas/image_processor/app
-      - ./lambdas/image_processor/tests:/lambdas/image_processor/tests
+      - ./lambdas/image_processor/app:/function/app
+      - ./lambdas/image_processor/tests:/function/tests
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
@@ -80,7 +81,7 @@ services:
       context: ./local-services/localstack-request-handler
       dockerfile: Dockerfile
     environment:
-      SERVICES: s3,secretsmanager,lambda,sqs,ecr,apigateway
+      SERVICES: s3,lambda,apigateway
       DEFAULT_REGION: eu-west-1
       USE_SINGLE_REGION: 1
       DEBUG: 1
@@ -100,7 +101,7 @@ services:
       context: ./local-services/localstack-processor
       dockerfile: Dockerfile
     environment:
-      SERVICES: s3,secretsmanager,lambda,sqs,ecr
+      SERVICES: secretsmanager,lambda,sqs
       DEFAULT_REGION: eu-west-1
       USE_SINGLE_REGION: 1
       DEBUG: 1

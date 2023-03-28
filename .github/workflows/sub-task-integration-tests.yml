@@ -1,0 +1,45 @@
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Environment to use'
+        required: true
+        type: string
+      workspace:
+        description: 'Workspace to use'
+        required: true
+        type: string
+    secrets:
+      aws_access_key_id_actions:
+        required: true
+      aws_secret_access_key_actions:
+        required: true
+
+jobs:
+  terraform_workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+
+      - name: Configure AWS Credentials For Terraform
+        uses: aws-actions/configure-aws-credentials@67fbcbb121271f7775d2e7715933280b06314838
+        with:
+          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
+          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::288342028542:role/integrations-ci
+          role-duration-seconds: 3600
+          role-session-name: OPGUALIaPIntegrationTests
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        working-directory: integration
+
+      - name: Run integration tests
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          WORKSPACE: ${{ inputs.workspace }}
+        run: python -m pytest .
+        working-directory: integration
