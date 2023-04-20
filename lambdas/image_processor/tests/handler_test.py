@@ -203,12 +203,10 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
     folder_name = '1234'
     image_locations = {"scan": f"{extraction_folder_path}/test_image.jpg"}
 
-    # Create a mock object for FormOperator
-    mock_form_operator = Mock()
-    # Set the return value of run_full_pipeline to None
-    mock_form_operator.run_full_pipeline.return_value = None
-    # Monkeypatch the FormOperator.create_from_config method to return the mock object
-    monkeypatch.setattr(FormOperator, 'create_from_config', Mock(return_value=mock_form_operator))
+    run_iap_extraction_mock = MagicMock()
+    run_iap_extraction_mock.return_value = None
+
+    monkeypatch.setattr(image_processor, "run_iap_extraction", run_iap_extraction_mock)
 
     list_files_mock = MagicMock()
     list_files_mock.return_value = [
@@ -231,12 +229,14 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
         "preferences": f"{temp_output}/pass/{folder_name}/scan/meta=lp1h/field_name=preferences/image_preferences.jpg",
     }
 
+    form_operator = FormOperator.create_from_config(f"{extraction_folder_path}/opg-config.yaml")
     # Assert that the mocked functions were called as expected
-    mock_form_operator.run_full_pipeline.assert_called_once_with(
+    image_processor.run_iap_extraction.assert_called_once_with(
         form_path=image_locations["scan"],
         pass_dir=f"{temp_output}/pass/{folder_name}/scan",
         fail_dir=f"{temp_output}/fail/{folder_name}/scan",
         form_meta_directory=f"{extraction_folder_path}/metadata",
+        form_operator=form_operator
     )
     list_files_mock.assert_called_once_with(
         f"{temp_output}/pass/1234", ".jpg"
@@ -626,3 +626,31 @@ def test_build_sirius_headers(image_processor, monkeypatch):
         assert decoded_token["session-data"] == "test-session-data"
         assert "iat" in decoded_token
         assert "exp" in decoded_token
+
+
+def test_similarity_score(image_processor):
+    # Test case 1: Identical strings
+    str1 = "The quick brown fox jumps over the lazy dog."
+    str2 = "The quick brown fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 1.0
+
+    # Test case 2: Completely different strings
+    str1 = "Python is a programming language."
+    str2 = "The quick brown fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 0.0
+
+    # Test case 3: Partially similar strings
+    str1 = "The quick brown fox jumps over the lazy dog."
+    str2 = "The quick brown fox jumps over the lazy cat."
+    score = image_processor.similarity_score(str1, str2)
+    assert 0.8 < score < 0.9
+
+    # Test case 4: Case sensitivity
+    str1 = "The quick brown fox jumps over the lazy dog."
+    str2 = "the quick brown Fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 1.0
+
+    # Test case 5: Punctuation and special characters
+    str1 = "The quick brown fox jumps over the lazy dog!"
+    str2 = "The quick brown fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 1.0
