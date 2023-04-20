@@ -1,0 +1,45 @@
+{
+	"$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+	"name": "hw114-template.pdf",
+	"description": "",
+	"file_format": "",
+	"sensitive": false,
+		"columns": [{
+		"name": "instructions",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 715,
+			"width": 810,
+			"top": 201,
+			"height": 521
+		},
+		"type": "string"
+	}, {
+		"name": "preferences",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 716,
+			"width": 804,
+			"top": 921,
+			"height": 406
+		},
+		"type": "string"
+	}],
+	"primary_key": [],
+	"partitions": [],
+	"form_pages": [{
+		"page_number": 1,
+		"identifier": "(.*health.*)",
+		"required": true,
+		"duplicates": false,
+		"extra": {
+			"page_text": "hw114_1.txt",
+			"barcode": ""
+		}
+	}],
+	"form_formats": ["pdf"],
+	"form_identifier": "(.*health and welfare.*)",
+	"from_template": "",
+	"excluded_sections": [],
+	"form_template": "extraction/opg_images/hw114_images"
+}
