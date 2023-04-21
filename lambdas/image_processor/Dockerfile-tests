@@ -34,7 +34,7 @@ ARG FUNCTION_DIR
 WORKDIR ${FUNCTION_DIR}
 # Install runtime dependencies
 RUN apt-get update && \
-    apt-get install -y libgl1-mesa-glx libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr && \
+    apt-get install -y libgl1-mesa-glx libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
