@@ -3,6 +3,7 @@ import boto3
 import requests
 import pytest
 import jwt
+import numpy as np
 from unittest.mock import patch, Mock, MagicMock
 from botocore.exceptions import ClientError
 from moto import mock_secretsmanager, mock_s3
@@ -203,12 +204,10 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
     folder_name = '1234'
     image_locations = {"scan": f"{extraction_folder_path}/test_image.jpg"}
 
-    # Create a mock object for FormOperator
-    mock_form_operator = Mock()
-    # Set the return value of run_full_pipeline to None
-    mock_form_operator.run_full_pipeline.return_value = None
-    # Monkeypatch the FormOperator.create_from_config method to return the mock object
-    monkeypatch.setattr(FormOperator, 'create_from_config', Mock(return_value=mock_form_operator))
+    run_iap_extraction_mock = MagicMock()
+    run_iap_extraction_mock.return_value = None
+
+    monkeypatch.setattr(image_processor, "run_iap_extraction", run_iap_extraction_mock)
 
     list_files_mock = MagicMock()
     list_files_mock.return_value = [
@@ -231,12 +230,14 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
         "preferences": f"{temp_output}/pass/{folder_name}/scan/meta=lp1h/field_name=preferences/image_preferences.jpg",
     }
 
+    form_operator = FormOperator.create_from_config(f"{extraction_folder_path}/opg-config.yaml")
     # Assert that the mocked functions were called as expected
-    mock_form_operator.run_full_pipeline.assert_called_once_with(
+    image_processor.run_iap_extraction.assert_called_once_with(
         form_path=image_locations["scan"],
         pass_dir=f"{temp_output}/pass/{folder_name}/scan",
         fail_dir=f"{temp_output}/fail/{folder_name}/scan",
         form_meta_directory=f"{extraction_folder_path}/metadata",
+        form_operator=form_operator
     )
     list_files_mock.assert_called_once_with(
         f"{temp_output}/pass/1234", ".jpg"
@@ -626,3 +627,94 @@ def test_build_sirius_headers(image_processor, monkeypatch):
         assert decoded_token["session-data"] == "test-session-data"
         assert "iat" in decoded_token
         assert "exp" in decoded_token
+
+
+def test_similarity_score(image_processor):
+    # Test case 1: Identical strings
+    str1 = "The quick brown fox jumps over the lazy dog."
+    str2 = "The quick brown fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 1.0
+
+    # Test case 2: Completely different strings
+    str1 = "Python is a programming language."
+    str2 = "The quick brown fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 0.0
+
+    # Test case 3: Partially similar strings
+    str1 = "The quick brown fox jumps over the lazy dog."
+    str2 = "The quick brown fox jumps over the lazy cat."
+    score = image_processor.similarity_score(str1, str2)
+    assert 0.8 < score < 0.9
+
+    # Test case 4: Case sensitivity
+    str1 = "The quick brown fox jumps over the lazy dog."
+    str2 = "the quick brown Fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 1.0
+
+    # Test case 5: Punctuation and special characters
+    str1 = "The quick brown fox jumps over the lazy dog!"
+    str2 = "The quick brown fox jumps over the lazy dog."
+    assert image_processor.similarity_score(str1, str2) == 1.0
+
+
+def test_levenstein_distance(image_processor):
+    assert image_processor.levenstein_distance('kitten', 'sitting') == 3
+    assert image_processor.levenstein_distance('rosettacode', 'raisethysword') == 8
+    assert image_processor.levenstein_distance('', 'foo') == 3
+    assert image_processor.levenstein_distance('foo', '') == 3
+    assert image_processor.levenstein_distance('', '') == 0
+
+
+class MockFormMeta:
+    def __init__(self, form_pages):
+        self.form_pages = form_pages
+
+
+class MockFormPage:
+    def __init__(self, barcode, page_number, page_text):
+        self.additional_args = {"extra": {"barcode": barcode, "page_text": page_text}}
+        self.page_number = page_number
+        self.identifier = "(.*meta_page_1.*)"
+
+
+@pytest.fixture
+def mock_form_images_as_strings():
+    return ['meta_page_1_text', 'meta_page_2_text']
+
+@pytest.fixture
+def mock_form_metastore():
+    return {
+        'meta_1': MockFormMeta(
+            form_pages=[MockFormPage(page_number=1, barcode="", page_text="meta_page_1_text"), MockFormPage(page_number=2, barcode="", page_text="meta_page_2_text")]
+        ),
+        'meta_2': MockFormMeta(
+            form_pages=[MockFormPage(page_number=1, barcode="", page_text="meta2_page_1_text"), MockFormPage(page_number=2, barcode="", page_text="meta2_page_2_text")]
+        )
+    }
+
+
+def test_create_scan_to_template_distances(monkeypatch, image_processor, mock_form_images_as_strings, mock_form_metastore):
+    mock_get_meta_page_text = MagicMock()
+    mock_get_meta_page_text.return_value = "meta_page_1_text"
+    # Call the method with a valid UID
+    monkeypatch.setattr(image_processor, "get_meta_page_text", mock_get_meta_page_text)
+
+    distances = image_processor.create_scan_to_template_distances(mock_form_images_as_strings, mock_form_metastore)
+
+    assert len(distances) == 8  # Expect 8 distances for 2 images and 2 metas each with 2 form pages
+
+    # Test the first distance
+    assert distances[0]['meta'] == 'meta_1'
+    assert distances[0]['distance'] == 0
+    assert distances[0]['scan_page_no'] == 1
+    assert distances[0]['template_page_no'] == 1
+    assert distances[0]['form_image_as_string'] == 'meta_page_1_text'
+    assert distances[0]['meta_page_text'] == 'meta_page_1_text'
+
+    # Test the last distance
+    assert distances[-1]['meta'] == 'meta_2'
+    assert distances[-1]['distance'] == 1000
+    assert distances[-1]['scan_page_no'] == 2
+    assert distances[-1]['template_page_no'] == 2
+    assert distances[-1]['form_image_as_string'] == 'meta_page_2_text'
+    assert distances[-1]['meta_page_text'] == 'meta_page_1_text'
