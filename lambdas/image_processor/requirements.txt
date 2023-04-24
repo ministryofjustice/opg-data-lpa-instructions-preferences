@@ -14,3 +14,4 @@ opencv-python==4.7.0.72
 mojap_metadata==1.11.1
 pydantic==1.10.5
 tesserocr==2.5.2
+pyzbar==0.1.9

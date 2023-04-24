@@ -34,6 +34,11 @@ paths:
                       template: 'LP1F'
                     continuationSheetScan:
                       location: ['s3://opg-backoffice-datastore-local/LPC-Scan.pdf','s3://opg-backoffice-datastore-local/LPC2-Scan.pdf']
+                lpa0088:
+                  value:
+                    lpaScan:
+                      location: 's3://opg-backoffice-datastore-local/PFA117-Scan.pdf'
+                      template: 'PFA117'
               schema:
                 type: object
                 properties:

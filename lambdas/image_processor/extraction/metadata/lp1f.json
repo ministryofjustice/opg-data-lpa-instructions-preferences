@@ -49,12 +49,16 @@
 	"partitions": [],
 	"form_pages": [{
 		"page_number": 1,
-		"identifier": "(.*Preferences.*(I|i)nstructions.*LP1F)",
+		"identifier": "(.*Property.*)",
 		"required": true,
-		"duplicates": false
+		"duplicates": false,
+		"extra": {
+			"page_text": "lp1f_1.txt",
+			"barcode": "1F7"
+		}
 	}],
 	"form_formats": ["pdf"],
-	"form_identifier": "(.*Preferences.*(I|i)nstructions.*LP1F)",
+	"form_identifier": "(.*Financial decisions.*)",
 	"from_template": "",
 	"excluded_sections": [],
 	"form_template": "extraction/opg_images/lp1f_images"

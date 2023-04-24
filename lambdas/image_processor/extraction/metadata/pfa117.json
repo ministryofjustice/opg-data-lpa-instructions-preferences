@@ -1,0 +1,45 @@
+{
+	"$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+	"name": "pfa117-template.pdf",
+	"description": "",
+	"file_format": "",
+	"sensitive": false,
+	"columns": [{
+		"name": "instructions",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 716,
+			"width": 808,
+			"top": 196,
+			"height": 530
+		},
+		"type": "string"
+	}, {
+		"name": "preferences",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 719,
+			"width": 808,
+			"top": 909,
+			"height": 415
+		},
+		"type": "string"
+	}],
+	"primary_key": [],
+	"partitions": [],
+	"form_pages": [{
+		"page_number": 1,
+		"identifier": "(.*property.*)",
+		"required": true,
+		"duplicates": false,
+		"extra": {
+			"page_text": "pfa117_1.txt",
+			"barcode": ""
+		}
+	}],
+	"form_formats": ["pdf"],
+	"form_identifier": "(.*property and financial.*)",
+	"from_template": "",
+	"excluded_sections": [],
+	"form_template": "extraction/opg_images/pfa117_images"
+}
