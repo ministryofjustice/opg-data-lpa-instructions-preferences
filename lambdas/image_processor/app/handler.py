@@ -1,5 +1,4 @@
 import copy
-import logging
 import os
 import json
 import re
@@ -18,9 +17,9 @@ import requests
 from botocore.exceptions import ClientError
 from form_tools.form_operators import FormOperator
 from form_tools.utils.image_reader import ImageReader
+from app.utility.custom_logging import custom_logger
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger = custom_logger("processor")
 
 
 class ImageProcessor:
@@ -48,12 +47,12 @@ class ImageProcessor:
         instructions and preferences and pushes them to S3.
         """
         self.uid = self.get_uid_from_event()
-        logger.info(f'Starting processing on {self.uid}')
+        logger.debug(f'Starting processing on {self.uid}')
         self.create_output_dir()
 
         # Get response from sirius for all scanned documents in s3 bucket for given UID
         sirius_response_dict = self.make_request_to_sirius(self.uid)
-        logger.info(f'Response from Sirius: {str(sirius_response_dict)}')
+        logger.debug(f'Response from Sirius: {str(sirius_response_dict)}')
 
         # Download all files from sirius and store their path locations
         downloaded_scan_locations = self.download_scanned_images(sirius_response_dict)
@@ -100,21 +99,24 @@ class ImageProcessor:
         """
         Creates the output directory and two subdirectories ("pass" and "fail") if they don't already exist.
         """
-        # Define the path to the output directory
-        output_dir = self.output_folder_path
+        try:
+            # Define the path to the output directory
+            output_dir = self.output_folder_path
 
-        # Create the output directory if it doesn't already exist
-        if not os.path.exists(output_dir):
-            os.mkdir(output_dir)
+            # Create the output directory if it doesn't already exist
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
 
-        # Create subdirectories "pass" and "fail" if they don't already exist
-        pass_dir = os.path.join(output_dir, "pass")
-        if not os.path.exists(pass_dir):
-            os.mkdir(pass_dir)
+            # Create subdirectories "pass" and "fail" if they don't already exist
+            pass_dir = os.path.join(output_dir, "pass")
+            if not os.path.exists(pass_dir):
+                os.mkdir(pass_dir)
 
-        fail_dir = os.path.join(output_dir, "fail")
-        if not os.path.exists(fail_dir):
-            os.mkdir(fail_dir)
+            fail_dir = os.path.join(output_dir, "fail")
+            if not os.path.exists(fail_dir):
+                os.mkdir(fail_dir)
+        except Exception as e:
+            raise Exception(f"Failed to create output directory: {e}")
 
     def setup_s3_connection(self) -> boto3.client:
         """
@@ -193,11 +195,15 @@ class ImageProcessor:
                             shutil.rmtree(subfolder_path)
 
     def get_uid_from_event(self):
-        message = self.event['Records'][0]['body']
-
-        # Parse the message and get the uid value
-        message_dict = json.loads(message)
-        uid = message_dict['uid']
+        try:
+            message = self.event['Records'][0]['body']
+            # Parse the message and get the uid value
+            message_dict = json.loads(message)
+            uid = message_dict['uid']
+        except KeyError:
+            raise Exception("UID key exception in event body")
+        except ValueError:
+            raise Exception("Problem loading JSON from event body")
         return uid
 
     def make_request_to_sirius(self, uid):
