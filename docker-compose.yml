@@ -21,6 +21,7 @@ services:
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
       VERSION: v1
+      LOGGER_LEVEL: DEBUG
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
   image-processor:
@@ -46,6 +47,7 @@ services:
       SIRIUS_URL_PART: /v1
       SESSION_DATA: publicapi@opgtest.com
       AWS_LAMBDA_FUNCTION_TIMEOUT: 900
+      LOGGER_LEVEL: INFO
 
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
