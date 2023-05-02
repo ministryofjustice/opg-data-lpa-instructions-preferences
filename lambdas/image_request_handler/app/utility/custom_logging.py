@@ -126,5 +126,13 @@ def custom_logger(name):
         logger.setLevel(os.environ["LOGGER_LEVEL"])
     except KeyError:
         logger.setLevel("INFO")
+
     logger.addHandler(handler)
+
+    # Switch to basic logging for DEBUG as easier to read
+    if logger.level == 10:
+        for handler in logger.handlers:
+            logger.removeHandler(handler)
+        logging.basicConfig()
+
     return logger

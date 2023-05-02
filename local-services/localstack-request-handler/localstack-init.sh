@@ -9,6 +9,8 @@ awslocal s3 cp /tmp/LP1F-Scan.pdf s3://opg-backoffice-datastore-local/LP1F-Scan.
 awslocal s3 cp /tmp/LPC-Scan.pdf s3://opg-backoffice-datastore-local/LPC-Scan.pdf
 awslocal s3 cp /tmp/LPC2-Scan.pdf s3://opg-backoffice-datastore-local/LPC2-Scan.pdf
 awslocal s3 cp /tmp/PFA117-Scan.pdf s3://opg-backoffice-datastore-local/PFA117-Scan.pdf
+# Nothing matches this template on purpose
+awslocal s3 cp /tmp/LPA120.pdf s3://opg-backoffice-datastore-local/LPA120.pdf
 
 awslocal s3api put-bucket-policy \
     --policy '{ "Statement": [ { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::lpa-iap-bucket/*", "Condition":  { "StringNotEquals": { "s3:x-amz-server-side-encryption": "AES256" } } }, { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::lpa-iap-bucket/*", "Condition":  { "Bool": { "aws:SecureTransport": false } } } ] }' \

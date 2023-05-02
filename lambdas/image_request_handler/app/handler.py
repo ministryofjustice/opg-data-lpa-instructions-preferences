@@ -77,10 +77,11 @@ class ImageRequestHandler:
         except Exception as e:
             status_code = 500
             logger.error(e, extra=get_event_details_for_logs(self.event, status=status_code))
+            message = self.formatted_message({}, 'COLLECTION_ERROR')
             response = {
                 "isBase64Encoded": False,
                 "statusCode": status_code,
-                "body": 'COLLECTION_ERROR'
+                "body": json.dumps(message)
             }
 
         return response
@@ -223,7 +224,7 @@ class ImageRequestHandler:
         formats the message to be ingested by UAL
         """
         message = {
-            'uid': self.uid,
+            'uid': int(self.uid),
             'status': collection_status,
             'signed_urls': signed_urls
         }
