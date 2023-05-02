@@ -40,37 +40,57 @@ class ImageProcessor:
         self.continuation_preference_count = 0
         self.secret_manager = self.setup_secret_manager_connection()
         self.uid = None
+        self.info_msg = {
+            "uid": None,
+            "document_paths": {},
+            "matched_templates": [],
+            "images_uploaded": [],
+            "status": "Not Started"
+        }
 
     def process_request(self):
         """
         Main Process that receives a request triggered from SQS and extracts the
         instructions and preferences and pushes them to S3.
         """
-        self.uid = self.get_uid_from_event()
-        logger.debug(f'Starting processing on {self.uid}')
-        self.create_output_dir()
+        try:
+            self.uid = self.get_uid_from_event()
+            self.info_msg["uid"] = self.uid
 
-        # Get response from sirius for all scanned documents in s3 bucket for given UID
-        sirius_response_dict = self.make_request_to_sirius(self.uid)
-        logger.debug(f'Response from Sirius: {str(sirius_response_dict)}')
+            logger.info(f'==== Starting processing on {self.uid} ====')
+            self.create_output_dir()
 
-        # Download all files from sirius and store their path locations
-        downloaded_scan_locations = self.download_scanned_images(sirius_response_dict)
-        logger.info(f'Scan locations: {str(downloaded_scan_locations)}')
+            # Get response from sirius for all scanned documents in s3 bucket for given UID
+            sirius_response_dict = self.make_request_to_sirius(self.uid)
+            logger.debug(f'Response from Sirius: {str(sirius_response_dict)}')
 
-        # Extract all relevant images relating to instructions and preferences from downloaded documents
-        paths_to_extracted_images = self.extract_instructions_and_preferences(downloaded_scan_locations)
-        logger.info(f"Paths to extracted images: {paths_to_extracted_images}")
+            # Download all files from sirius and store their path locations
+            downloaded_scan_locations = self.download_scanned_images(sirius_response_dict)
+            self.info_msg["document_paths"] = downloaded_scan_locations
+            logger.debug(f'Downloaded scan locations: {str(downloaded_scan_locations)}')
 
-        # Update the counts that will be pushed as metadata
-        self.update_continuation_sheet_counts(paths_to_extracted_images)
+            # Extract all relevant images relating to instructions and preferences from downloaded documents
+            paths_to_extracted_images = self.extract_instructions_and_preferences(downloaded_scan_locations)
+            logger.debug(f"Paths to extracted images: {paths_to_extracted_images}")
 
-        # Push images up to the buckets
-        self.put_images_to_bucket(paths_to_extracted_images)
+            # Update the counts that will be pushed as metadata
+            self.update_continuation_sheet_counts(paths_to_extracted_images)
+            logger.debug("Updated continuation sheet counts")
 
-        # Cleanup all the folders
-        self.cleanup(downloaded_scan_locations)
-        logger.info('Process Finished Successfully')
+            # Push images up to the buckets
+            self.put_images_to_bucket(paths_to_extracted_images)
+            logger.debug("Finished pushing images to bucket")
+
+            # Cleanup all the folders
+            self.cleanup(downloaded_scan_locations)
+            logger.debug("Cleaned down paths")
+
+            self.info_msg["status"] = "Completed"
+            logger.info(self.info_msg)
+        except Exception as e:
+            self.info_msg["status"] = "Error"
+            logger.info(self.info_msg)
+            logger.error(e)
 
     @staticmethod
     def list_files(filepath: str, filetype: str) -> list:
@@ -118,6 +138,57 @@ class ImageProcessor:
         except Exception as e:
             raise Exception(f"Failed to create output directory: {e}")
 
+    def cleanup(self, downloaded_document_locations):
+        """
+        Cleans up downloaded images and removes the pass and fail directories created during the image processing.
+        Also removes any pdfs older than one hour and any pass and fail folders older than 1 hour.
+
+        Args:
+        - downloaded_image_locations (dict): A dictionary containing the paths to the downloaded images.
+        """
+        downloaded_document_paths = []
+        # Extract the paths from the 'scans' key and add them to the list
+        if "scans" in downloaded_document_locations:
+            for path in downloaded_document_locations['scans']:
+                downloaded_document_paths.append(path)
+
+        # Extract the paths from the 'continuations' keys and add them to the list
+        if "continuations" in downloaded_document_locations:
+            for key, value in downloaded_document_locations['continuations'].items():
+                downloaded_document_paths.append(value)
+
+        # Remove downloaded images
+        for path in downloaded_document_paths:
+            if path and os.path.exists(path):
+                os.remove(path)
+
+        # Remove pass and fail directories
+        pass_path = f"{self.output_folder_path}/pass"
+        fail_path = f"{self.output_folder_path}/fail"
+
+        one_hour_ago = time.time() - 3600
+
+        for file_name in os.listdir(self.output_folder_path):
+            file_path = os.path.join(self.output_folder_path, file_name)
+            if os.path.isfile(file_path) and file_name.endswith('.pdf'):
+                file_modified_time = os.path.getmtime(file_path)
+                if file_modified_time < one_hour_ago:
+                    os.remove(file_path)
+
+        for folder_path in [pass_path, fail_path]:
+            for subfolder_name in os.listdir(folder_path):
+                subfolder_path = os.path.join(folder_path, subfolder_name)
+                if os.path.isdir(subfolder_path):
+                    try:
+                        timestamp = int(subfolder_name)
+                        if timestamp < one_hour_ago:
+                            shutil.rmtree(subfolder_path)
+                    except ValueError:
+                        pass
+                    if subfolder_name == self.folder_name:
+                        if os.path.exists(subfolder_path):
+                            shutil.rmtree(subfolder_path)
+
     def setup_s3_connection(self) -> boto3.client:
         """
         Sets up an S3 connection object based on the environment specified by the instance variable "environment".
@@ -154,46 +225,6 @@ class ImageProcessor:
             sm = boto3.client(service_name="secretsmanager", region_name="eu-west-1")
         return sm
 
-    def cleanup(self, downloaded_image_locations):
-        """
-        Cleans up downloaded images and removes the pass and fail directories created during the image processing.
-        Also removes any pdfs older than one hour and any pass and fail folders older than 1 hour.
-
-        Args:
-        - downloaded_image_locations (dict): A dictionary containing the paths to the downloaded images.
-        """
-        # Remove downloaded images
-        for path in downloaded_image_locations.values():
-            if path and os.path.exists(path):
-                os.remove(path)
-
-        # Remove pass and fail directories
-        pass_path = f"{self.output_folder_path}/pass"
-        fail_path = f"{self.output_folder_path}/fail"
-
-        one_hour_ago = time.time() - 3600
-
-        for file_name in os.listdir(self.output_folder_path):
-            file_path = os.path.join(self.output_folder_path, file_name)
-            if os.path.isfile(file_path) and file_name.endswith('.pdf'):
-                file_modified_time = os.path.getmtime(file_path)
-                if file_modified_time < one_hour_ago:
-                    os.remove(file_path)
-
-        for folder_path in [pass_path, fail_path]:
-            for subfolder_name in os.listdir(folder_path):
-                subfolder_path = os.path.join(folder_path, subfolder_name)
-                if os.path.isdir(subfolder_path):
-                    try:
-                        timestamp = int(subfolder_name)
-                        if timestamp < one_hour_ago:
-                            shutil.rmtree(subfolder_path)
-                    except ValueError:
-                        pass
-                    if subfolder_name == self.folder_name:
-                        if os.path.exists(subfolder_path):
-                            shutil.rmtree(subfolder_path)
-
     def get_uid_from_event(self):
         try:
             message = self.event['Records'][0]['body']
@@ -202,7 +233,7 @@ class ImageProcessor:
             uid = message_dict['uid']
         except KeyError:
             raise Exception("UID key exception in event body")
-        except ValueError:
+        except json.decoder.JSONDecodeError:
             raise Exception("Problem loading JSON from event body")
         return uid
 
@@ -219,22 +250,17 @@ class ImageProcessor:
         """
         url = f"{self.sirius_url}{self.sirius_url_part}/lpas/{uid}/scans"
         headers = self.build_sirius_headers()
-        logger.info(f"Sending request to Sirius on url: {url}")
+        logger.debug(f"Sending request to Sirius on url: {url}")
 
         try:
             response = requests.get(url=url, headers=headers)
         except requests.exceptions.RequestException as e:
-            logger.error("Bad response from Sirius")
-            logger.exception(e)
-            return {"error": "Error getting response from Sirius"}
-
-        logger.info(f"Response from Sirius: {response.text}, Status: {response.status_code}")
+            raise Exception(f"Error getting response from Sirius: {e}")
 
         try:
             response_dict = json.loads(response.text)
         except json.decoder.JSONDecodeError as e:
-            logger.exception(e)
-            return {"error": "Error decoding response from Sirius"}
+            raise Exception(f"Unable to decode sirius JSON: {e}")
 
         return response_dict
 
@@ -271,49 +297,62 @@ class ImageProcessor:
         Returns:
             A dictionary containing the local file paths of the downloaded scanned images.
         """
-        # Extract the S3 URLs for the LPA and continuation sheet scans
-        lpa_scan = s3_urls_dict.get('lpaScan')
-        continuation_sheet_scan = s3_urls_dict.get('continuationSheetScan', None)
+        # Extract the S3 URLs for the possible LPA sheet scans
+        lpa_scan = s3_urls_dict.get('lpaScans')
+        lpa_locations = lpa_scan.get('locations') if lpa_scan else None
 
-        # Extract the S3 locations for the scans, if they exist
-        lpa_location = lpa_scan.get('location') if lpa_scan else None
-        continuation_locations = continuation_sheet_scan.get('location') if continuation_sheet_scan else None
+        # Extract the S3 locations for the possible continuation sheet scans, if they exist
+        continuation_sheet_scan = s3_urls_dict.get('continuationSheetScans', None)
+        continuation_locations = continuation_sheet_scan.get('locations') if continuation_sheet_scan else None
 
         # Download the LPA scan, if it exists
         scan_locations = {}
-        if lpa_location:
-            # Extract the file path and bucket name from the S3 URL
-            path_parts = self.extract_s3_file_path(lpa_location)
-            # Construct the local file path for the downloaded scan
-            scan_location = f'{self.output_folder_path}/{path_parts["file_path"]}'
-            logger.info(
-                f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
-            )
-            # Download the scan from S3 and save it to the local file path
-            self.s3.download_file(path_parts["bucket"], path_parts["file_path"], scan_location)
-            # Add the local file path to the dictionary of downloaded scan locations
-            scan_locations['scan'] = scan_location
+        if not lpa_locations or len(lpa_locations) == 0:
+            raise Exception(f"No documents returned by Sirius. Sirius response dictionary: {s3_urls_dict}")
+
+        scan_locations['scans'] = []
+        scan_locations['continuations'] = {}
+        for lpa_location in lpa_locations:
+            try:
+                # Extract the file path and bucket name from the S3 URL
+                path_parts = self.extract_s3_file_path(lpa_location)
+                # Construct the local file path for the downloaded scan
+                scan_location = f'{self.output_folder_path}/{path_parts["file_path"]}'
+                logger.debug(
+                    f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
+                )
+                # Download the scan from S3 and save it to the local file path
+                self.s3.download_file(path_parts["bucket"], path_parts["file_path"], scan_location)
+                # Add the local file path to the dictionary of downloaded scan locations
+                scan_locations['scans'].append(scan_location)
+            except Exception as e:
+                raise Exception(f"Error downloading scanned document {lpa_location}: {e}")
 
         # Download the continuation sheet scans, if they exist
-        if continuation_locations and len(continuation_locations) > 0:
-            location_position = 0
-            for continuation_location in continuation_locations:
+        if not continuation_locations or len(continuation_locations) == 0:
+            return scan_locations
+
+        location_position = 0
+        for continuation_location in continuation_locations:
+            try:
                 # Extract the file path and bucket name from the S3 URL
                 path_parts = self.extract_s3_file_path(continuation_location)
                 # Construct the local file path for the downloaded scan
                 scan_location = f'{self.output_folder_path}/{path_parts["file_path"]}'
-                logger.info(
+                logger.debug(
                     f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
                 )
                 # Download the scan from S3 and save it to the local file path
                 self.s3.download_file(path_parts["bucket"], path_parts["file_path"], scan_location)
                 # Add the local file path to the dictionary of downloaded scan locations
                 location_position += 1
-                scan_locations[f'continuation_{location_position}'] = scan_location
+                scan_locations['continuations'][f'continuation_{location_position}'] = scan_location
+            except Exception as e:
+                raise Exception(f"Error downloading scanned continuation sheet {continuation_location}: {e}")
 
         return scan_locations
 
-    def extract_instructions_and_preferences(self, image_locations: dict) -> dict:
+    def extract_instructions_and_preferences(self, scan_locations: dict) -> dict:
         """
         Extracts instructions and preferences from scanned images.
 
@@ -328,122 +367,281 @@ class ImageProcessor:
         # Generate a unique folder name based on current timestamp
         self.folder_name = self.get_timestamp_as_str()
 
-        continuation_keys_to_use = []
-        for key, image_location in image_locations.items():
-            # Run full pipeline to extract data from the scanned image
-            _ = self.run_iap_extraction (
-                form_path=image_location,
-                pass_dir=f"{self.output_folder_path}/pass/{self.folder_name}/{key}",
-                fail_dir=f"{self.output_folder_path}/fail/{self.folder_name}/{key}",
-                form_meta_directory=f"{self.extraction_folder_path}/metadata",
-                form_operator=form_operator
-            )
-            # If the key contains "continuation_", add it to the list of continuation keys to use
-            if 'continuation_' in key:
-                continuation_keys_to_use.append(key)
+        # Run full pipeline to extract data from the scanned image
+        continuation_keys_to_use = self.run_iap_extraction(
+            scan_locations=scan_locations,
+            form_operator=form_operator
+        )
 
         # Get the list of file paths that have been extracted from the scanned images
         paths = self.list_files(f'{self.output_folder_path}/pass/{self.folder_name}', '.jpg')
-        logger.info(f"Paths: {paths}")
+        logger.debug(f"Full list of paths extracted from scanned images: {paths}")
         # Select the paths to upload based on continuation keys
         path_selection = self.get_selected_paths_for_upload(paths, continuation_keys_to_use)
 
         return path_selection
 
-    def run_iap_extraction(
-            self,
-            form_path: str,
+    @staticmethod
+    def get_preprocessed_images(form_path, form_operator):
+        logger.debug(f"Reading form from path: {form_path}")
+        _, imgs = ImageReader.read(form_path)
+
+        logger.debug("Pre-processing raw form images...")
+        preprocessed_imgs = form_operator.preprocess_form_images(imgs)
+
+        logger.debug("Auto-rotating images based on text direction...")
+        rotated_images = form_operator.auto_rotate_form_images(preprocessed_imgs)
+
+        logger.debug(f"Total images found: {len(rotated_images)}")
+
+        return rotated_images
+
+    def get_ocr_matches(
+            self, processed_images: list, form_operator: FormOperator, form_meta_directory: str
+    ) -> dict:
+        """
+        Applies OCR to extract text from images, filters metadata by matching form regex,
+        and attempts to identify matches based on text identification.
+
+        Args:
+            - processed_images (List[Any]): A list of processed images to extract text from.
+            - form_operator (Any): A form operator object with `form_images_to_text` method.
+            - form_meta_directory (str): A directory containing form metadata documents.
+
+        Returns:
+            - matched_items (Dict[str, Any]): A dictionary containing the results of the matching process.
+              The dictionary contains keys:
+              - 'image_page_map' (Dict[Tuple[int, int], List[int]]): A dictionary mapping a tuple of
+                (form_index, image_index) to a list of matched page indices in metadata documents.
+              - 'match_confidences' (List[float]): A list of match confidences for all matched items.
+        """
+        logger.debug("Increase image size to help OCR...")
+        form_images_doubled = self.double_image_size(processed_images)
+        logger.debug("Applying OCR to extract text from images...")
+        form_images_text = form_operator.form_images_to_text(form_images_doubled)
+        logger.debug("Filtering metadata store by form regex...")
+        # this is based on matching the form regex to filter down the number of matching metadata docs
+        matching_meta_store = self.match_first_form_image_text_to_form_meta(
+            form_meta_directory, form_images_text, form_operator
+        )
+        logger.debug(f"Created following metadata store based on form regex: {matching_meta_store}")
+
+        logger.debug("Attempting to identify matches based on text identification")
+        matched_items = self.mixed_mode_page_identifier(
+            form_images_text, matching_meta_store, processed_images
+        )
+        logger.debug(f"Total matched based on OCR: {len(matched_items['image_page_map'])}")
+
+        return matched_items
+
+    @staticmethod
+    def extract_images(
+            matched_items: dict,
+            meta: dict,
+            meta_id: str,
+            form_operator: FormOperator,
+            scan_path: str,
             pass_dir: str,
             fail_dir: str,
-            form_meta_directory: str,
-            form_operator: FormOperator,
-            as_bytes: bool = False,
-            encode_type: str = ".jpg",
-            debug: bool = False
-    ):
+            run_timestamp: str
+    ) -> None:
+        """
+        Extracts images and fields from a form, aligns them to a metadata template, and saves the result
+        in the pass directory. If there is an error, saves a copy in the fail directory.
+
+        Parameters:
+            matched_items (dict): A dictionary with information about the matched items.
+            meta (dict): A dictionary with metadata for the form.
+            meta_id (str): The ID of the metadata template to use.
+            form_operator (object): The operator to use for the form.
+            scan_path (str): The path to the form.
+            pass_dir (str): The directory to save the result in.
+            fail_dir (str): The directory to save a copy in if there is an error.
+            run_timestamp (str): The timestamp of the run.
+
+        Returns:
+            None
+        """
+        encode_type = ".jpg"
+
         try:
-            run_timestamp = int(datetime.datetime.utcnow().timestamp())
+            # Align the images to the metadata template
+            logger.debug("Aligning images...")
+            aligned_images = form_operator.align_images_to_template(
+                matched_items["image_page_map"], form_meta=meta, debug=False
+            )
 
-            logger.info(f"Reading form from path: {form_path}")
-            _, imgs = ImageReader.read(form_path)
+            # Extract the fields from the form images
+            logger.debug(f"Selected template is: {meta_id}")
+            logger.debug("Extracting fields from form images...")
+            extracted_fields = form_operator.extract_fields(
+                aligned_images,
+                form_meta=meta,
+                as_bytes=False,
+                encode_type=encode_type,
+                debug=False,
+            )
 
-            logger.info("Preprocessing raw form images...")
-            preprocessed_imgs = form_operator.preprocess_form_images(imgs)
+            # Write the extracted fields to the pass directory
+            logger.debug("Writing to pass directory...")
+            form_operator._write_to_pass(
+                extracted_fields=extracted_fields,
+                original_path=scan_path,
+                pass_dir=pass_dir,
+                meta_id=meta_id,
+                timestamp=run_timestamp,
+                as_bytes=False,
+                encode_type=".jpg",
+            )
 
-            logger.info("Auto-rotating images based on text direction...")
-            rotated_imgs = form_operator.auto_rotate_form_images(preprocessed_imgs)
+        except Exception as e:
+            # If there is an error, save a copy in the fail directory
+            logger.debug(f"Failed to match doc to a metadata template {scan_path}: {e}")
+            logger.debug("Saving copy in fail directory")
+            form_operator._copy_to_fail(
+                form_path=scan_path,
+                fail_dir=fail_dir,
+                meta_id="unknown",
+                timestamp=run_timestamp,
+            )
 
-            logger.info(f"Total images found: {len(rotated_imgs)}")
+    def get_matching_continuation_items(
+            self, scan_locations: dict, form_meta_directory: str, form_operator: FormOperator) -> dict:
+        """
+        This function attempts to match continuation scan locations with corresponding items using barcodes and OCR.
 
+        :param scan_locations: Dictionary containing scan locations of the form.
+        :param form_meta_directory: Directory containing the form meta data.
+        :param form_operator: Operator for handling form data.
+        :return: Dictionary containing matched continuation documents.
+        """
+        matched_lpa_scans_store = {}
+
+        # Loop through scan locations and attempt to match them
+        for key, scan_location in scan_locations['continuations'].items():
+            # Get preprocessed images for current scan location
+            processed_images = self.get_preprocessed_images(scan_location, form_operator)
+
+            # Get form meta data
             matching_meta_store = form_operator.form_meta_store(form_meta_directory)
 
-            logger.info("Attempting to match based on barcodes...")
-            matched_items = self.find_matches_from_barcodes(rotated_imgs, matching_meta_store)
+            logger.debug(f"Attempting to match {scan_location} based on barcodes...")
+            # Attempt to match based on barcodes
+            matched_items = self.find_matches_from_barcodes(processed_images, matching_meta_store)
+            logger.debug(f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}")
 
-            logger.info(f"Total matched based on barcodes: {len(matched_items['image_page_map'])}")
-
+            # If no matches found using barcodes, attempt to match using OCR
             if len(matched_items['image_page_map']) == 0:
-                logger.info("Preprocessing the images to help OCR")
-                form_images_doubled = self.double_image_size(rotated_imgs)
-                logger.info("Applying OCR to extract text from images...")
-                form_images_text = form_operator.form_images_to_text(form_images_doubled)
-                logger.info("Filtering metadata store by form regex...")
-                # this is based on matching the form regex to filter down the number of matching metadata docs
-                matching_meta_store = self.match_first_form_image_text_to_form_meta(
-                    form_meta_directory, form_images_text, form_operator
-                )
-                logger.info(f"Created following metadata store based on form regex: {matching_meta_store}")
+                logger.debug(f"Attempting to match {scan_location} based on OCR...")
+                matched_items = self.get_ocr_matches(processed_images, form_operator, form_meta_directory)
 
-                logger.info("Attempting to identify matches based on text identification")
-                matched_items = self.mixed_mode_page_identifier(
-                    form_images_text, matching_meta_store, rotated_imgs
-                )
-
-            meta_id = matched_items["meta_id"]
-            meta = matching_meta_store[meta_id]
-
-            logger.info(f"matched_images: {len(matched_items['image_page_map'])}")
-
+            # If matches found, store them in the matched LPA scans store
             if len(matched_items["image_page_map"]) > 0:
-                try:
-                    logger.info("Aligning images...")
-                    aligned_images = form_operator.align_images_to_template(
-                        matched_items["image_page_map"], form_meta=meta, debug=debug
-                    )
-                    logger.info(f"Selected template is: {meta_id}")
+                if 'continuation_' in key:
+                    matched_lpa_scans_store[key] = {}
+                    matched_lpa_scans_store[key]["match"] = matched_items
+                    matched_lpa_scans_store[key]["scan_location"] = scan_location
 
-                    logger.info("Extracting fields from form images...")
-                    extracted_fields = form_operator.extract_fields(
-                        aligned_images,
-                        form_meta=meta,
-                        as_bytes=as_bytes,
-                        encode_type=encode_type,
-                        debug=debug,
-                    )
+        logger.debug(f"Matched continuation documents: {len(matched_lpa_scans_store)}")
 
-                    form_operator._write_to_pass(
-                        extracted_fields=extracted_fields,
-                        original_path=form_path,
-                        pass_dir=pass_dir,
-                        meta_id=meta_id,
-                        timestamp=run_timestamp,
-                        as_bytes=as_bytes,
-                        encode_type=encode_type,
-                    )
-                except Exception as e:
-                    logger.info(
-                        f"Failed to match doc to a metadata template: {form_path}"
-                    )
-                    logger.info("Saving copy in fail directory")
-                    form_operator._copy_to_fail(
-                        form_path=form_path,
-                        fail_dir=fail_dir,
-                        meta_id="unknown",
-                        timestamp=run_timestamp,
-                    )
-        except Exception as ex:
-            logger.info(f"Unknown error during processing: {ex}")
-            raise
+        return matched_lpa_scans_store
+
+    def get_matching_scan_item(
+            self,
+            scan_locations: dict,
+            complete_meta_store: dict,
+            form_meta_directory: str,
+            form_operator: FormOperator
+    ) -> dict:
+        """
+        Find the matching scan item from a list of scan locations by attempting to match based on barcodes and OCR.
+        Returns a dictionary containing the match and the scan location.
+        """
+        matched_lpa_scans_store = {
+            "scan": {
+                "match": {},
+                "scan_location": ""
+            }
+        }
+        matches = []
+        # Attempt to match based on barcodes
+        for scan_location in scan_locations['scans']:
+            processed_images = self.get_preprocessed_images(scan_location, form_operator)
+            logger.debug(f"Attempting to match {scan_location} based on barcodes...")
+            matched_items = self.find_matches_from_barcodes(processed_images, complete_meta_store)
+            logger.debug(f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}")
+            if len(matched_items['image_page_map']) > 0:
+                matched_lpa_scans_store[f"scan"]["match"] = matched_items
+                matched_lpa_scans_store[f"scan"]["scan_location"] = scan_location
+                matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
+                matches.append(matched_lpa_scans_store_deep)
+
+        # Check if there is exactly one match
+        logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
+        if len(matches) > 1:
+            raise Exception("More than one matching document path for LPA barcode scans")
+        elif len(matches) == 1:
+            return matched_lpa_scans_store
+
+        # Attempt to match based on OCR
+        logger.debug("Attempting to match scans based on OCR...")
+        for scan_location in scan_locations['scans']:
+            processed_images = self.get_preprocessed_images(scan_location, form_operator)
+            matched_items = self.get_ocr_matches(processed_images, form_operator, form_meta_directory)
+            if len(matched_items["image_page_map"]) > 0:
+                matched_lpa_scans_store["scan"]["match"] = matched_items
+                matched_lpa_scans_store["scan"]["scan_location"] = scan_location
+                matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
+                matches.append(matched_lpa_scans_store_deep)
+
+        # Check if there is exactly one match
+        logger.debug(f"Matched LPA scan documents based on OCR: {len(matches)}")
+        if len(matches) > 1:
+            raise Exception("More than one matching document path for LPA OCR scans")
+        elif len(matches) == 1:
+            return matches[0]
+
+    def run_iap_extraction(
+            self,
+            scan_locations: dict,
+            form_operator: FormOperator,
+    ):
+        continuation_keys_to_use = []
+        run_timestamp = int(datetime.datetime.utcnow().timestamp())
+        form_meta_directory = f"{self.extraction_folder_path}/metadata"
+        complete_meta_store = form_operator.form_meta_store(form_meta_directory)
+
+        # Find matches based on Scans (only one should match)
+        scan_sheet_store = self.get_matching_scan_item(
+            scan_locations, complete_meta_store, form_meta_directory, form_operator
+        )
+
+        # Find matches based on Continuation sheets (multiple matches possible)
+        continuation_sheet_store = self.get_matching_continuation_items(
+            scan_locations, form_meta_directory, form_operator
+        )
+
+        complete_matching_store = {**scan_sheet_store, **continuation_sheet_store}
+
+        if len(complete_matching_store) == 0:
+            raise Exception("No matches found in any documents")
+
+        for key, matched_document_store_item in complete_matching_store.items():
+            pass_dir = f"{self.output_folder_path}/pass/{self.folder_name}/{key}"
+            fail_dir = f"{self.output_folder_path}/fail/{self.folder_name}/{key}"
+            meta_id = matched_document_store_item["match"]["meta_id"]
+            meta = complete_meta_store[meta_id]
+            document_path = matched_document_store_item["scan_location"]
+            matched_document_items = matched_document_store_item["match"]
+            self.extract_images(
+                matched_document_items, meta, meta_id, form_operator, document_path, pass_dir, fail_dir, run_timestamp
+            )
+
+            # If the key contains "continuation_", add it to the list of continuation keys to use
+            if 'continuation_' in key:
+                continuation_keys_to_use.append(key)
+
+        return continuation_keys_to_use
 
     @staticmethod
     def double_image_size(image_list: list) -> list:
@@ -464,9 +662,27 @@ class ImageProcessor:
         # Return the list of doubled-size images
         return doubled_images
 
+    def find_matches_from_barcodes(
+            self,
+            images: list,
+            form_metastore: dict
+    ) -> dict:
+        """
+        Finds and matches barcodes in the input images to the corresponding template pages in the
+        form metastore.
 
-    @staticmethod
-    def find_matches_from_barcodes(images, form_metastore):
+        Args:
+            images (List[np.ndarray]): A list of images to be matched with templates.
+            form_metastore (Dict[str, Any]): A dictionary containing form template metadata.
+
+        Returns:
+            Union[Dict[str, Any], List[Dict[str, Any]]]: If a match is found, a dictionary containing
+            the metadata of the form template and a mapping between template pages and images. If no
+            matches are found, an empty dictionary is returned. If too many matches are found, a
+            dictionary with an empty image-page map is returned. If multiple matches are found, a list
+            of dictionaries with the metadata and image-page mappings for each matched template is
+            returned.
+        """
         img_count = 0
         image_barcode_dict = {}
         matched_meta = {
@@ -503,11 +719,15 @@ class ImageProcessor:
                     if template_barcode == image_barcode:
                         # Check that we haven't already matched this image or form page
                         if img_count not in images_used and form_page.page_number not in form_pages_used:
-                            logger.info(
-                                f"matching {template_barcode}. and image {img_count} from page: {form_page.page_number}")
+                            logger.debug(
+                                f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}")
                             matching_image_page[form_page.page_number] = [images[img_count]]
                             images_used.append(img_count)
                             form_pages_used.append(form_page.page_number)
+                            self.info_msg["matched_templates"].append(
+                                f"Match on {meta_id } with barcode {template_barcode} "
+                                f"for scan page number {img_count} from template page {form_page.page_number}"
+                            )
 
             matched_meta["meta_id"] = meta_id
             matched_meta["image_page_map"] = matching_image_page
@@ -516,16 +736,14 @@ class ImageProcessor:
                 matched_meta_deep = copy.deepcopy(matched_meta)
                 matching_images.append(matched_meta_deep)
 
-        logger.info(f"Number of matching images: {len(matching_images)}")
-
         # Handle the cases where we have too many or too few matches
         if len(matching_images) > 1:
-            logger.error("Too many matches on Barcodes")
+            logger.debug("Too many matches on Barcodes")
             matched_meta["image_page_map"] = {}
             return matched_meta
 
         if len(matching_images) == 0:
-            logger.error("No matches on barcodes")
+            logger.debug("No matches on barcodes")
             return matched_meta
 
         # If we have exactly one match, return it
@@ -569,7 +787,7 @@ class ImageProcessor:
             sorted_scan_template_entities[0]["meta_page_text"],
             sorted_scan_template_entities[0]["form_image_as_string"]
         )
-        print(f"Top similarity score is: {similarity_score}")
+        logger.debug(f"Top similarity score is: {similarity_score}")
         return similarity_score
 
     @staticmethod
@@ -577,8 +795,7 @@ class ImageProcessor:
         meta_id_to_use = sorted_scan_template_entities[0]['meta']
         return meta_id_to_use
 
-    @staticmethod
-    def get_matching_image_results(meta_id_to_use, similarity_score, sorted_scan_template_entities, form_images):
+    def get_matching_image_results(self, meta_id_to_use, similarity_score, sorted_scan_template_entities, form_images):
         matching_image_results = {"meta_id": meta_id_to_use, "image_page_map": {}}
         if similarity_score < 0.7:
             return matching_image_results
@@ -593,11 +810,16 @@ class ImageProcessor:
                 scan_pages_used.add(scan_page_no)
                 template_pages_used.add(template_page_no)
                 templates_to_keep.append(scan_template_entity)
+
         for template_to_keep in templates_to_keep:
             template_page_no = template_to_keep['template_page_no']
             scan_page_no = template_to_keep['scan_page_no']
             matching_image_results["image_page_map"].setdefault(template_page_no, []).append(
                 form_images[scan_page_no - 1])
+            self.info_msg["matched_templates"].append(
+                f"Match on {meta_id_to_use} with OCR match "
+                f"for scan page number {scan_page_no} from template page number {template_page_no}"
+            )
         return matching_image_results
 
     def mixed_mode_page_identifier(self, form_images_as_strings: list, form_metastore: dict, form_images: list) -> dict:
@@ -662,7 +884,6 @@ class ImageProcessor:
         """
         results = {}
         for id, meta in form_operator.form_meta_store(form_meta_directory).items():
-            print(f"ID: {id}")
             valid, _ = form_operator.form_identifier_match([form_images_as_strings[0]], meta)
             if valid:
                 results[id] = meta
@@ -707,10 +928,10 @@ class ImageProcessor:
                         'ContinuationSheetsPreferences': str(self.continuation_preference_count)
                     }
                 )
-                logger.info(f"File '{image}' added to the '{self.iap_bucket}' bucket.")
+                logger.debug(f"File '{image}' added to the '{self.iap_bucket}' bucket.")
+                self.info_msg["images_uploaded"].append(image)
             except Exception as e:
-                logger.error(f"Error: Failed to add file '{image}' to the '{self.iap_bucket}' bucket. {e}")
-                raise
+                raise Exception(f"Failed to add file '{image}' to the '{self.iap_bucket}' bucket: {e}")
 
     def find_instruction_and_preference_paths(self, path_selection: dict, paths: list) -> dict:
         """
@@ -746,7 +967,7 @@ class ImageProcessor:
                     ]
             ):
                 path_selection['preferences'] = path
-                logger.info(f'Found preferences path {path}')
+                logger.debug(f'Found preferences path {path}')
             elif self.string_fragments_in_string(
                     target_string=path,
                     mandatory_fragments=[
@@ -760,7 +981,7 @@ class ImageProcessor:
                     ]
             ):
                 path_selection['instructions'] = path
-                logger.info(f'Found instructions path {path}')
+                logger.debug(f'Found instructions path {path}')
             elif self.string_fragments_in_string(
                     target_string=path,
                     mandatory_fragments=[
@@ -785,8 +1006,6 @@ class ImageProcessor:
             ):
                 if self.detect_marked_checkbox(path):
                     continuation_preferences = True
-
-        logger.info(f"path selection.. {path_selection}")
 
         return {
             "path_selection": path_selection,
@@ -901,12 +1120,13 @@ class ImageProcessor:
         path_selection = {}
 
         # Find the instruction and preference paths
-        response = self.find_instruction_and_preference_paths(path_selection, paths)
+        instructions_and_preferences = self.find_instruction_and_preference_paths(path_selection, paths)
+        logger.debug(f"List of IaP paths found: {instructions_and_preferences['path_selection']}")
 
-        # Extract the path selection and continuation sheet type from the response
-        path_selection = response["path_selection"]
+        # Extract the path selection and continuation sheet type from the instructions_and_preferences
+        path_selection = instructions_and_preferences["path_selection"]
         continuation_sheet_type = self.get_continuation_sheet_type(
-            response["continuation_instructions"], response["continuation_preferences"]
+            instructions_and_preferences["continuation_instructions"], instructions_and_preferences["continuation_preferences"]
         )
 
         # Loop through each continuation key and get the corresponding continuation sheet paths
@@ -918,7 +1138,7 @@ class ImageProcessor:
                 continuation_sheet_type,
                 path_filter
             )
-        logger.info(f"Continuation_Sheets: {continuation_sheets}")
+        logger.debug(f"List of Continuation sheets found: {continuation_sheets}")
 
         # Created the final combined object of instructions, preferences and continuation sheets
         path_selection = self.merge_continuation_images_into_path_selection(path_selection, continuation_sheets)
@@ -1029,7 +1249,7 @@ class ImageProcessor:
         percentage_black = number_of_black_pix / total_pixels
 
         is_ticked = False if percentage_black > 0.99 else True
-        logger.info(f"Checkbox is {str(is_ticked)} for: {image_path}")
+        logger.debug(f"Checkbox is {str(is_ticked)} for: {image_path}")
 
         # If the percentage_black (as image is inverted) is above a certain threshold, the image is blank
         return False if percentage_black > 0.99 else True
@@ -1050,8 +1270,7 @@ class ImageProcessor:
             get_secret_value_response = self.secret_manager.get_secret_value(SecretId=secret_name)
             secret = get_secret_value_response["SecretString"]
         except ClientError as e:
-            logger.info("Unable to get secret from Secrets Manager")
-            raise e
+            raise Exception(f"Unable to get secret for JWT key from Secrets Manager: {e}")
 
         return secret
 
