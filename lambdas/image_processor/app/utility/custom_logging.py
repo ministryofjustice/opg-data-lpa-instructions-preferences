@@ -76,10 +76,10 @@ def custom_logger(name):
         {
             "level": "levelname",
             "timestamp": "asctime",
-            "message": "message",
-            "loggerName": "name",
-            "functionName": "funcName",
-            "lineNumber": "lineno",
+            "message_details": "message",
+            "logger_name": "name",
+            "function_name": "funcName",
+            "line_number": "lineno",
         }
     )
 

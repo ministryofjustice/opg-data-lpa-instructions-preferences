@@ -86,10 +86,10 @@ class ImageProcessor:
             logger.debug("Cleaned down paths")
 
             self.info_msg["status"] = "Completed"
-            logger.info(self.info_msg)
+            logger.info(json.dumps(self.info_msg))
         except Exception as e:
             self.info_msg["status"] = "Error"
-            logger.info(self.info_msg)
+            logger.info(json.dumps(self.info_msg))
             logger.error(e)
 
     @staticmethod
