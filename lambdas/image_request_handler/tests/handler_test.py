@@ -7,9 +7,58 @@ from moto import mock_s3, mock_sqs
 from lambdas.image_request_handler.app.handler import ImageRequestHandler
 from botocore.stub import Stubber
 
-test_uid = "700000001"
+test_uid = 700000001
 test_queue = "test-queue"
 test_bucket = "test-bucket"
+event = {
+    'resource': '/image-request/{uid}',
+    'path': '/image-request/700000000004',
+    'httpMethod': 'GET',
+    'headers': None,
+    'multiValueHeaders': None,
+    'queryStringParameters': None,
+    'multiValueQueryStringParameters': None,
+    'pathParameters': {
+        'uid': '700000000004'
+    },
+    'stageVariables': {
+        'app_name': 'lpa-iap-request-handler-uml1234'
+    },
+    'requestContext': {
+        'resourceId': 'v6fake',
+        'resourcePath': '/image-request/{uid}',
+        'httpMethod': 'GET',
+        'extendedRequestId': 'FakeFakeFakeZWQ=',
+        'requestTime': '15/Feb/2023:13:10:03 +0000',
+        'path': '/image-request/{uid}',
+        'accountId': '12345678',
+        'protocol': 'HTTP/1.1',
+        'stage': 'test-invoke-stage',
+        'domainPrefix': 'testPrefix',
+        'requestTimeEpoch': 1676466603450,
+        'requestId': 'fake-fake-fake-fake-3e81f5d989a5',
+        'identity': {
+            'cognitoIdentityPoolId': None,
+            'cognitoIdentityId': None,
+            'apiKey': 'test-invoke-api-key',
+            'principalOrgId': None,
+            'cognitoAuthenticationType': None,
+            'userArn': 'arn:aws:sts::12345678:assumed-role/operator/fake.user',
+            'apiKeyId': 'test-invoke-api-key-id',
+            'userAgent': 'aws-internal/3 aws-sdk-java/1.12.401 Linux/5.4.228-141.415.amzn2int.x86_64 OpenJDK_64-Bit_Server_VM/25.362-b09 java/1.8.0_362 vendor/Oracle_Corporation cfg/retry-mode/standard',
+            'accountId': '12345678',
+            'caller': 'FAKE:fake.user',
+            'sourceIp': 'test-invoke-source-ip',
+            'accessKey': 'FAKE',
+            'cognitoAuthenticationProvider': None,
+            'user': 'FAKE:fake.user'
+        },
+        'domainName': 'testPrefix.testDomainName',
+        'apiId': 'fake1234'
+    },
+    'body': None,
+    'isBase64Encoded': False
+}
 
 
 @pytest.fixture(autouse=True)
@@ -21,12 +70,12 @@ def setup_environment_variables():
 
 @pytest.fixture
 def image_request_handler():
-    return ImageRequestHandler(test_uid, test_bucket, test_queue)
+    return ImageRequestHandler(test_uid, test_bucket, test_queue, event)
 
 
 def test_init(image_request_handler):
     assert image_request_handler.environment == os.getenv('ENVIRONMENT')
-    assert image_request_handler.uid == "700000001"
+    assert image_request_handler.uid == 700000001
     assert image_request_handler.bucket == "test-bucket"
     assert image_request_handler.sqs_queue == "test-queue"
     assert image_request_handler.total_images == 2
@@ -60,7 +109,7 @@ def test_setup_s3_connection(mock_boto3, image_request_handler):
 def test_check_image_statuses(mock_image_status_in_bucket):
     images_to_check = ['image1', 'image2', 'image3', 'image4']
     mock_image_status_in_bucket.side_effect = ['NOT_FOUND', 'IN_PROGRESS', 'EXISTS', 'EXISTS']
-    handler = ImageRequestHandler("700000001", "test-bucket", "test-queue")
+    handler = ImageRequestHandler("700000001", "test-bucket", "test-queue", event)
     # Test the method with mocked return values
     image_statuses = handler.check_image_statuses(images_to_check)
     # Assert the method returns the expected statuses
@@ -94,8 +143,8 @@ def test_image_status_in_bucket(image_request_handler):
     error_response = {'Error': {'Code': '401', 'Message': 'Access Denied'}}
     with patch.object(image_request_handler.s3, 'head_object',
                       return_value=Exception(error_response, 'head_object')) as head_object_mock:
-        response = image_request_handler.image_status_in_bucket(image)
-        assert response == 'ERROR'
+        with pytest.raises(Exception):
+            _ = image_request_handler.image_status_in_bucket(image)
 
 
 @mock_sqs
@@ -120,7 +169,7 @@ def test_add_to_sqs(image_request_handler):
 
 @mock_s3
 def test_add_temp_images_to_bucket():
-    image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue)
+    image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue, event)
     s3 = boto3.client('s3', region_name='us-east-1')
     s3.create_bucket(Bucket='test-bucket')
     image_request_handler.images_to_check = ['image1.jpg', 'image2.jpg', 'image3.jpg']
@@ -142,7 +191,7 @@ def test_add_temp_images_to_bucket():
 def test_generate_signed_urls_returns_correct_urls():
     s3 = boto3.client('s3', region_name='us-east-1')
     s3.create_bucket(Bucket=test_bucket)
-    image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue)
+    image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue, event)
     collection_status = 'COLLECTION_COMPLETE'
     image_statuses = {'image1': 'FOUND', 'image2': 'FOUND'}
     expected_urls = {
@@ -164,7 +213,7 @@ def test_generate_signed_urls_returns_correct_urls():
 def test_formatted_message_returns_correct_message():
     signed_urls = {'image1': 'url1', 'image2': 'url2'}
     collection_status = 'SUCCESS'
-    image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue)
+    image_request_handler = ImageRequestHandler(test_uid, test_bucket, test_queue, event)
     actual_message = image_request_handler.formatted_message(signed_urls, collection_status)
 
     expected_message = {
