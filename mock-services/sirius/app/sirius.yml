@@ -1,0 +1,137 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: sirius
+paths:
+  /lpas/{uid}/scans:
+    get:
+      summary: Retrieve LPA and Continuation Sheet scans
+      description: Retrieves the LPA and Continuation Sheet scans for the specified UID
+      parameters:
+        - in: path
+          name: uid
+          description: The UID of the LPA
+          required: true
+          schema:
+            type: string
+            pattern: '^7\d{11}$'
+            example: '700000000003'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              examples:
+                lpa0047:
+                  value:
+                    lpaScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/LP1H-Scan.pdf', 's3://opg-backoffice-datastore-integration/LPA120.pdf']
+                lpa0138:
+                  value:
+                    lpaScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/LP1F-Scan.pdf']
+                    continuationSheetScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/LPC-Scan.pdf','s3://opg-backoffice-datastore-integration/LPC2-Scan.pdf']
+                lpa0088:
+                  value:
+                    lpaScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/PFA117-Scan.pdf']
+              schema:
+                type: object
+                properties:
+                  lpaScans:
+                    type: object
+                    properties:
+                      locations:
+                        type: array
+                        items:
+                          type: string
+                          format: uri
+                        example:
+                          - 's3://opg-backoffice-datastore-integration/LP1H-Scan.pdf'
+                      template:
+                        type: string
+                        example: 'LP1H'
+                  continuationSheetScans:
+                    type: object
+                    properties:
+                      locations:
+                        type: array
+                        items:
+                          type: string
+                          format: uri
+                        example:
+                          - 's3://opg-backoffice-datastore-integration/LPC-Scan.pdf'
+                required:
+                  - lpaScans
+                  - continuationSheetScans
+        '404':
+          description: Document not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '400':
+          description: Bad request (either in parameter or payload)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error400'
+components:
+  schemas:
+    Error400:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - title
+            properties:
+              code:
+                type: string
+                example: "OPGDATA-API-INVALIDREQUEST"
+              title:
+                type: string
+                example: "Invalid Request"
+              detail:
+                type: string
+                example: "Invalid request, the data is incorrect"
+              meta:
+                type: object
+                properties:
+                  x-ray:
+                    type: string
+                    example: "93c330d4-7d84-4c1b-8fdb-54cec5bfe747"
+    Error404:
+      type: object
+      required:
+        - errors
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            required:
+              - code
+              - title
+            properties:
+              code:
+                type: string
+                example: "OPGDATA-API-NOTFOUND"
+              title:
+                type: string
+                example: "Page not found"
+              detail:
+                type: string
+                example: "That URL is not a valid route, or the item resource does not exist"
+              meta:
+                type: object
+                properties:
+                  x-ray:
+                    type: string
+                    example: "93c330d4-7d84-4c1b-8fdb-54cec5bfe747"

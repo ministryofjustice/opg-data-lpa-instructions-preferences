@@ -13,10 +13,6 @@ permissions:
 on:
   workflow_call:
     inputs:
-      lambda_names:
-        description: 'The name of the lambda Docker container'
-        required: true
-        type: string
       tag:
         description: 'Tag for docker image'
         required: true
@@ -37,7 +33,15 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        lambda: ${{ fromJSON(inputs.lambda_names) }}
+        include:
+          - name: 'lpa-iap-request-handler-lambda'
+            path: 'lambdas/image_request_handler'
+          - name: 'lpa-iap-scan-processor-lambda'
+            path: 'lambdas/image_processor'
+          - name: 'lpa-iap-mock-sirius'
+            path: 'mock-services/sirius/app'
+          - name: 'lpa-iap-mock-sirius-web'
+            path: 'mock-services/sirius/web'
     steps:
       - name: Check out code
         id: checkout_code
@@ -45,15 +49,16 @@ jobs:
 
       - name: Build Container
         id: build_container
-        run: docker build --file ${{ matrix.lambda.path }}/Dockerfile --tag ${{ matrix.lambda.name }}:latest ${{ matrix.lambda.path }}
+        run: docker build --file ${{ matrix.path }}/Dockerfile --tag ${{ matrix.name }}:latest ${{ matrix.path }}
 
       - name: Trivy Image Vulnerability Scanner
         id: trivy_scan
         uses: aquasecurity/trivy-action@9ab158e8597f3b310480b9a69402b419bc03dbd5
         with:
-          image-ref: ${{ matrix.lambda.name }}:latest
+          image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
           format: 'sarif'
+          ignore-unfixed: true
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy scan results to GitHub Security tab
@@ -85,13 +90,13 @@ jobs:
       - name: Push to ECR
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: integrations/${{ matrix.lambda.name }}
+          ECR_REPOSITORY: integrations/${{ matrix.name }}
           BRANCH_NAME: ${{ inputs.branch_name }}
         run: |
-          docker tag ${{ matrix.lambda.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.tag }}
+          docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.tag }}
           if [ $BRANCH_NAME == "main" ]; then
-            docker tag ${{ matrix.lambda.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-            docker tag ${{ matrix.lambda.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ inputs.tag }}
+            docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ inputs.tag }}
           fi
             echo "skipping push for now..."
-            # docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
+            docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY

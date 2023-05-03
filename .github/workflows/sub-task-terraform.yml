@@ -13,6 +13,11 @@ on:
         description: 'Image tag to use'
         required: false
         type: string
+      mock_sirius:
+        description: 'Mock sirius'
+        default: '0'
+        required: false
+        type: string
     secrets:
       aws_access_key_id_actions:
         required: true
@@ -42,9 +47,26 @@ jobs:
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
           aws-region: eu-west-1
           role-duration-seconds: 3600
-          role-session-name: OPGDeputyReportingGithubAction
+          role-session-name: OPGUALIaPGithubAction
 
-      - name: Lint Terraform
-        run: terraform fmt -check -recursive
+      - name: Terraform Init
+        run: terraform init -input=false
         working-directory: ./${{ inputs.terraform_path }}
-        continue-on-error: true
+
+      - name: Terraform Plan
+        env:
+          TF_WORKSPACE: ${{ inputs.workspace }}
+          TF_VAR_image_tag: ${{ inputs.image_tag }}
+          TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
+        run: |
+          terraform workspace show
+          terraform plan -input=false -parallelism=30
+        working-directory: ./${{ inputs.terraform_path }}
+
+      - name: Terraform Apply
+        env:
+          TF_WORKSPACE: ${{ inputs.workspace }}
+          TF_VAR_image_tag: ${{ inputs.image_tag }}
+          TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
+        run: terraform apply -lock-timeout=300s -input=false -auto-approve -parallelism=30
+        working-directory: ./${{ inputs.terraform_path }}

@@ -1,0 +1,94 @@
+{
+	"$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+	"name": "lpc.pdf",
+	"description": "",
+	"file_format": "",
+	"sensitive": false,
+	"columns": [{
+		"name": "continuation_sheet_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 115,
+			"width": 1423,
+			"top": 804,
+			"height": 717
+		},
+		"type": "string"
+	}, {
+		"name": "preferences_checkbox_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 679,
+			"height": 42
+		},
+		"type": "string"
+	}, {
+		"name": "instructions_checkbox_p1",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 733,
+			"height": 42
+		},
+		"type": "string"
+	}, {
+		"name": "continuation_sheet_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 115,
+			"width": 1423,
+			"top": 804,
+			"height": 717
+		},
+		"type": "string"
+	}, {
+		"name": "preferences_checkbox_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 679,
+			"height": 42
+		},
+		"type": "string"
+	}, {
+		"name": "instructions_checkbox_p2",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 112,
+			"width": 42,
+			"top": 733,
+			"height": 42
+		},
+		"type": "string"
+	}],
+	"primary_key": [],
+	"partitions": [],
+	"form_pages": [{
+		"page_number": 1,
+		"identifier": "(.*Continuation.*)",
+		"required": true,
+		"duplicates": false,
+		"extra": {
+			"page_text": "lpc_1.txt",
+			"barcode": "1C2"
+		}
+	}, {
+		"page_number": 2,
+		"identifier": "(.*Continuation.*)",
+		"required": true,
+		"duplicates": false,
+		"extra": {
+			"page_text": "lpc_2.txt",
+			"barcode": "1C2"
+		}
+	}],
+	"form_formats": ["pdf"],
+	"form_identifier": "(.*Continuation sheets.*)",
+	"from_template": "",
+	"excluded_sections": [],
+	"form_template": "extraction/opg_images/lpc_images"
+}

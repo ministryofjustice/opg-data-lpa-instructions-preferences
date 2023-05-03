@@ -5,6 +5,7 @@
 *.tfstate
 *.tfstate.*
 *.tfvars
+**/__pycache__/**
 secrets.auto.tfvars
 # editors
 .vscode/
@@ -14,3 +15,7 @@ secrets.auto.tfvars
 .env
 venv/
 env/
+terraform/environment/.terraform.lock.hcl
+lambdas/image_processor/extraction/fail/**
+lambdas/image_processor/extraction/pass/**
+lambdas/image_processor/extraction/LP1H-Edited.pdf

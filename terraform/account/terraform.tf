@@ -1,40 +1,38 @@
 terraform {
-
   backend "s3" {
     bucket         = "opg.terraform.state"
-    key            = "github-workflow-example-account/terraform.tfstate"
+    key            = "opg-data-lpa-instructions-preferences-account/terraform.tfstate"
     encrypt        = true
     region         = "eu-west-1"
-    role_arn       = "arn:aws:iam::311462405659:role/gh-workflow-example-ci"
+    role_arn       = "arn:aws:iam::311462405659:role/integrations-ci"
     dynamodb_table = "remote_lock"
   }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "3.40.0"
-    }
-  }
-  required_version = ">= 1.1.0"
-}
-
-locals {
-  sandbox = "995199299616"
 }
 
 provider "aws" {
-  alias = "sandbox"
-
+  region = "eu-west-1"
+  default_tags {
+    tags = {
+      business-unit          = "OPG"
+      application            = "LPA-Instructions-and-Preferences"
+      environment-name       = local.environment
+      owner                  = "OPG Supervision"
+      infrastructure-support = "OPG WebOps: opgteam@digital.justice.gov.uk"
+      is-production          = local.account.is_production
+      source-code            = "https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences"
+    }
+  }
   assume_role {
-    role_arn     = "arn:aws:iam::${local.sandbox}:role/${var.DEFAULT_ROLE}"
+    role_arn     = "arn:aws:iam::${local.account["account_id"]}:role/${var.default_role}"
     session_name = "terraform-session"
   }
 }
 
-variable "DEFAULT_ROLE" {
-  default = "integrations-ci"
-}
-
-data "aws_caller_identity" "current" {
-  provider = aws.sandbox
+provider "aws" {
+  region = "eu-west-1"
+  alias  = "management"
+  assume_role {
+    role_arn     = "arn:aws:iam::311462405659:role/${var.management_role}"
+    session_name = "terraform-session"
+  }
 }

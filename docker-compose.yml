@@ -3,53 +3,138 @@ version: '3'
 
 services:
   image-request-handler:
+    image: image-request-handler:latest
     build:
-      context: ./lambda/image-request-handler
+      context: lambdas/image_request_handler
       dockerfile: Dockerfile
     ports:
-      - "9010:8080"
+      - 9010:8080
     depends_on:
-      - localstack
+      - localstack-request-handler
+      - image-processor
+      - mock-sirius-web
     volumes:
-      - ./lambda/.aws-lambda-rie:/aws-lambda
-      - ./lambda/image-request-handler/app:/function/app
+      - ./lambdas/.aws-lambda-rie:/aws-lambda
+      - ./lambdas/image_request_handler/app:/function/app
+    environment:
+      AWS_ACCESS_KEY_ID: FAKE
+      AWS_SECRET_ACCESS_KEY: FAKE
+      ENVIRONMENT: local
+      VERSION: v1
+      LOGGER_LEVEL: DEBUG
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
-  localstack:
+  image-processor:
+    image: image-processor:latest
     build:
-      context: ./local-services/localstack
+      context: lambdas/image_processor
       dockerfile: Dockerfile
     ports:
-      - "4566-4599:4566-4599"
-      - "8080:8080"
-    environment:
-      - SERVICES=sqs,secretsmanager,s3,lambda
-      - DATA_DIR=/tmp/localstack/data
-      - DEFAULT_REGION=eu-west-1
-      - USE_SINGLE_REGION=1
-      - DEBUG=1
-      - LAMBDA_EXECUTOR=docker
-      - LAMBDA_REMOVE_CONTAINERS="true"
-      - LAMBDA_FORWARD_URL=http://image-request-handler:8080
-
-# Mock API gateway and image request handler
-# This will largely be replaced as we move forward and moved into use an LPA repo as it's mock.
-# Useful here for the time being.
-  api-gateway:
-    container_name: api-gateway
-    image: nginx:stable-alpine
+      - 9011:8080
     depends_on:
-      - mock-image-request-handler
-    command: 'nginx -g "daemon off;"'
+      - localstack-processor
     volumes:
-      - ./mock-services/image-request-handler/nginx.conf:/etc/nginx/conf.d/default.conf
-    ports:
-      - 7010:5000
+      - ./lambdas/.aws-lambda-rie:/aws-lambda
+      - ./lambdas/image_processor/app:/function/app
+      - ./lambdas/image_processor/extraction:/function/extraction
+    environment:
+      AWS_ACCESS_KEY_ID: FAKE
+      AWS_SECRET_ACCESS_KEY: FAKE
+      ENVIRONMENT: local
+      TARGET_ENVIRONMENT: local
+      SECRET_PREFIX: local
+      SIRIUS_URL: http://mock-sirius-web:80
+      SIRIUS_URL_PART: /v1
+      SESSION_DATA: publicapi@opgtest.com
+      AWS_LAMBDA_FUNCTION_TIMEOUT: 900
+      LOGGER_LEVEL: DEBUG
 
-  mock-image-request-handler:
-    image: stoplight/prism:4
-    command: 'mock -h 0.0.0.0 /tmp/image-request-handler.yml'
+    entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
+
+  unit-tests-request-handler:
+    image: unit-tests-request-handler:latest
+    build:
+      context: lambdas/image_request_handler
+      dockerfile: Dockerfile-tests
     volumes:
-      - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml:ro
+      - ./lambdas/image_request_handler/app:/lambdas/image_request_handler/app
+      - ./lambdas/image_request_handler/tests:/lambdas/image_request_handler/tests
+    environment:
+      AWS_ACCESS_KEY_ID: FAKE
+      AWS_SECRET_ACCESS_KEY: FAKE
+      ENVIRONMENT: local
+
+  unit-tests-processor:
+    image: unit-tests-processor:latest
+    build:
+      context: lambdas/image_processor
+      dockerfile: Dockerfile-tests
+    volumes:
+      - ./lambdas/image_processor/app:/function/app
+      - ./lambdas/image_processor/tests:/function/tests
+    environment:
+      AWS_ACCESS_KEY_ID: FAKE
+      AWS_SECRET_ACCESS_KEY: FAKE
+      ENVIRONMENT: local
+
+  localstack-request-handler:
+    image: localstack-request-handler:latest
+    build:
+      context: ./local-services/localstack-request-handler
+      dockerfile: Dockerfile
+    environment:
+      SERVICES: s3,lambda,apigateway
+      DEFAULT_REGION: eu-west-1
+      USE_SINGLE_REGION: 1
+      DEBUG: 1
+      HOSTNAME_EXTERNAL: localstack-request-handler
+      LAMBDA_EXECUTOR: docker
+      LAMBDA_REMOVE_CONTAINERS: "true"
+      LAMBDA_FORWARD_URL: http://image-request-handler:8080
+      DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
     ports:
-      - 7011:4010
+      - 4566:4566
+
+  localstack-processor:
+    image: localstack-processor:latest
+    build:
+      context: ./local-services/localstack-processor
+      dockerfile: Dockerfile
+    environment:
+      SERVICES: secretsmanager,lambda,sqs
+      DEFAULT_REGION: eu-west-1
+      USE_SINGLE_REGION: 1
+      DEBUG: 1
+      HOSTNAME_EXTERNAL: localstack-processor
+      LAMBDA_EXECUTOR: docker
+      LAMBDA_REMOVE_CONTAINERS: "true"
+      LAMBDA_FORWARD_URL: http://image-processor:8080
+      DOCKER_HOST: unix:///var/run/docker.sock
+    ports:
+      - 4567:4566
+
+#Mock Sirius LB
+  mock-sirius-web:
+    build:
+      context: ./mock-services/sirius/web
+      dockerfile: Dockerfile
+    image: mock-sirius-web:latest
+    container_name: api-gateway
+    depends_on:
+      - mock-sirius
+    volumes:
+      - ./mock-services/sirius/web/nginx-local.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 7012:80
+
+  mock-sirius:
+    build:
+      context: ./mock-services/sirius/app
+      dockerfile: Dockerfile
+    image: mock-sirius:latest
+    volumes:
+      - ./mock-services/sirius/app/sirius-local.yml:/app/sirius.yml:ro
+    ports:
+      - 7013:4010
