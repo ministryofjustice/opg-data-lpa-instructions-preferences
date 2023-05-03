@@ -24,18 +24,18 @@ logger = custom_logger("processor")
 
 class ImageProcessor:
     def __init__(self, event):
-        self.environment = os.getenv('ENVIRONMENT')
-        self.target_environment = os.getenv('TARGET_ENVIRONMENT')
-        self.secret_key_prefix = os.getenv('SECRET_PREFIX')
-        self.sirius_url = os.getenv('SIRIUS_URL')
-        self.sirius_url_part = os.getenv('SIRIUS_URL_PART')
+        self.environment = os.getenv("ENVIRONMENT")
+        self.target_environment = os.getenv("TARGET_ENVIRONMENT")
+        self.secret_key_prefix = os.getenv("SECRET_PREFIX")
+        self.sirius_url = os.getenv("SIRIUS_URL")
+        self.sirius_url_part = os.getenv("SIRIUS_URL_PART")
         self.event = event
         self.s3 = self.setup_s3_connection()
-        self.sirius_bucket = f'opg-backoffice-datastore-{self.target_environment}'
-        self.iap_bucket = f'lpa-iap-{self.environment}'
-        self.extraction_folder_path = 'extraction'
-        self.output_folder_path = '/tmp/output'
-        self.folder_name = '9999'
+        self.sirius_bucket = f"opg-backoffice-datastore-{self.target_environment}"
+        self.iap_bucket = f"lpa-iap-{self.environment}"
+        self.extraction_folder_path = "extraction"
+        self.output_folder_path = "/tmp/output"
+        self.folder_name = "9999"
         self.continuation_instruction_count = 0
         self.continuation_preference_count = 0
         self.secret_manager = self.setup_secret_manager_connection()
@@ -45,7 +45,7 @@ class ImageProcessor:
             "document_paths": {},
             "matched_templates": [],
             "images_uploaded": [],
-            "status": "Not Started"
+            "status": "Not Started",
         }
 
     def process_request(self):
@@ -57,20 +57,24 @@ class ImageProcessor:
             self.uid = self.get_uid_from_event()
             self.info_msg["uid"] = self.uid
 
-            logger.info(f'==== Starting processing on {self.uid} ====')
+            logger.info(f"==== Starting processing on {self.uid} ====")
             self.create_output_dir()
 
             # Get response from sirius for all scanned documents in s3 bucket for given UID
             sirius_response_dict = self.make_request_to_sirius(self.uid)
-            logger.debug(f'Response from Sirius: {str(sirius_response_dict)}')
+            logger.debug(f"Response from Sirius: {str(sirius_response_dict)}")
 
             # Download all files from sirius and store their path locations
-            downloaded_scan_locations = self.download_scanned_images(sirius_response_dict)
+            downloaded_scan_locations = self.download_scanned_images(
+                sirius_response_dict
+            )
             self.info_msg["document_paths"] = downloaded_scan_locations
-            logger.debug(f'Downloaded scan locations: {str(downloaded_scan_locations)}')
+            logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
 
             # Extract all relevant images relating to instructions and preferences from downloaded documents
-            paths_to_extracted_images = self.extract_instructions_and_preferences(downloaded_scan_locations)
+            paths_to_extracted_images = self.extract_instructions_and_preferences(
+                downloaded_scan_locations
+            )
             logger.debug(f"Paths to extracted images: {paths_to_extracted_images}")
 
             # Update the counts that will be pushed as metadata
@@ -149,12 +153,12 @@ class ImageProcessor:
         downloaded_document_paths = []
         # Extract the paths from the 'scans' key and add them to the list
         if "scans" in downloaded_document_locations:
-            for path in downloaded_document_locations['scans']:
+            for path in downloaded_document_locations["scans"]:
                 downloaded_document_paths.append(path)
 
         # Extract the paths from the 'continuations' keys and add them to the list
         if "continuations" in downloaded_document_locations:
-            for key, value in downloaded_document_locations['continuations'].items():
+            for key, value in downloaded_document_locations["continuations"].items():
                 downloaded_document_paths.append(value)
 
         # Remove downloaded images
@@ -170,7 +174,7 @@ class ImageProcessor:
 
         for file_name in os.listdir(self.output_folder_path):
             file_path = os.path.join(self.output_folder_path, file_name)
-            if os.path.isfile(file_path) and file_name.endswith('.pdf'):
+            if os.path.isfile(file_path) and file_name.endswith(".pdf"):
                 file_modified_time = os.path.getmtime(file_path)
                 if file_modified_time < one_hour_ago:
                     os.remove(file_path)
@@ -198,9 +202,11 @@ class ImageProcessor:
         - An S3 connection object (boto3.client).
         """
         if self.environment == "local":
-            s3 = boto3.client("s3",
-                              endpoint_url="http://localstack-request-handler:4566",
-                              region_name="eu-west-1")
+            s3 = boto3.client(
+                "s3",
+                endpoint_url="http://localstack-request-handler:4566",
+                region_name="eu-west-1",
+            )
         else:
             s3 = boto3.client("s3", region_name="eu-west-1")
         return s3
@@ -225,19 +231,19 @@ class ImageProcessor:
             sm = boto3.client(service_name="secretsmanager", region_name="eu-west-1")
         return sm
 
-    def get_uid_from_event(self):
+    def get_uid_from_event(self) -> str:
         try:
-            message = self.event['Records'][0]['body']
+            message = self.event["Records"][0]["body"]
             # Parse the message and get the uid value
             message_dict = json.loads(message)
-            uid = message_dict['uid']
+            uid = message_dict["uid"]
         except KeyError:
             raise Exception("UID key exception in event body")
         except json.decoder.JSONDecodeError:
             raise Exception("Problem loading JSON from event body")
         return uid
 
-    def make_request_to_sirius(self, uid):
+    def make_request_to_sirius(self, uid: str) -> dict:
         """
         Sends a GET request to the Sirius API to retrieve scans associated with a given UID.
 
@@ -265,7 +271,7 @@ class ImageProcessor:
         return response_dict
 
     @staticmethod
-    def extract_s3_file_path(s3_path):
+    def extract_s3_file_path(s3_path: str) -> dict:
         """
         Extracts the file path from an S3 path.
 
@@ -276,7 +282,7 @@ class ImageProcessor:
             The file path and bucket portion of the S3 path as dict.
         """
         # Remove the s3:// prefix and split the path into its components.
-        path_components = s3_path[len("s3://"):].split("/", 1)
+        path_components = s3_path[len("s3://") :].split("/", 1)
         bucket = path_components[0]
 
         # The first component is the bucket name, so we only need the second component.
@@ -298,20 +304,26 @@ class ImageProcessor:
             A dictionary containing the local file paths of the downloaded scanned images.
         """
         # Extract the S3 URLs for the possible LPA sheet scans
-        lpa_scan = s3_urls_dict.get('lpaScans')
-        lpa_locations = lpa_scan.get('locations') if lpa_scan else None
+        lpa_scan = s3_urls_dict.get("lpaScans")
+        lpa_locations = lpa_scan.get("locations") if lpa_scan else None
 
         # Extract the S3 locations for the possible continuation sheet scans, if they exist
-        continuation_sheet_scan = s3_urls_dict.get('continuationSheetScans', None)
-        continuation_locations = continuation_sheet_scan.get('locations') if continuation_sheet_scan else None
+        continuation_sheet_scan = s3_urls_dict.get("continuationSheetScans", None)
+        continuation_locations = (
+            continuation_sheet_scan.get("locations")
+            if continuation_sheet_scan
+            else None
+        )
 
         # Download the LPA scan, if it exists
         scan_locations = {}
         if not lpa_locations or len(lpa_locations) == 0:
-            raise Exception(f"No documents returned by Sirius. Sirius response dictionary: {s3_urls_dict}")
+            raise Exception(
+                f"No documents returned by Sirius. Sirius response dictionary: {s3_urls_dict}"
+            )
 
-        scan_locations['scans'] = []
-        scan_locations['continuations'] = {}
+        scan_locations["scans"] = []
+        scan_locations["continuations"] = {}
         for lpa_location in lpa_locations:
             try:
                 # Extract the file path and bucket name from the S3 URL
@@ -322,11 +334,15 @@ class ImageProcessor:
                     f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
                 )
                 # Download the scan from S3 and save it to the local file path
-                self.s3.download_file(path_parts["bucket"], path_parts["file_path"], scan_location)
+                self.s3.download_file(
+                    path_parts["bucket"], path_parts["file_path"], scan_location
+                )
                 # Add the local file path to the dictionary of downloaded scan locations
-                scan_locations['scans'].append(scan_location)
+                scan_locations["scans"].append(scan_location)
             except Exception as e:
-                raise Exception(f"Error downloading scanned document {lpa_location}: {e}")
+                raise Exception(
+                    f"Error downloading scanned document {lpa_location}: {e}"
+                )
 
         # Download the continuation sheet scans, if they exist
         if not continuation_locations or len(continuation_locations) == 0:
@@ -343,12 +359,18 @@ class ImageProcessor:
                     f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
                 )
                 # Download the scan from S3 and save it to the local file path
-                self.s3.download_file(path_parts["bucket"], path_parts["file_path"], scan_location)
+                self.s3.download_file(
+                    path_parts["bucket"], path_parts["file_path"], scan_location
+                )
                 # Add the local file path to the dictionary of downloaded scan locations
                 location_position += 1
-                scan_locations['continuations'][f'continuation_{location_position}'] = scan_location
+                scan_locations["continuations"][
+                    f"continuation_{location_position}"
+                ] = scan_location
             except Exception as e:
-                raise Exception(f"Error downloading scanned continuation sheet {continuation_location}: {e}")
+                raise Exception(
+                    f"Error downloading scanned continuation sheet {continuation_location}: {e}"
+                )
 
         return scan_locations
 
@@ -363,26 +385,42 @@ class ImageProcessor:
             A list of file paths that have been selected for upload.
         """
         # Create FormOperator instance from config file
-        form_operator = FormOperator.create_from_config(f"{self.extraction_folder_path}/opg-config.yaml")
+        form_operator = FormOperator.create_from_config(
+            f"{self.extraction_folder_path}/opg-config.yaml"
+        )
         # Generate a unique folder name based on current timestamp
         self.folder_name = self.get_timestamp_as_str()
 
         # Run full pipeline to extract data from the scanned image
         continuation_keys_to_use = self.run_iap_extraction(
-            scan_locations=scan_locations,
-            form_operator=form_operator
+            scan_locations=scan_locations, form_operator=form_operator
         )
 
         # Get the list of file paths that have been extracted from the scanned images
-        paths = self.list_files(f'{self.output_folder_path}/pass/{self.folder_name}', '.jpg')
+        paths = self.list_files(
+            f"{self.output_folder_path}/pass/{self.folder_name}", ".jpg"
+        )
         logger.debug(f"Full list of paths extracted from scanned images: {paths}")
         # Select the paths to upload based on continuation keys
-        path_selection = self.get_selected_paths_for_upload(paths, continuation_keys_to_use)
+        path_selection = self.get_selected_paths_for_upload(
+            paths, continuation_keys_to_use
+        )
 
         return path_selection
 
     @staticmethod
-    def get_preprocessed_images(form_path, form_operator):
+    def get_preprocessed_images(form_path: str, form_operator: FormOperator) -> list:
+        """
+        Preprocesses the images of a form at the specified file path using the
+        provided FormOperator object.
+
+        Args:
+            form_path (str): A string containing the file path of the form to be processed.
+            form_operator (FormOperator): A FormOperator object used to preprocess the form images.
+
+        Returns:
+            list: A list of preprocessed form images after being auto-rotated based on text direction.
+        """
         logger.debug(f"Reading form from path: {form_path}")
         _, imgs = ImageReader.read(form_path)
 
@@ -397,7 +435,10 @@ class ImageProcessor:
         return rotated_images
 
     def get_ocr_matches(
-            self, processed_images: list, form_operator: FormOperator, form_meta_directory: str
+        self,
+        processed_images: list,
+        form_operator: FormOperator,
+        form_meta_directory: str,
     ) -> dict:
         """
         Applies OCR to extract text from images, filters metadata by matching form regex,
@@ -424,26 +465,30 @@ class ImageProcessor:
         matching_meta_store = self.match_first_form_image_text_to_form_meta(
             form_meta_directory, form_images_text, form_operator
         )
-        logger.debug(f"Created following metadata store based on form regex: {matching_meta_store}")
+        logger.debug(
+            f"Created following metadata store based on form regex: {matching_meta_store}"
+        )
 
         logger.debug("Attempting to identify matches based on text identification")
         matched_items = self.mixed_mode_page_identifier(
             form_images_text, matching_meta_store, processed_images
         )
-        logger.debug(f"Total matched based on OCR: {len(matched_items['image_page_map'])}")
+        logger.debug(
+            f"Total matched based on OCR: {len(matched_items['image_page_map'])}"
+        )
 
         return matched_items
 
     @staticmethod
     def extract_images(
-            matched_items: dict,
-            meta: dict,
-            meta_id: str,
-            form_operator: FormOperator,
-            scan_path: str,
-            pass_dir: str,
-            fail_dir: str,
-            run_timestamp: str
+        matched_items: dict,
+        meta: dict,
+        meta_id: str,
+        form_operator: FormOperator,
+        scan_path: str,
+        pass_dir: str,
+        fail_dir: str,
+        run_timestamp: str,
     ) -> None:
         """
         Extracts images and fields from a form, aligns them to a metadata template, and saves the result
@@ -506,7 +551,11 @@ class ImageProcessor:
             )
 
     def get_matching_continuation_items(
-            self, scan_locations: dict, form_meta_directory: str, form_operator: FormOperator) -> dict:
+        self,
+        scan_locations: dict,
+        form_meta_directory: str,
+        form_operator: FormOperator,
+    ) -> dict:
         """
         This function attempts to match continuation scan locations with corresponding items using barcodes and OCR.
 
@@ -518,26 +567,34 @@ class ImageProcessor:
         matched_lpa_scans_store = {}
 
         # Loop through scan locations and attempt to match them
-        for key, scan_location in scan_locations['continuations'].items():
+        for key, scan_location in scan_locations["continuations"].items():
             # Get preprocessed images for current scan location
-            processed_images = self.get_preprocessed_images(scan_location, form_operator)
+            processed_images = self.get_preprocessed_images(
+                scan_location, form_operator
+            )
 
             # Get form meta data
             matching_meta_store = form_operator.form_meta_store(form_meta_directory)
 
             logger.debug(f"Attempting to match {scan_location} based on barcodes...")
             # Attempt to match based on barcodes
-            matched_items = self.find_matches_from_barcodes(processed_images, matching_meta_store)
-            logger.debug(f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}")
+            matched_items = self.find_matches_from_barcodes(
+                processed_images, matching_meta_store
+            )
+            logger.debug(
+                f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}"
+            )
 
             # If no matches found using barcodes, attempt to match using OCR
-            if len(matched_items['image_page_map']) == 0:
+            if len(matched_items["image_page_map"]) == 0:
                 logger.debug(f"Attempting to match {scan_location} based on OCR...")
-                matched_items = self.get_ocr_matches(processed_images, form_operator, form_meta_directory)
+                matched_items = self.get_ocr_matches(
+                    processed_images, form_operator, form_meta_directory
+                )
 
             # If matches found, store them in the matched LPA scans store
             if len(matched_items["image_page_map"]) > 0:
-                if 'continuation_' in key:
+                if "continuation_" in key:
                     matched_lpa_scans_store[key] = {}
                     matched_lpa_scans_store[key]["match"] = matched_items
                     matched_lpa_scans_store[key]["scan_location"] = scan_location
@@ -547,47 +604,54 @@ class ImageProcessor:
         return matched_lpa_scans_store
 
     def get_matching_scan_item(
-            self,
-            scan_locations: dict,
-            complete_meta_store: dict,
-            form_meta_directory: str,
-            form_operator: FormOperator
+        self,
+        scan_locations: dict,
+        complete_meta_store: dict,
+        form_meta_directory: str,
+        form_operator: FormOperator,
     ) -> dict:
         """
         Find the matching scan item from a list of scan locations by attempting to match based on barcodes and OCR.
         Returns a dictionary containing the match and the scan location.
         """
-        matched_lpa_scans_store = {
-            "scan": {
-                "match": {},
-                "scan_location": ""
-            }
-        }
+        matched_lpa_scans_store = {"scan": {"match": {}, "scan_location": ""}}
         matches = []
         # Attempt to match based on barcodes
-        for scan_location in scan_locations['scans']:
-            processed_images = self.get_preprocessed_images(scan_location, form_operator)
+        for scan_location in scan_locations["scans"]:
+            processed_images = self.get_preprocessed_images(
+                scan_location, form_operator
+            )
             logger.debug(f"Attempting to match {scan_location} based on barcodes...")
-            matched_items = self.find_matches_from_barcodes(processed_images, complete_meta_store)
-            logger.debug(f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}")
-            if len(matched_items['image_page_map']) > 0:
-                matched_lpa_scans_store[f"scan"]["match"] = matched_items
-                matched_lpa_scans_store[f"scan"]["scan_location"] = scan_location
+            matched_items = self.find_matches_from_barcodes(
+                processed_images, complete_meta_store
+            )
+            logger.debug(
+                f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}"
+            )
+            if len(matched_items["image_page_map"]) > 0:
+                matched_lpa_scans_store["scan"]["match"] = matched_items
+                matched_lpa_scans_store["scan"]["scan_location"] = scan_location
                 matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
                 matches.append(matched_lpa_scans_store_deep)
 
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
         if len(matches) > 1:
-            raise Exception("More than one matching document path for LPA barcode scans")
+            raise Exception(
+                "More than one matching document path for LPA barcode scans"
+            )
         elif len(matches) == 1:
             return matched_lpa_scans_store
 
         # Attempt to match based on OCR
         logger.debug("Attempting to match scans based on OCR...")
-        for scan_location in scan_locations['scans']:
-            processed_images = self.get_preprocessed_images(scan_location, form_operator)
-            matched_items = self.get_ocr_matches(processed_images, form_operator, form_meta_directory)
+        for scan_location in scan_locations["scans"]:
+            processed_images = self.get_preprocessed_images(
+                scan_location, form_operator
+            )
+            matched_items = self.get_ocr_matches(
+                processed_images, form_operator, form_meta_directory
+            )
             if len(matched_items["image_page_map"]) > 0:
                 matched_lpa_scans_store["scan"]["match"] = matched_items
                 matched_lpa_scans_store["scan"]["scan_location"] = scan_location
@@ -602,9 +666,9 @@ class ImageProcessor:
             return matches[0]
 
     def run_iap_extraction(
-            self,
-            scan_locations: dict,
-            form_operator: FormOperator,
+        self,
+        scan_locations: dict,
+        form_operator: FormOperator,
     ):
         continuation_keys_to_use = []
         run_timestamp = int(datetime.datetime.utcnow().timestamp())
@@ -634,11 +698,18 @@ class ImageProcessor:
             document_path = matched_document_store_item["scan_location"]
             matched_document_items = matched_document_store_item["match"]
             self.extract_images(
-                matched_document_items, meta, meta_id, form_operator, document_path, pass_dir, fail_dir, run_timestamp
+                matched_document_items,
+                meta,
+                meta_id,
+                form_operator,
+                document_path,
+                pass_dir,
+                fail_dir,
+                run_timestamp,
             )
 
             # If the key contains "continuation_", add it to the list of continuation keys to use
-            if 'continuation_' in key:
+            if "continuation_" in key:
                 continuation_keys_to_use.append(key)
 
         return continuation_keys_to_use
@@ -656,17 +727,17 @@ class ImageProcessor:
         for image in image_list:
             # Get the current size of the image
             height, width = image.shape[:2]
-            image = cv2.resize(image, (round(2 * width), round(2 * height)), interpolation=cv2.INTER_LANCZOS4)
+            image = cv2.resize(
+                image,
+                (round(2 * width), round(2 * height)),
+                interpolation=cv2.INTER_LANCZOS4,
+            )
             doubled_images.append(image)
 
         # Return the list of doubled-size images
         return doubled_images
 
-    def find_matches_from_barcodes(
-            self,
-            images: list,
-            form_metastore: dict
-    ) -> dict:
+    def find_matches_from_barcodes(self, images: list, form_metastore: dict) -> dict:
         """
         Finds and matches barcodes in the input images to the corresponding template pages in the
         form metastore.
@@ -685,20 +756,17 @@ class ImageProcessor:
         """
         img_count = 0
         image_barcode_dict = {}
-        matched_meta = {
-            "meta_id": "",
-            "image_page_map": {}
-        }
+        matched_meta = {"meta_id": "", "image_page_map": {}}
 
         # Iterate over each image and find its barcode
         for img in images:
             height, width = img.shape[:2]
-            roi = img[0:height // 3, 2 * width // 3:width]
+            roi = img[0 : height // 3, 2 * width // 3 : width]
             barcodes = decode(roi)
 
             barcodes_decoded = []
             for barcode in barcodes:
-                barcodes_decoded.append(barcode.data.decode('utf-8'))
+                barcodes_decoded.append(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
                 image_barcode_dict[img_count] = barcodes_decoded[0]
@@ -713,15 +781,21 @@ class ImageProcessor:
             form_pages_used = []
 
             for form_page in meta.form_pages:
-                template_barcode = form_page.additional_args['extra']["barcode"]
+                template_barcode = form_page.additional_args["extra"]["barcode"]
 
                 for img_count, image_barcode in image_barcode_dict.items():
                     if template_barcode == image_barcode:
                         # Check that we haven't already matched this image or form page
-                        if img_count not in images_used and form_page.page_number not in form_pages_used:
+                        if (
+                            img_count not in images_used
+                            and form_page.page_number not in form_pages_used
+                        ):
                             logger.debug(
-                                f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}")
-                            matching_image_page[form_page.page_number] = [images[img_count]]
+                                f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}"
+                            )
+                            matching_image_page[form_page.page_number] = [
+                                images[img_count]
+                            ]
                             images_used.append(img_count)
                             form_pages_used.append(form_page.page_number)
                             self.info_msg["matched_templates"].append(
@@ -754,8 +828,12 @@ class ImageProcessor:
         for meta_id, meta in form_metastore.items():
             for form_page in meta.form_pages:
                 meta_page_text = self.get_meta_page_text(form_page)
-                for scan_page_no, form_image_as_string in enumerate(form_images_as_strings, start=1):
-                    distance = self.calculate_levenstein_distance(form_page, form_image_as_string, meta_page_text)
+                for scan_page_no, form_image_as_string in enumerate(
+                    form_images_as_strings, start=1
+                ):
+                    distance = self.calculate_levenstein_distance(
+                        form_page, form_image_as_string, meta_page_text
+                    )
                     scan_info = {
                         "meta": meta_id,
                         "distance": distance,
@@ -769,13 +847,19 @@ class ImageProcessor:
 
     def get_meta_page_text(self, form_page):
         template_page_text_file = f"{self.extraction_folder_path}/target_texts/{form_page.additional_args['extra']['page_text']}"
-        with open(template_page_text_file, 'r') as file:
-            meta_page_text = file.read().replace('\n', '')
+        with open(template_page_text_file, "r") as file:
+            meta_page_text = file.read().replace("\n", "")
         return meta_page_text
 
-    def calculate_levenstein_distance(self, form_page, form_image_as_string, meta_page_text):
+    def calculate_levenstein_distance(
+        self, form_page, form_image_as_string, meta_page_text
+    ):
         page_regex = form_page.identifier
-        regex_match = True if re.search(page_regex, form_image_as_string, re.DOTALL) is not None else False
+        regex_match = (
+            True
+            if re.search(page_regex, form_image_as_string, re.DOTALL) is not None
+            else False
+        )
         if regex_match:
             distance = self.levenstein_distance(form_image_as_string, meta_page_text)
         else:
@@ -785,17 +869,23 @@ class ImageProcessor:
     def get_similarity_score(self, sorted_scan_template_entities):
         similarity_score = self.similarity_score(
             sorted_scan_template_entities[0]["meta_page_text"],
-            sorted_scan_template_entities[0]["form_image_as_string"]
+            sorted_scan_template_entities[0]["form_image_as_string"],
         )
         logger.debug(f"Top similarity score is: {similarity_score}")
         return similarity_score
 
     @staticmethod
     def get_meta_id_to_use(sorted_scan_template_entities):
-        meta_id_to_use = sorted_scan_template_entities[0]['meta']
+        meta_id_to_use = sorted_scan_template_entities[0]["meta"]
         return meta_id_to_use
 
-    def get_matching_image_results(self, meta_id_to_use, similarity_score, sorted_scan_template_entities, form_images):
+    def get_matching_image_results(
+        self,
+        meta_id_to_use,
+        similarity_score,
+        sorted_scan_template_entities,
+        form_images,
+    ):
         matching_image_results = {"meta_id": meta_id_to_use, "image_page_map": {}}
         if similarity_score < 0.7:
             return matching_image_results
@@ -803,29 +893,40 @@ class ImageProcessor:
         scan_pages_used = set()
         templates_to_keep = []
         for scan_template_entity in sorted_scan_template_entities:
-            template_page_no = scan_template_entity['template_page_no']
-            scan_page_no = scan_template_entity['scan_page_no']
-            meta_id = scan_template_entity['meta']
-            if template_page_no not in template_pages_used and scan_page_no not in scan_pages_used and meta_id == meta_id_to_use:
+            template_page_no = scan_template_entity["template_page_no"]
+            scan_page_no = scan_template_entity["scan_page_no"]
+            meta_id = scan_template_entity["meta"]
+            if (
+                template_page_no not in template_pages_used
+                and scan_page_no not in scan_pages_used
+                and meta_id == meta_id_to_use
+            ):
                 scan_pages_used.add(scan_page_no)
                 template_pages_used.add(template_page_no)
                 templates_to_keep.append(scan_template_entity)
 
         for template_to_keep in templates_to_keep:
-            template_page_no = template_to_keep['template_page_no']
-            scan_page_no = template_to_keep['scan_page_no']
-            matching_image_results["image_page_map"].setdefault(template_page_no, []).append(
-                form_images[scan_page_no - 1])
+            template_page_no = template_to_keep["template_page_no"]
+            scan_page_no = template_to_keep["scan_page_no"]
+            matching_image_results["image_page_map"].setdefault(
+                template_page_no, []
+            ).append(form_images[scan_page_no - 1])
             self.info_msg["matched_templates"].append(
                 f"Match on {meta_id_to_use} with OCR match "
                 f"for scan page number {scan_page_no} from template page number {template_page_no}"
             )
         return matching_image_results
 
-    def mixed_mode_page_identifier(self, form_images_as_strings: list, form_metastore: dict, form_images: list) -> dict:
-        scan_to_template_distances = self.create_scan_to_template_distances(form_images_as_strings, form_metastore)
-        sorted_scan_template_entities = sorted(scan_to_template_distances,
-                                               key=lambda x: (x['distance'], x['template_page_no'], x['scan_page_no']))
+    def mixed_mode_page_identifier(
+        self, form_images_as_strings: list, form_metastore: dict, form_images: list
+    ) -> dict:
+        scan_to_template_distances = self.create_scan_to_template_distances(
+            form_images_as_strings, form_metastore
+        )
+        sorted_scan_template_entities = sorted(
+            scan_to_template_distances,
+            key=lambda x: (x["distance"], x["template_page_no"], x["scan_page_no"]),
+        )
         similarity_score = self.get_similarity_score(sorted_scan_template_entities)
         meta_id_to_use = self.get_meta_id_to_use(sorted_scan_template_entities)
         matching_image_results = self.get_matching_image_results(
@@ -862,7 +963,9 @@ class ImageProcessor:
 
     @staticmethod
     def match_first_form_image_text_to_form_meta(
-        form_meta_directory: str, form_images_as_strings: list, form_operator: FormOperator
+        form_meta_directory: str,
+        form_images_as_strings: list,
+        form_operator: FormOperator,
     ) -> dict:
         """Filters form meta directory using given form image string
         of first page
@@ -884,7 +987,9 @@ class ImageProcessor:
         """
         results = {}
         for id, meta in form_operator.form_meta_store(form_meta_directory).items():
-            valid, _ = form_operator.form_identifier_match([form_images_as_strings[0]], meta)
+            valid, _ = form_operator.form_identifier_match(
+                [form_images_as_strings[0]], meta
+            )
             if valid:
                 results[id] = meta
         return results
@@ -892,8 +997,8 @@ class ImageProcessor:
     @staticmethod
     def similarity_score(str1, str2):
         # remove non-alphanumeric characters and split into words
-        words1 = re.findall(r'\w+', str1.lower())
-        words2 = re.findall(r'\w+', str2.lower())
+        words1 = re.findall(r"\w+", str1.lower())
+        words2 = re.findall(r"\w+", str2.lower())
 
         # count the occurrence of each word in both strings
         word_count1 = Counter(words1)
@@ -916,24 +1021,32 @@ class ImageProcessor:
 
     def put_images_to_bucket(self, path_selection):
         for key, value in path_selection.items():
-            image = f'iap-{self.uid}-{key}'
+            image = f"iap-{self.uid}-{key}"
             try:
                 self.s3.put_object(
                     Bucket=self.iap_bucket,
                     Key=image,
-                    Body=open(value, 'rb'),
-                    ServerSideEncryption='AES256',
+                    Body=open(value, "rb"),
+                    ServerSideEncryption="AES256",
                     Metadata={
-                        'ContinuationSheetsInstructions': str(self.continuation_instruction_count),
-                        'ContinuationSheetsPreferences': str(self.continuation_preference_count)
-                    }
+                        "ContinuationSheetsInstructions": str(
+                            self.continuation_instruction_count
+                        ),
+                        "ContinuationSheetsPreferences": str(
+                            self.continuation_preference_count
+                        ),
+                    },
                 )
                 logger.debug(f"File '{image}' added to the '{self.iap_bucket}' bucket.")
                 self.info_msg["images_uploaded"].append(image)
             except Exception as e:
-                raise Exception(f"Failed to add file '{image}' to the '{self.iap_bucket}' bucket: {e}")
+                raise Exception(
+                    f"Failed to add file '{image}' to the '{self.iap_bucket}' bucket: {e}"
+                )
 
-    def find_instruction_and_preference_paths(self, path_selection: dict, paths: list) -> dict:
+    def find_instruction_and_preference_paths(
+        self, path_selection: dict, paths: list
+    ) -> dict:
         """
         Searches through a dictionary of file paths to find the paths to the instructions and preferences files.
         Also detects if continuation checkboxes are marked, and sets continuation flags accordingly.
@@ -955,54 +1068,44 @@ class ImageProcessor:
 
         for path in paths:
             if self.string_fragments_in_string(
-                    target_string=path,
-                    mandatory_fragments=[
-                        'field_name=preferences'
-                    ],
-                    one_of_fragments=[
-                        'meta=lp1f',
-                        'meta=lp1h',
-                        'meta=pfa117',
-                        'meta=hw114'
-                    ]
+                target_string=path,
+                mandatory_fragments=["field_name=preferences"],
+                one_of_fragments=[
+                    "meta=lp1f",
+                    "meta=lp1h",
+                    "meta=pfa117",
+                    "meta=hw114",
+                ],
             ):
-                path_selection['preferences'] = path
-                logger.debug(f'Found preferences path {path}')
+                path_selection["preferences"] = path
+                logger.debug(f"Found preferences path {path}")
             elif self.string_fragments_in_string(
-                    target_string=path,
-                    mandatory_fragments=[
-                        'field_name=instructions'
-                    ],
-                    one_of_fragments=[
-                        'meta=lp1f',
-                        'meta=lp1h',
-                        'meta=pfa117',
-                        'meta=hw114'
-                    ]
+                target_string=path,
+                mandatory_fragments=["field_name=instructions"],
+                one_of_fragments=[
+                    "meta=lp1f",
+                    "meta=lp1h",
+                    "meta=pfa117",
+                    "meta=hw114",
+                ],
             ):
-                path_selection['instructions'] = path
-                logger.debug(f'Found instructions path {path}')
+                path_selection["instructions"] = path
+                logger.debug(f"Found instructions path {path}")
             elif self.string_fragments_in_string(
-                    target_string=path,
-                    mandatory_fragments=[
-                        'field_name=continuation_checkbox_instructions',
-                    ],
-                    one_of_fragments=[
-                        'meta=lp1f',
-                        'meta=lp1h'
-                    ]
+                target_string=path,
+                mandatory_fragments=[
+                    "field_name=continuation_checkbox_instructions",
+                ],
+                one_of_fragments=["meta=lp1f", "meta=lp1h"],
             ):
                 if self.detect_marked_checkbox(path):
                     continuation_instructions = True
             elif self.string_fragments_in_string(
-                    target_string=path,
-                    mandatory_fragments=[
-                        'field_name=continuation_checkbox_preferences',
-                    ],
-                    one_of_fragments=[
-                        'meta=lp1f',
-                        'meta=lp1h'
-                    ]
+                target_string=path,
+                mandatory_fragments=[
+                    "field_name=continuation_checkbox_preferences",
+                ],
+                one_of_fragments=["meta=lp1f", "meta=lp1h"],
             ):
                 if self.detect_marked_checkbox(path):
                     continuation_preferences = True
@@ -1010,10 +1113,12 @@ class ImageProcessor:
         return {
             "path_selection": path_selection,
             "continuation_instructions": continuation_instructions,
-            "continuation_preferences": continuation_preferences
+            "continuation_preferences": continuation_preferences,
         }
 
-    def get_continuation_sheet_paths(self, paths, continuation_sheet_type, path_filter) -> dict:
+    def get_continuation_sheet_paths(
+        self, paths, continuation_sheet_type, path_filter
+    ) -> dict:
         """
         Get the paths of the continuation sheet pages and the types of checkboxes checked
         for a single continuation sheet.
@@ -1029,46 +1134,40 @@ class ImageProcessor:
 
         # Structure of return object defined here for clarity.
         # This is all the data we need for a single continuation sheet
-        pages = {
-            'p1': {
-                'path': '',
-                'type': ''
-            },
-            'p2': {
-                'path': '',
-                'type': ''
-            }
-        }
+        pages = {"p1": {"path": "", "type": ""}, "p2": {"path": "", "type": ""}}
 
         checkboxes = {
-            'preferences': {
-                'p1': 'field_name=preferences_checkbox_p1',
-                'p2': 'field_name=preferences_checkbox_p2'
+            "preferences": {
+                "p1": "field_name=preferences_checkbox_p1",
+                "p2": "field_name=preferences_checkbox_p2",
             },
-            'instructions': {
-                'p1': 'field_name=instructions_checkbox_p1',
-                'p2': 'field_name=instructions_checkbox_p2'
-            }
+            "instructions": {
+                "p1": "field_name=instructions_checkbox_p1",
+                "p2": "field_name=instructions_checkbox_p2",
+            },
         }
-        checked_checkboxes = {'p1': [], 'p2': []}
-        warning_message = 'Found unexpected continuation sheet type.'
+        checked_checkboxes = {"p1": [], "p2": []}
+        warning_message = "Found unexpected continuation sheet type."
 
         # Loops over the paths filtered by our filter.
         # Finds out which checkbox type is ticked for each page.
         # Adds the path for the actual text box for each page
         for path in paths:
             if path_filter in path:
-                for page in ['p1', 'p2']:
-                    for sheet_type in ['preferences', 'instructions']:
+                for page in ["p1", "p2"]:
+                    for sheet_type in ["preferences", "instructions"]:
                         checkbox = checkboxes[sheet_type][page]
                         # Checks on checkbox type for each page and appends and checked boxes to a list
                         if self.string_fragments_in_string(
-                                target_string=path,
-                                mandatory_fragments=[checkbox],
-                                one_of_fragments=['meta=lpc']
+                            target_string=path,
+                            mandatory_fragments=[checkbox],
+                            one_of_fragments=["meta=lpc"],
                         ):
                             if self.detect_marked_checkbox(path):
-                                if continuation_sheet_type in ['BOTH', sheet_type.upper()]:
+                                if continuation_sheet_type in [
+                                    "BOTH",
+                                    sheet_type.upper(),
+                                ]:
                                     checked_checkboxes[page].append(sheet_type)
                                 else:
                                     logger.warning(
@@ -1077,30 +1176,38 @@ class ImageProcessor:
                                     checked_checkboxes[page].append(sheet_type)
                         # Appends the continuation sheet text to path item of pages dict for each page
                         elif self.string_fragments_in_string(
-                                target_string=path,
-                                mandatory_fragments=[f'field_name=continuation_sheet_{page}'],
-                                one_of_fragments=['meta=lpc']
+                            target_string=path,
+                            mandatory_fragments=[
+                                f"field_name=continuation_sheet_{page}"
+                            ],
+                            one_of_fragments=["meta=lpc"],
                         ):
-                            pages[page]['path'] = path
+                            pages[page]["path"] = path
 
-        for page in ['p1', 'p2']:
+        for page in ["p1", "p2"]:
             if len(checked_checkboxes[page]) > 1:
-                logger.warning(f"User has ticked more than one checkbox for page {page} of path {path_filter}")
+                logger.warning(
+                    f"User has ticked more than one checkbox for page {page} of path {path_filter}"
+                )
             # Make type neither where no checkboxes ticked or the last type ticked otherwise
-            pages[page]['type'] = 'neither' if not checked_checkboxes[page] else checked_checkboxes[page][-1]
+            pages[page]["type"] = (
+                "neither"
+                if not checked_checkboxes[page]
+                else checked_checkboxes[page][-1]
+            )
 
         return pages
 
     @staticmethod
     def get_continuation_sheet_type(instructions, preferences):
         if preferences and instructions:
-            return 'BOTH'
+            return "BOTH"
         elif instructions:
-            return 'INSTRUCTIONS'
+            return "INSTRUCTIONS"
         elif preferences:
-            return 'PREFERENCES'
+            return "PREFERENCES"
         else:
-            return 'NEITHER'
+            return "NEITHER"
 
     def get_selected_paths_for_upload(self, paths, continuation_keys_to_use) -> dict:
         """
@@ -1120,28 +1227,33 @@ class ImageProcessor:
         path_selection = {}
 
         # Find the instruction and preference paths
-        instructions_and_preferences = self.find_instruction_and_preference_paths(path_selection, paths)
-        logger.debug(f"List of IaP paths found: {instructions_and_preferences['path_selection']}")
+        instructions_and_preferences = self.find_instruction_and_preference_paths(
+            path_selection, paths
+        )
+        logger.debug(
+            f"List of IaP paths found: {instructions_and_preferences['path_selection']}"
+        )
 
         # Extract the path selection and continuation sheet type from the instructions_and_preferences
         path_selection = instructions_and_preferences["path_selection"]
         continuation_sheet_type = self.get_continuation_sheet_type(
-            instructions_and_preferences["continuation_instructions"], instructions_and_preferences["continuation_preferences"]
+            instructions_and_preferences["continuation_instructions"],
+            instructions_and_preferences["continuation_preferences"],
         )
 
         # Loop through each continuation key and get the corresponding continuation sheet paths
         continuation_sheets = {}
         for continuation_key in continuation_keys_to_use:
-            path_filter = f'pass/{self.folder_name}/{continuation_key}'
+            path_filter = f"pass/{self.folder_name}/{continuation_key}"
             continuation_sheets[continuation_key] = self.get_continuation_sheet_paths(
-                paths,
-                continuation_sheet_type,
-                path_filter
+                paths, continuation_sheet_type, path_filter
             )
         logger.debug(f"List of Continuation sheets found: {continuation_sheets}")
 
         # Created the final combined object of instructions, preferences and continuation sheets
-        path_selection = self.merge_continuation_images_into_path_selection(path_selection, continuation_sheets)
+        path_selection = self.merge_continuation_images_into_path_selection(
+            path_selection, continuation_sheets
+        )
 
         return path_selection
 
@@ -1153,14 +1265,20 @@ class ImageProcessor:
             paths_to_extracted_images (dict): A dictionary containing paths to extracted images.
         """
         self.continuation_instruction_count = sum(
-            1 for key in paths_to_extracted_images.keys() if "continuation_instructions" in key
+            1
+            for key in paths_to_extracted_images.keys()
+            if "continuation_instructions" in key
         )
         self.continuation_preference_count = sum(
-            1 for key in paths_to_extracted_images.keys() if "continuation_preferences" in key
+            1
+            for key in paths_to_extracted_images.keys()
+            if "continuation_preferences" in key
         )
 
     @staticmethod
-    def merge_continuation_images_into_path_selection(path_selection, continuation_sheets) -> dict:
+    def merge_continuation_images_into_path_selection(
+        path_selection, continuation_sheets
+    ) -> dict:
         """
         Merge continuation images into path selection.
 
@@ -1190,7 +1308,9 @@ class ImageProcessor:
         return path_selection
 
     @staticmethod
-    def string_fragments_in_string(target_string, mandatory_fragments, one_of_fragments) -> bool:
+    def string_fragments_in_string(
+        target_string, mandatory_fragments, one_of_fragments
+    ) -> bool:
         """
         Check if all mandatory fragments are present in the target string and at least one of the optional fragments is present.
         Args:
@@ -1227,7 +1347,9 @@ class ImageProcessor:
         # Load the image in grayscale
         img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 
-        (thresh, im_bw) = cv2.threshold(img, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+        (thresh, im_bw) = cv2.threshold(
+            img, 128, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU
+        )
 
         # Mask always seems to be black so we invert so mask and background match
         im_bw_inverted = cv2.bitwise_not(im_bw)
@@ -1238,12 +1360,17 @@ class ImageProcessor:
 
         # Create a mask to ignore the border
         mask = np.zeros((img_height, img_width), np.uint8)
-        mask[border_size:img_height - border_size, border_size:img_width - border_size] = 255
+        mask[
+            border_size : img_height - border_size,
+            border_size : img_width - border_size,
+        ] = 255
 
         # Apply the mask to the image
         im_bw_inverted = cv2.bitwise_and(im_bw_inverted, im_bw_inverted, mask=mask)
 
-        number_of_white_pix = np.sum(im_bw_inverted == 255)  # extracting only white pixels
+        number_of_white_pix = np.sum(
+            im_bw_inverted == 255
+        )  # extracting only white pixels
         number_of_black_pix = np.sum(im_bw_inverted == 0)
         total_pixels = number_of_white_pix + number_of_black_pix
         percentage_black = number_of_black_pix / total_pixels
@@ -1267,10 +1394,14 @@ class ImageProcessor:
         secret_name = f"{self.secret_key_prefix}/jwt-key"
 
         try:
-            get_secret_value_response = self.secret_manager.get_secret_value(SecretId=secret_name)
+            get_secret_value_response = self.secret_manager.get_secret_value(
+                SecretId=secret_name
+            )
             secret = get_secret_value_response["SecretString"]
         except ClientError as e:
-            raise Exception(f"Unable to get secret for JWT key from Secrets Manager: {e}")
+            raise Exception(
+                f"Unable to get secret for JWT key from Secrets Manager: {e}"
+            )
 
         return secret
 
