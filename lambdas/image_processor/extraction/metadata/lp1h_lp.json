@@ -1,0 +1,84 @@
+{
+  "$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+  "name": "lp1h-lp.pdf",
+  "description": "",
+  "file_format": "",
+  "sensitive": false,
+  "columns": [
+    {
+      "name": "preferences",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 176,
+        "width": 1342,
+        "top": 611,
+        "height": 530
+      },
+      "type": "string"
+    },
+    {
+      "name": "continuation_checkbox_preferences",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 174,
+        "width": 91,
+        "top": 1158,
+        "height": 94
+      },
+      "type": "string"
+    },
+    {
+      "name": "instructions",
+      "page_number": 2,
+      "bounding_box": {
+        "left": 176,
+        "width": 1341,
+        "top": 967,
+        "height": 557
+      },
+      "type": "string"
+    },
+    {
+      "name": "continuation_checkbox_instructions",
+      "page_number": 2,
+      "bounding_box": {
+        "left": 175,
+        "width": 90,
+        "top": 1540,
+        "height": 94
+      },
+      "type": "string"
+    }
+  ],
+  "primary_key": [],
+  "partitions": [],
+  "form_pages": [
+    {
+      "page_number": 1,
+      "identifier": "(.*Preferences.*LP1H.*)",
+      "required": true,
+      "duplicates": false,
+      "extra": {
+        "page_text": "lp1h_lp_1.txt",
+        "barcode": ""
+      }
+    },
+    {
+      "page_number": 2,
+      "identifier": "(.*Instructions.*LP1H.*)",
+      "required": true,
+      "duplicates": false,
+      "extra": {
+        "page_text": "lp1h_lp_2.txt",
+        "barcode": ""
+      }
+    }
+  ],
+  "form_formats": [
+    "pdf"
+  ],
+  "form_identifier": "(.*LP1H.*)",
+  "from_template": "",
+  "excluded_sections": [],
+  "form_template": "opg_images/lp1h_lp_images"
+}
