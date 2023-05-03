@@ -1,11 +1,11 @@
+import datetime
 import os
+
 import boto3
 import requests
 import pytest
 import jwt
-import numpy as np
 from unittest.mock import patch, Mock, MagicMock
-from botocore.exceptions import ClientError
 from moto import mock_secretsmanager, mock_s3
 from app.handler import ImageProcessor
 from form_tools.form_operators import FormOperator
@@ -30,6 +30,12 @@ def image_processor():
     return ImageProcessor(event)
 
 
+@pytest.fixture
+def form_operator():
+    extraction_folder_path = 'extraction'
+    return FormOperator.create_from_config(f"{extraction_folder_path}/opg-config.yaml")
+
+
 def test_init_function(image_processor):
     assert image_processor.environment == os.getenv('ENVIRONMENT')
     assert image_processor.target_environment == os.getenv('TARGET_ENVIRONMENT')
@@ -47,6 +53,87 @@ def test_init_function(image_processor):
     assert image_processor.continuation_preference_count == 0
     assert image_processor.secret_manager is not None
     assert image_processor.uid is None
+
+
+@patch("os.walk")
+def test_list_files(mock_walk, image_processor):
+    # Create a mock file system to test the function
+    mock_walk.return_value = [
+        ("/test", ["dir1", "dir2"], ["file1.txt", "file2.png"]),
+        ("/test/dir1", [], ["file3.txt", "file4.pdf"]),
+        ("/test/dir2", [], ["file5.txt", "file6.jpg"]),
+    ]
+
+    # Test the function with a specified filepath and filetype
+    file_paths = image_processor.list_files("/test", ".txt")
+
+    # Verify that the correct file paths are returned
+    assert file_paths == [
+        "/test/file1.txt",
+        "/test/dir1/file3.txt",
+        "/test/dir2/file5.txt",
+    ]
+
+
+def test_get_timestamp_as_str(image_processor):
+    # Get the current timestamp as a string
+    timestamp_str = image_processor.get_timestamp_as_str()
+
+    # Verify that the timestamp string is correct
+    expected_str = str(int(datetime.datetime.utcnow().timestamp()))
+    assert timestamp_str == expected_str
+
+
+def test_create_output_dir(tmpdir, image_processor):
+    # Create a temporary directory to use as the output folder
+    # output_dir = str(tmpdir.join('output'))
+    image_processor.output_folder_path = str(tmpdir.join('output'))
+    # Call the method
+    image_processor.create_output_dir()
+    # Check that the output directory and subdirectories were created
+    assert os.path.exists(image_processor.output_folder_path)
+    assert os.path.exists(os.path.join(image_processor.output_folder_path, 'pass'))
+    assert os.path.exists(os.path.join(image_processor.output_folder_path, 'fail'))
+
+
+# def test_cleanup(image_processor, tmpdir):
+#     # Create a temporary directory to use as the output folder path
+#     output_folder_path = str(tmpdir.join("output"))
+#
+#     # Create a test PDF file that is more than 1 hour old
+#     old_pdf_file_path = os.path.join(output_folder_path, "old.pdf")
+#     with open(old_pdf_file_path, "w") as f:
+#         f.write("This is an old PDF file.")
+#     os.utime(old_pdf_file_path, (time.time() - 7200, time.time() - 7200))
+#
+#     # Create a test pass folder that is more than 1 hour old
+#     old_pass_folder_path = os.path.join(output_folder_path, "pass", "1234567890")
+#     os.makedirs(old_pass_folder_path)
+#     os.utime(old_pass_folder_path, (time.time() - 7200, time.time() - 7200))
+#
+#     # Create a test fail folder that is less than 1 hour old
+#     new_fail_folder_path = os.path.join(output_folder_path, "fail", "1234567890")
+#     os.makedirs(new_fail_folder_path)
+#
+#     # Create an instance of MyClass with the temporary directory as the output folder path
+#     image_processor.output_folder_path = output_folder_path
+#
+#     # Define the input dictionary for the cleanup method
+#     downloaded_document_locations = {
+#         "scans": [old_pdf_file_path],
+#         "continuations": {"test": new_fail_folder_path},
+#     }
+#
+#     # Call the cleanup method
+#     output_folder_path.cleanup(downloaded_document_locations)
+#     # Check that the old PDF file was deleted
+#     assert not os.path.exists(old_pdf_file_path)
+#     # Check that the old pass folder was deleted
+#     assert not os.path.exists(old_pass_folder_path)
+#     # Check that the new fail folder was not deleted
+#     assert os.path.exists(new_fail_folder_path)
+#     # Check that the temporary output folder was not deleted
+#     assert os.path.exists(output_folder_path)
 
 
 @patch('boto3.client')
@@ -114,11 +201,10 @@ def test_make_request_to_sirius_exception(mock_get, monkeypatch):
     }
     monkeypatch.setattr(image_processor, "build_sirius_headers", mock_sirius_headers)
     # Call the method with a valid UID
-    response_dict = image_processor.make_request_to_sirius(test_uid)
+    with pytest.raises(Exception) as e:
+        _ = image_processor.make_request_to_sirius(test_uid)
 
-    # Verify the response
-    assert response_dict == {"error": "Error getting response from Sirius"}
-
+    assert str(e.value) == "Error getting response from Sirius: Test Exception"
 
 def test_make_request_to_sirius_decode_exception(mock_get, monkeypatch):
     # Setup the mock response
@@ -136,10 +222,10 @@ def test_make_request_to_sirius_decode_exception(mock_get, monkeypatch):
     }
     monkeypatch.setattr(image_processor, "build_sirius_headers", mock_sirius_headers)
 
-    response_dict = image_processor.make_request_to_sirius(test_uid)
+    with pytest.raises(Exception) as e:
+        _ = image_processor.make_request_to_sirius(test_uid)
 
-    # Verify the response
-    assert response_dict == {"error": "Error decoding response from Sirius"}
+    assert str(e.value) == "Unable to decode sirius JSON: Expecting value: line 1 column 1 (char 0)"
 
 
 def test_extract_s3_file_path(image_processor):
@@ -159,9 +245,13 @@ def test_extract_s3_file_path(image_processor):
 def test_download_scanned_images(image_processor, monkeypatch):
     # Define test data
     s3_urls_dict = {
-        "lpaScan": {"location": "s3://my_bucket/my_scan.pdf"},
-        "continuationSheetScan": {
-            "location": [
+        "lpaScans": {
+            "locations": [
+                "s3://my_bucket/my_scan.pdf"
+            ]
+         },
+        "continuationSheetScans": {
+            "locations": [
                 "s3://my_bucket/my_continuation_sheet1.pdf",
                 "s3://my_bucket/my_continuation_sheet2.pdf"
             ]
@@ -187,10 +277,13 @@ def test_download_scanned_images(image_processor, monkeypatch):
 
     # Check that the function returned the expected file paths
     expected_result = {
-        "scan": "/tmp/output/my_scan.pdf",
-        "continuation_1": "/tmp/output/my_continuation_sheet1.pdf",
-        "continuation_2": "/tmp/output/my_continuation_sheet2.pdf",
+        'scans': ['/tmp/output/my_scan.pdf'],
+        'continuations': {
+            'continuation_1': '/tmp/output/my_continuation_sheet1.pdf',
+            'continuation_2': '/tmp/output/my_continuation_sheet2.pdf'
+        }
     }
+
     assert result == expected_result
 
 
@@ -205,7 +298,7 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
     image_locations = {"scan": f"{extraction_folder_path}/test_image.jpg"}
 
     run_iap_extraction_mock = MagicMock()
-    run_iap_extraction_mock.return_value = None
+    run_iap_extraction_mock.return_value = []
 
     monkeypatch.setattr(image_processor, "run_iap_extraction", run_iap_extraction_mock)
 
@@ -233,16 +326,203 @@ def test_extract_instructions_and_preferences(image_processor, monkeypatch):
     form_operator = FormOperator.create_from_config(f"{extraction_folder_path}/opg-config.yaml")
     # Assert that the mocked functions were called as expected
     image_processor.run_iap_extraction.assert_called_once_with(
-        form_path=image_locations["scan"],
-        pass_dir=f"{temp_output}/pass/{folder_name}/scan",
-        fail_dir=f"{temp_output}/fail/{folder_name}/scan",
-        form_meta_directory=f"{extraction_folder_path}/metadata",
+        scan_locations={'scan': image_locations["scan"]},
         form_operator=form_operator
     )
     list_files_mock.assert_called_once_with(
         f"{temp_output}/pass/1234", ".jpg"
     )
 
+
+def test_get_preprocessed_images(monkeypatch, tmp_path, image_processor):
+    # Create a fake PDF with two pages
+    pdf_path = tmp_path / "test.pdf"
+    with pdf_path.open(mode="wb") as f:
+        f.write(b"fake PDF")
+
+    # Mock ImageReader.read to return a list of two images
+    mock_image_reader = MagicMock()
+    mock_image_reader.read.return_value = (None, [None, None])
+    monkeypatch.setattr("form_tools.utils.image_reader.ImageReader.read", mock_image_reader.read)
+
+    # Mock the form operator methods
+    mock_form_operator = MagicMock()
+    mock_form_operator.preprocess_form_images.return_value = [None, None]
+    mock_form_operator.auto_rotate_form_images.return_value = [None, None]
+    monkeypatch.setattr("form_tools.form_operators.FormOperator", lambda: mock_form_operator)
+
+    # Call the function under test
+    images = image_processor.get_preprocessed_images(pdf_path, mock_form_operator)
+
+    # Assert that the correct number of images were returned
+    assert len(images) == 2
+
+    # Assert that ImageReader.read was called with the correct arguments
+    mock_image_reader.read.assert_called_once_with(pdf_path)
+
+    # Assert that the form operator methods were called with the correct arguments
+    mock_form_operator.preprocess_form_images.assert_called_once_with([None, None])
+    mock_form_operator.auto_rotate_form_images.assert_called_once_with([None, None])
+
+
+def test_get_ocr_matches(monkeypatch, form_operator, image_processor):
+    # mock the double_image_size and match_first_form_image_text_to_form_meta methods
+    monkeypatch.setattr(image_processor, 'double_image_size', MagicMock(return_value=['img1', 'img2']))
+    monkeypatch.setattr('form_tools.form_operators.FormOperator.form_images_to_text', MagicMock(return_value=['text1', 'text2']))
+    monkeypatch.setattr(image_processor, 'match_first_form_image_text_to_form_meta', MagicMock(return_value=['meta1', 'meta2']))
+    monkeypatch.setattr(image_processor, 'mixed_mode_page_identifier', MagicMock(return_value={"image_page_map": {"1": ['numpyarray']}}))
+    # call the get_ocr_matches function with mock inputs
+    result = image_processor.get_ocr_matches(['img1', 'img2'], form_operator, '/path/to/form/meta')
+
+    # assert that the form_images_to_text method was called with the correct input
+    form_operator.form_images_to_text.assert_called_once_with(['img1', 'img2'])
+    # assert that the methods were called with the correct input
+    image_processor.double_image_size.assert_called_once_with(['img1', 'img2'])
+    image_processor.match_first_form_image_text_to_form_meta.assert_called_once_with('/path/to/form/meta', ['text1', 'text2'], form_operator)
+    image_processor.mixed_mode_page_identifier.assert_called_once_with(['text1', 'text2'], ['meta1', 'meta2'], ['img1', 'img2'])
+    # assert that the function returned the correct output
+    assert result == {"image_page_map": {"1": ['numpyarray']}}
+
+
+def test_extract_images(monkeypatch, image_processor, form_operator):
+    # Setup
+    matched_items = {
+        "image_page_map": {
+            (0, 0): [0]
+        }
+    }
+    meta = {}
+    meta_id = "test_meta_id"
+    scan_path = "test_scan_path"
+    pass_dir = "test_pass_dir"
+    fail_dir = "test_fail_dir"
+    run_timestamp = "test_timestamp"
+
+    # Lightest possible assertions here...
+    monkeypatch.setattr(
+        "form_tools.form_operators.FormOperator.align_images_to_template",
+        MagicMock(return_value=[])
+    )
+    monkeypatch.setattr(
+        "form_tools.form_operators.FormOperator.extract_fields",
+        MagicMock(return_value=[])
+    )
+
+    monkeypatch.setattr(
+        "form_tools.form_operators.FormOperator._write_to_pass",
+        MagicMock(return_value=[])
+    )
+
+    monkeypatch.setattr(
+        "form_tools.form_operators.FormOperator._copy_to_fail",
+        MagicMock(return_value=[])
+    )
+
+    # Call function and assert
+    image_processor.extract_images(
+        matched_items, meta, meta_id, form_operator, scan_path, pass_dir, fail_dir, run_timestamp
+    )
+
+    # Assert that methods were called
+    assert form_operator.align_images_to_template.call_count == 1
+    assert form_operator.extract_fields.call_count == 1
+    assert form_operator._write_to_pass.call_count == 1
+    assert form_operator._copy_to_fail.call_count == 0 # Should not be called since no error was raised
+
+
+def test_get_matching_continuation_items(image_processor, form_operator, monkeypatch):
+    # Barcode match scenario
+
+    # Create test data
+    scan_locations = {
+        "continuations": {
+            "continuation_1": "path/to/image1",
+            "continuation_2": "path/to/image2"
+        }
+    }
+    form_meta_directory = "path/to/meta/directory"
+
+    # Set up mock for form_operator methods
+    monkeypatch.setattr(
+        image_processor,
+        "get_preprocessed_images",
+        MagicMock(return_value=[])
+    )
+    monkeypatch.setattr(
+        "form_tools.form_operators.FormOperator.form_meta_store",
+        MagicMock(return_value={"meta1": {"field1": "value1"}, "meta2": {"field2": "value2"}})
+    )
+    monkeypatch.setattr(
+        image_processor,
+        "find_matches_from_barcodes",
+        MagicMock(return_value={
+            "image_page_map": {"1": ["numpy_image"]},
+            "meta_id": "lpc"
+        })
+    )
+
+    # Set up mock for logger
+    mock_logger_debug = Mock()
+    monkeypatch.setattr("builtins.print", mock_logger_debug)
+
+    # Call the function
+    result = image_processor.get_matching_continuation_items(scan_locations, form_meta_directory, form_operator)
+    expected = {
+        'continuation_1': {
+            'match': {
+                'image_page_map': {'1': ['numpy_image']},
+                'meta_id': 'lpc'
+            },
+            'scan_location': 'path/to/image1'
+        },
+        'continuation_2': {
+            'match': {
+                'image_page_map': {'1': ['numpy_image']},
+                'meta_id': 'lpc'
+            },
+            'scan_location': 'path/to/image2'
+        }
+    }
+    # Assertions
+    assert image_processor.get_preprocessed_images.call_count == 2  # Called once for each scan location
+    assert result == expected
+
+    # OCR match scenario
+    monkeypatch.setattr(
+        image_processor,
+        "find_matches_from_barcodes",
+        MagicMock(return_value={
+            "image_page_map": {},
+            "meta_id": ""
+        })
+    )
+
+    monkeypatch.setattr(
+        image_processor,
+        "get_ocr_matches",
+        MagicMock(return_value={
+            "image_page_map": {"1": ["numpy_image2"]},
+            "meta_id": "lpc2"
+        })
+    )
+    result = image_processor.get_matching_continuation_items(scan_locations, form_meta_directory, form_operator)
+    expected = {
+        'continuation_1': {
+            'match': {
+                'image_page_map': {'1': ['numpy_image2']},
+                'meta_id': 'lpc2'
+            },
+            'scan_location': 'path/to/image1'
+        },
+        'continuation_2': {
+            'match': {
+                'image_page_map': {'1': ['numpy_image2']},
+                'meta_id': 'lpc2'
+            },
+            'scan_location': 'path/to/image2'
+        }
+    }
+    assert result == expected
 
 @mock_s3
 def test_put_images_to_bucket(image_processor):
@@ -604,8 +884,9 @@ def test_get_secret(image_processor):
 
     # Test that an exception is raised when Secrets Manager cannot be accessed
     client.delete_secret(SecretId=secret_name)
-    with pytest.raises(ClientError):
+    with pytest.raises(Exception) as e:
         image_processor.get_secret()
+    assert "Unable to get secret for JWT key from Secrets Manager" in str(e)
 
 
 def test_build_sirius_headers(image_processor, monkeypatch):
