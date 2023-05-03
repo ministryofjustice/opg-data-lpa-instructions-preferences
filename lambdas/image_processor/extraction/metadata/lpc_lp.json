@@ -1,0 +1,98 @@
+{
+  "$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+  "name": "lpc-lp.pdf",
+  "description": "",
+  "file_format": "",
+  "sensitive": false,
+  "columns": [
+    {
+      "name": "continuation_sheet_p1",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 176,
+        "width": 1342,
+        "top": 1698,
+        "height": 505
+      },
+      "type": "string"
+    },
+    {
+      "name": "preferences_checkbox_p1",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 176,
+        "width": 84,
+        "top": 1482,
+        "height": 90
+      },
+      "type": "string"
+    },
+    {
+      "name": "instructions_checkbox_p1",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 176,
+        "width": 84,
+        "top": 1587,
+        "height": 90
+      },
+      "type": "string"
+    },
+    {
+      "name": "continuation_sheet_p2",
+      "page_number": 2,
+      "bounding_box": {
+        "left": 176,
+        "width": 1341,
+        "top": 1666,
+        "height": 529
+      },
+      "type": "string"
+    },
+    {
+      "name": "preferences_checkbox_p2",
+      "page_number": 2,
+      "bounding_box": {
+        "left": 176,
+        "width": 84,
+        "top": 1482,
+        "height": 90
+      },
+      "type": "string"
+    },
+    {
+      "name": "instructions_checkbox_p2",
+      "page_number": 2,
+      "bounding_box": {
+        "left": 176,
+        "width": 84,
+        "top": 1587,
+        "height": 90
+      },
+      "type": "string"
+    }
+  ],
+  "primary_key": [],
+  "partitions": [],
+  "form_pages": [
+    {
+      "page_number": 1,
+      "identifier": "(.*Additional information.*)",
+      "required": true,
+      "duplicates": false
+    },
+    {
+      "page_number": 2,
+      "identifier": "(.*Additional information.*)",
+      "required": true,
+      "duplicates": false
+    }
+  ],
+  "form_formats": [
+    "pdf"
+  ],
+  "form_identifier": "(.*LPC.*)",
+  "from_template": "",
+  "excluded_sections": [],
+  "form_template": "opg_images/lpc_lp_images"
+}

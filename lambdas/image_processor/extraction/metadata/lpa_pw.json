@@ -1,0 +1,61 @@
+{
+  "$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+  "name": "lpa-pw-completable.pdf",
+  "description": "",
+  "file_format": "",
+  "sensitive": false,
+  "columns": [
+  	{
+		"name": "instructions",
+		"page_number": 1,
+		"bounding_box": {
+			"left": 112,
+			"width": 1464,
+			"top": 640,
+			"height": 920
+		},
+		"type": "string"
+	}, {
+		"name": "preferences",
+		"page_number": 2,
+		"bounding_box": {
+			"left": 112,
+			"width": 1464,
+			"top": 240,
+			"height": 910
+		},
+		"type": "string"
+	}
+  ],
+  "primary_key": [],
+  "partitions": [],
+  "form_pages": [
+    {
+      "page_number": 1,
+      "identifier": "(.*restrictions.*)",
+      "required": true,
+      "duplicates": false,
+      "extra": {
+        "page_text": "lpa_pw_1.txt",
+        "barcode": ""
+      }
+    },
+    {
+      "page_number": 2,
+      "identifier": "(.*Guidance.*)",
+      "required": true,
+      "duplicates": false,
+      "extra": {
+        "page_text": "lpa_pw_2.txt",
+        "barcode": ""
+      }
+    }
+  ],
+  "form_formats": [
+    "pdf"
+  ],
+  "form_identifier": "(.*Personal Welfare.*)",
+  "from_template": "",
+  "excluded_sections": [],
+  "form_template": "opg_images/lpa_pw_images"
+}
