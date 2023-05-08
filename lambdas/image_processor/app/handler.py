@@ -7,6 +7,7 @@ import datetime
 import time
 from collections import Counter
 from pyzbar.pyzbar import decode
+from fuzzywuzzy import fuzz
 
 import jwt
 import cv2
@@ -16,6 +17,7 @@ import boto3
 import requests
 from botocore.exceptions import ClientError
 from form_tools.form_operators import FormOperator
+from form_tools.form_meta.form_meta import FormPage
 from form_tools.utils.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 
@@ -38,10 +40,11 @@ class ImageProcessor:
         self.folder_name = "9999"
         self.continuation_instruction_count = 0
         self.continuation_preference_count = 0
+        self.continuation_unknown_count = 0
         self.secret_manager = self.setup_secret_manager_connection()
-        self.uid = None
+        self.uid = ""
         self.info_msg = {
-            "uid": None,
+            "uid": "",
             "document_paths": {},
             "matched_templates": [],
             "images_uploaded": [],
@@ -53,48 +56,46 @@ class ImageProcessor:
         Main Process that receives a request triggered from SQS and extracts the
         instructions and preferences and pushes them to S3.
         """
-        try:
-            self.uid = self.get_uid_from_event()
-            self.info_msg["uid"] = self.uid
+        # try:
+        self.uid = self.get_uid_from_event()
+        self.info_msg["uid"] = self.uid
 
-            logger.info(f"==== Starting processing on {self.uid} ====")
-            self.create_output_dir()
+        logger.info(f"==== Starting processing on {self.uid} ====")
+        self.create_output_dir()
 
-            # Get response from sirius for all scanned documents in s3 bucket for given UID
-            sirius_response_dict = self.make_request_to_sirius(self.uid)
-            logger.debug(f"Response from Sirius: {str(sirius_response_dict)}")
+        # Get response from sirius for all scanned documents in s3 bucket for given UID
+        sirius_response_dict = self.make_request_to_sirius(self.uid)
+        logger.debug(f"Response from Sirius: {str(sirius_response_dict)}")
 
-            # Download all files from sirius and store their path locations
-            downloaded_scan_locations = self.download_scanned_images(
-                sirius_response_dict
-            )
-            self.info_msg["document_paths"] = downloaded_scan_locations
-            logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
+        # Download all files from sirius and store their path locations
+        downloaded_scan_locations = self.download_scanned_images(sirius_response_dict)
+        self.info_msg["document_paths"] = downloaded_scan_locations
+        logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
 
-            # Extract all relevant images relating to instructions and preferences from downloaded documents
-            paths_to_extracted_images = self.extract_instructions_and_preferences(
-                downloaded_scan_locations
-            )
-            logger.debug(f"Paths to extracted images: {paths_to_extracted_images}")
+        # Extract all relevant images relating to instructions and preferences from downloaded documents
+        paths_to_extracted_images = self.extract_instructions_and_preferences(
+            downloaded_scan_locations
+        )
+        logger.debug(f"Paths to extracted images: {paths_to_extracted_images}")
 
-            # Update the counts that will be pushed as metadata
-            self.update_continuation_sheet_counts(paths_to_extracted_images)
-            logger.debug("Updated continuation sheet counts")
+        # Update the counts that will be pushed as metadata
+        self.update_continuation_sheet_counts(paths_to_extracted_images)
+        logger.debug("Updated continuation sheet counts")
 
-            # Push images up to the buckets
-            self.put_images_to_bucket(paths_to_extracted_images)
-            logger.debug("Finished pushing images to bucket")
+        # Push images up to the buckets
+        self.put_images_to_bucket(paths_to_extracted_images)
+        logger.debug("Finished pushing images to bucket")
 
-            # Cleanup all the folders
-            self.cleanup(downloaded_scan_locations)
-            logger.debug("Cleaned down paths")
+        # Cleanup all the folders
+        self.cleanup(downloaded_scan_locations)
+        logger.debug("Cleaned down paths")
 
-            self.info_msg["status"] = "Completed"
-            logger.info(json.dumps(self.info_msg))
-        except Exception as e:
-            self.info_msg["status"] = "Error"
-            logger.info(json.dumps(self.info_msg))
-            logger.error(e)
+        self.info_msg["status"] = "Completed"
+        logger.info(json.dumps(self.info_msg))
+        # except Exception as e:
+        #     self.info_msg["status"] = "Error"
+        #     logger.info(json.dumps(self.info_msg))
+        #     logger.error(e)
 
     @staticmethod
     def list_files(filepath: str, filetype: str) -> list:
@@ -456,7 +457,7 @@ class ImageProcessor:
                 (form_index, image_index) to a list of matched page indices in metadata documents.
               - 'match_confidences' (List[float]): A list of match confidences for all matched items.
         """
-        logger.debug("Increase image size to help OCR...")
+        logger.debug("Further image processing...")
         form_images_doubled = self.double_image_size(processed_images)
         logger.debug("Applying OCR to extract text from images...")
         form_images_text = form_operator.form_images_to_text(form_images_doubled)
@@ -488,7 +489,7 @@ class ImageProcessor:
         scan_path: str,
         pass_dir: str,
         fail_dir: str,
-        run_timestamp: str,
+        run_timestamp: int,
     ) -> None:
         """
         Extracts images and fields from a form, aligns them to a metadata template, and saves the result
@@ -824,14 +825,14 @@ class ImageProcessor:
         return matching_images[0]
 
     def create_scan_to_template_distances(self, form_images_as_strings, form_metastore):
-        scan_to_template_distances = []
+        scan_to_template_similarities = []
         for meta_id, meta in form_metastore.items():
             for form_page in meta.form_pages:
                 meta_page_text = self.get_meta_page_text(form_page)
                 for scan_page_no, form_image_as_string in enumerate(
                     form_images_as_strings, start=1
                 ):
-                    distance = self.calculate_levenstein_distance(
+                    distance = self.calculate_similarity_ratio(
                         form_page, form_image_as_string, meta_page_text
                     )
                     scan_info = {
@@ -842,8 +843,8 @@ class ImageProcessor:
                         "form_image_as_string": form_image_as_string,
                         "meta_page_text": meta_page_text,
                     }
-                    scan_to_template_distances.append(scan_info)
-        return scan_to_template_distances
+                    scan_to_template_similarities.append(scan_info)
+        return scan_to_template_similarities
 
     def get_meta_page_text(self, form_page):
         template_page_text_file = f"{self.extraction_folder_path}/target_texts/{form_page.additional_args['extra']['page_text']}"
@@ -851,26 +852,55 @@ class ImageProcessor:
             meta_page_text = file.read().replace("\n", "")
         return meta_page_text
 
-    def calculate_levenstein_distance(
-        self, form_page, form_image_as_string, meta_page_text
-    ):
+    @staticmethod
+    def calculate_similarity_ratio(
+        form_page: FormPage, form_image_as_string: str, meta_page_text: str
+    ) -> float:
+        """
+        Calculates the similarity between the given `form_image_as_string`
+        and `meta_page_text`, based on the `form_page.identifier` regex match.
+
+        Args:
+        - form_page (FormPage): An object representing the form page.
+        - form_image_as_string (str): A string representation of the form image.
+        - meta_page_text (str): A string representation of the meta page text.
+
+        Returns:
+        - ratio (float): The similarity ratio using Levenstein distance between `form_image_as_string` and
+          `meta_page_text` if a regex match is found. Otherwise, returns 0.
+        """
         page_regex = form_page.identifier
         regex_match = (
-            True
-            if re.search(page_regex, form_image_as_string, re.DOTALL) is not None
-            else False
+            True if re.search(page_regex, form_image_as_string, re.DOTALL) else False
         )
+
+        logger.debug(f"Regex match: {regex_match} for {form_page.identifier}")
+
         if regex_match:
-            distance = self.levenstein_distance(form_image_as_string, meta_page_text)
+            ratio = fuzz.ratio(form_image_as_string, meta_page_text)
         else:
-            distance = 1000
-        return distance
+            ratio = 0
+
+        return ratio
 
     def get_similarity_score(self, sorted_scan_template_entities):
         similarity_score = self.similarity_score(
             sorted_scan_template_entities[0]["meta_page_text"],
             sorted_scan_template_entities[0]["form_image_as_string"],
         )
+
+        # for count, value in enumerate(sorted_scan_template_entities):
+        #     tmp_sim = self.similarity_score(
+        #         sorted_scan_template_entities[count]["meta_page_text"],
+        #         sorted_scan_template_entities[count]["form_image_as_string"],
+        #     )
+        #     logger.debug(tmp_sim)
+        #     logger.debug(value["meta"])
+        #     logger.debug(value["distance"])
+        #     logger.debug(value["scan_page_no"])
+        #     logger.debug(value["template_page_no"])
+        #     logger.debug(sorted_scan_template_entities[count]["meta_page_text"][0:50])
+        #     logger.debug(sorted_scan_template_entities[count]["form_image_as_string"][0:50])
         logger.debug(f"Top similarity score is: {similarity_score}")
         return similarity_score
 
@@ -911,10 +941,12 @@ class ImageProcessor:
             matching_image_results["image_page_map"].setdefault(
                 template_page_no, []
             ).append(form_images[scan_page_no - 1])
-            self.info_msg["matched_templates"].append(
-                f"Match on {meta_id_to_use} with OCR match "
-                f"for scan page number {scan_page_no} from template page number {template_page_no}"
+            msg = (
+                f"Match on {meta_id_to_use} with OCR match for scan page number {scan_page_no} "
+                f"from template page number {template_page_no}"
             )
+            logger.debug(msg)
+            self.info_msg["matched_templates"].append(msg)
         return matching_image_results
 
     def mixed_mode_page_identifier(
@@ -925,7 +957,7 @@ class ImageProcessor:
         )
         sorted_scan_template_entities = sorted(
             scan_to_template_distances,
-            key=lambda x: (x["distance"], x["template_page_no"], x["scan_page_no"]),
+            key=lambda x: (-x["distance"], x["template_page_no"], x["scan_page_no"]),
         )
         similarity_score = self.get_similarity_score(sorted_scan_template_entities)
         meta_id_to_use = self.get_meta_id_to_use(sorted_scan_template_entities)
@@ -933,33 +965,6 @@ class ImageProcessor:
             meta_id_to_use, similarity_score, sorted_scan_template_entities, form_images
         )
         return matching_image_results
-
-    @staticmethod
-    def levenstein_distance(source_string: str, target_string: str) -> int:
-        """
-        Computes the Levenstein distance between the contents of two text files.
-        """
-        # Read in the contents of both files
-        # Create a matrix to store the Levenstein distances
-        m = [[0] * (len(target_string) + 1) for _ in range(len(source_string) + 1)]
-
-        # Initialize the first row and column of the matrix
-        for i in range(len(source_string) + 1):
-            m[i][0] = i
-
-        for j in range(len(target_string) + 1):
-            m[0][j] = j
-
-        # Compute the Levenstein distance using dynamic programming
-        for i in range(1, len(source_string) + 1):
-            for j in range(1, len(target_string) + 1):
-                if source_string[i - 1] == target_string[j - 1]:
-                    m[i][j] = m[i - 1][j - 1]
-                else:
-                    m[i][j] = 1 + min(m[i - 1][j], m[i][j - 1], m[i - 1][j - 1])
-
-        # Return the final Levenstein distance
-        return m[-1][-1]
 
     @staticmethod
     def match_first_form_image_text_to_form_meta(
@@ -1035,6 +1040,9 @@ class ImageProcessor:
                         "ContinuationSheetsPreferences": str(
                             self.continuation_preference_count
                         ),
+                        "ContinuationSheetsUnknown": str(
+                            self.continuation_unknown_count
+                        ),
                     },
                 )
                 logger.debug(f"File '{image}' added to the '{self.iap_bucket}' bucket.")
@@ -1075,6 +1083,10 @@ class ImageProcessor:
                     "meta=lp1h",
                     "meta=pfa117",
                     "meta=hw114",
+                    "meta=lpa_pw",
+                    "meta=lpa_pa",
+                    "meta=lp1f_lp",
+                    "meta=lp1h_lp",
                 ],
             ):
                 path_selection["preferences"] = path
@@ -1087,6 +1099,10 @@ class ImageProcessor:
                     "meta=lp1h",
                     "meta=pfa117",
                     "meta=hw114",
+                    "meta=lpa_pw",
+                    "meta=lpa_pa",
+                    "meta=lp1f_lp",
+                    "meta=lp1h_lp",
                 ],
             ):
                 path_selection["instructions"] = path
@@ -1096,7 +1112,12 @@ class ImageProcessor:
                 mandatory_fragments=[
                     "field_name=continuation_checkbox_instructions",
                 ],
-                one_of_fragments=["meta=lp1f", "meta=lp1h"],
+                one_of_fragments=[
+                    "meta=lp1f",
+                    "meta=lp1h",
+                    "meta=lp1f_lp",
+                    "meta=lp1h_lp",
+                ],
             ):
                 if self.detect_marked_checkbox(path):
                     continuation_instructions = True
@@ -1105,7 +1126,12 @@ class ImageProcessor:
                 mandatory_fragments=[
                     "field_name=continuation_checkbox_preferences",
                 ],
-                one_of_fragments=["meta=lp1f", "meta=lp1h"],
+                one_of_fragments=[
+                    "meta=lp1f",
+                    "meta=lp1h",
+                    "meta=lp1f_lp",
+                    "meta=lp1h_lp",
+                ],
             ):
                 if self.detect_marked_checkbox(path):
                     continuation_preferences = True
@@ -1161,7 +1187,7 @@ class ImageProcessor:
                         if self.string_fragments_in_string(
                             target_string=path,
                             mandatory_fragments=[checkbox],
-                            one_of_fragments=["meta=lpc"],
+                            one_of_fragments=["meta=lpc", "meta=lpc_lp"],
                         ):
                             if self.detect_marked_checkbox(path):
                                 if continuation_sheet_type in [
@@ -1180,21 +1206,26 @@ class ImageProcessor:
                             mandatory_fragments=[
                                 f"field_name=continuation_sheet_{page}"
                             ],
-                            one_of_fragments=["meta=lpc"],
+                            one_of_fragments=["meta=lpc", "meta=lpc_lp", "meta=pfa_c"],
                         ):
                             pages[page]["path"] = path
+                            if "meta=pfa_c" in path:
+                                pages[page]["type"] = "unknown"
 
         for page in ["p1", "p2"]:
             if len(checked_checkboxes[page]) > 1:
                 logger.warning(
                     f"User has ticked more than one checkbox for page {page} of path {path_filter}"
                 )
-            # Make type neither where no checkboxes ticked or the last type ticked otherwise
-            pages[page]["type"] = (
-                "neither"
-                if not checked_checkboxes[page]
-                else checked_checkboxes[page][-1]
-            )
+            # If type is not unknown, make type neither where no checkboxes ticked or the last type ticked otherwise
+            if pages[page]["type"] != "unknown":
+                pages[page]["type"] = (
+                    "neither"
+                    if not checked_checkboxes[page]
+                    else checked_checkboxes[page][-1]
+                )
+            if pages[page]["path"] == "":
+                pages.pop(page)
 
         return pages
 
@@ -1241,6 +1272,7 @@ class ImageProcessor:
             instructions_and_preferences["continuation_preferences"],
         )
 
+        logger.debug(f"Continuation keys to use: {continuation_keys_to_use}")
         # Loop through each continuation key and get the corresponding continuation sheet paths
         continuation_sheets = {}
         for continuation_key in continuation_keys_to_use:
@@ -1274,6 +1306,11 @@ class ImageProcessor:
             for key in paths_to_extracted_images.keys()
             if "continuation_preferences" in key
         )
+        self.continuation_unknown_count = sum(
+            1
+            for key in paths_to_extracted_images.keys()
+            if "continuation_unknown" in key
+        )
 
     @staticmethod
     def merge_continuation_images_into_path_selection(
@@ -1300,6 +1337,9 @@ class ImageProcessor:
                 elif pagenumber_dict["type"] == "instructions":
                     instructions_continuation_count += 1
                     key = f"continuation_instructions_{instructions_continuation_count}"
+                elif pagenumber_dict["type"] == "unknown":
+                    instructions_continuation_count += 1
+                    key = f"continuation_unknown_{instructions_continuation_count}"
                 else:
                     continue
                 # Add the page path to the corresponding key in final_path_selection
