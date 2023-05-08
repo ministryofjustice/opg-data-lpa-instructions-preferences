@@ -6,7 +6,7 @@
   "sensitive": false,
   "columns": [
     {
-      "name": "instructions_or_preferences",
+      "name": "continuation_sheet_p1",
       "page_number": 1,
       "bounding_box": {
         "left": 144,
@@ -22,7 +22,7 @@
   "form_pages": [
     {
       "page_number": 1,
-      "identifier": "(.*restrictions.*conditions.*)",
+      "identifier": "(.*(restrictions|restricions).{0,10}(conditions|condiions).*)",
       "required": true,
       "duplicates": false,
       "extra": {
@@ -34,8 +34,8 @@
   "form_formats": [
     "pdf"
   ],
-  "form_identifier": "(.*Continuation.*)",
+  "form_identifier": "(.*Continuation s.{0,50} A.{0,50} Ad.{0,50} p.*)",
   "from_template": "",
   "excluded_sections": [],
-  "form_template": "opg_images/pfa_c_images"
+  "form_template": "extraction/opg_images/pfa_c_images"
 }

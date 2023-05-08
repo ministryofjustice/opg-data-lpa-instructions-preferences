@@ -58,5 +58,5 @@
   "form_identifier": "(.*Property and Affairs.*)",
   "from_template": "",
   "excluded_sections": [],
-  "form_template": "opg_images/lpa_pa_images"
+  "form_template": "extraction/opg_images/lpa_pa_images"
 }
