@@ -80,5 +80,5 @@
   "form_identifier": "(.*LP1F.*)",
   "from_template": "",
   "excluded_sections": [],
-  "form_template": "opg_images/lp1f_lp_images"
+  "form_template": "extraction/opg_images/lp1f_lp_images"
 }
