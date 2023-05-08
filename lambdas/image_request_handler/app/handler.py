@@ -21,6 +21,7 @@ class ImageRequestHandler:
         self.image_to_store_metadata_against = f"iap-{self.uid}-instructions"
         self.continuation_sheet_instructions_count = 0
         self.continuation_sheet_preferences_count = 0
+        self.continuation_sheet_unknown_count = 0
         self.url_expiration = 60
         self.event = event
 
@@ -115,10 +116,7 @@ class ImageRequestHandler:
         # Check the status of each image in the list
         for image in images_to_check:
             logger.debug(f"Checking image status for {image}")
-            try:
-                image_statuses[image] = self.image_status_in_bucket(image)
-            except Exception:
-                raise Exception(f"Error assigning image status for image {image}")
+            image_statuses[image] = self.image_status_in_bucket(image)
 
         # Check the status of continuation instruction images
         for index in range(self.continuation_sheet_instructions_count):
@@ -132,9 +130,10 @@ class ImageRequestHandler:
                 image_statuses[
                     continuation_instruction_image
                 ] = self.image_status_in_bucket(continuation_instruction_image)
-            except Exception:
+            except Exception as e:
                 raise Exception(
-                    f"Error assigning image status for instruction continuation sheets {continuation_instruction_image}"
+                    f"Error assigning image status for instruction "
+                    f"continuation sheets {continuation_instruction_image}: {e}"
                 )
 
         # Check the status of continuation preference images
@@ -149,9 +148,28 @@ class ImageRequestHandler:
                 image_statuses[
                     continuation_preference_image
                 ] = self.image_status_in_bucket(continuation_preference_image)
-            except Exception:
+            except Exception as e:
                 raise Exception(
-                    f"Error assigning image status for instruction continuation sheets {continuation_preference_image}"
+                    f"Error assigning image status for preference  "
+                    f"continuation sheets {continuation_preference_image}: {e}"
+                )
+
+        # Check the status of continuation preference images
+        for index in range(self.continuation_sheet_unknown_count):
+            continuation_unknown_image = (
+                f"iap-{self.uid}-continuation_unknown_{index + 1}"
+            )
+            try:
+                logger.debug(
+                    f"Checking continuation preference image status for: {continuation_unknown_image}"
+                )
+                image_statuses[
+                    continuation_unknown_image
+                ] = self.image_status_in_bucket(continuation_unknown_image)
+            except Exception as e:
+                raise Exception(
+                    f"Error assigning image status for unknown  "
+                    f"continuation sheets {continuation_unknown_image}: {e}"
                 )
 
         logger.debug(f"Image statuses: {image_statuses}")
@@ -180,6 +198,9 @@ class ImageRequestHandler:
                 )
                 self.continuation_sheet_preferences_count = int(
                     file["Metadata"]["continuationsheetspreferences"]
+                )
+                self.continuation_sheet_unknown_count = int(
+                    file["Metadata"]["continuationsheetsunknown"]
                 )
             image_status = "EXISTS" if file_size > 0 else "IN_PROGRESS"
         except botocore.exceptions.ClientError as e:
@@ -221,6 +242,7 @@ class ImageRequestHandler:
                     Metadata={
                         "ContinuationSheetsInstructions": "0",
                         "ContinuationSheetsPreferences": "0",
+                        "ContinuationSheetsUnknown": "0",
                     },
                 )
                 logger.debug(

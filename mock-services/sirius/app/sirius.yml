@@ -36,6 +36,24 @@ paths:
                   value:
                     lpaScans:
                       locations: ['s3://opg-backoffice-datastore-integration/PFA117-Scan.pdf']
+                lpa0089:
+                  value:
+                    lpaScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/HW114-Scan.pdf']
+                    continuationSheetScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/PFA-C-Scan.pdf']
+                lpa0090:
+                  value:
+                    lpaScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/LPA-PW-Scan.pdf']
+                    continuationSheetScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/Correspondence-Bad-Continuation-Scan.pdf']
+                lpa0091:
+                  value:
+                    lpaScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/LP1F-LP-Scan.pdf']
+                    continuationSheetScans:
+                      locations: ['s3://opg-backoffice-datastore-integration/LPC-LP-Scan.pdf']
               schema:
                 type: object
                 properties:
