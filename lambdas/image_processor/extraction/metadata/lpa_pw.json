@@ -5,27 +5,28 @@
   "file_format": "",
   "sensitive": false,
   "columns": [
-  	{
-		"name": "instructions",
-		"page_number": 1,
-		"bounding_box": {
-			"left": 112,
-			"width": 1464,
-			"top": 640,
-			"height": 920
-		},
-		"type": "string"
-	}, {
-		"name": "preferences",
-		"page_number": 2,
-		"bounding_box": {
-			"left": 112,
-			"width": 1464,
-			"top": 240,
-			"height": 910
-		},
-		"type": "string"
-	}
+    {
+      "name": "instructions",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 112,
+        "width": 1464,
+        "top": 480,
+        "height": 920
+      },
+      "type": "string"
+    },
+    {
+      "name": "preferences",
+      "page_number": 2,
+      "bounding_box": {
+        "left": 112,
+        "width": 1464,
+        "top": 230,
+        "height": 910
+      },
+      "type": "string"
+    }
   ],
   "primary_key": [],
   "partitions": [],
@@ -57,5 +58,5 @@
   "form_identifier": "(.*Personal Welfare.*)",
   "from_template": "",
   "excluded_sections": [],
-  "form_template": "opg_images/lpa_pw_images"
+  "form_template": "extraction/opg_images/lpa_pw_images"
 }
