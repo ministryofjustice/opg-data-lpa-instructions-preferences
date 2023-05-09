@@ -98,6 +98,7 @@ class ImageProcessor:
             self.info_msg["status"] = "Error"
             logger.info(json.dumps(self.info_msg))
             logger.error(e)
+            self.put_error_image_to_bucket()
 
     @staticmethod
     def list_files(filepath: str, filetype: str) -> list:
@@ -552,6 +553,7 @@ class ImageProcessor:
                 meta_id="unknown",
                 timestamp=run_timestamp,
             )
+            raise Exception(e)
 
     def get_matching_continuation_items(
         self,
@@ -876,8 +878,6 @@ class ImageProcessor:
             True if re.search(page_regex, form_image_as_string, re.DOTALL) else False
         )
 
-        logger.debug(f"Regex match: {regex_match} for {form_page.identifier}")
-
         if regex_match:
             ratio = fuzz.ratio(form_image_as_string, meta_page_text)
         else:
@@ -891,18 +891,6 @@ class ImageProcessor:
             sorted_scan_template_entities[0]["form_image_as_string"],
         )
 
-        # for count, value in enumerate(sorted_scan_template_entities):
-        #     tmp_sim = self.similarity_score(
-        #         sorted_scan_template_entities[count]["meta_page_text"],
-        #         sorted_scan_template_entities[count]["form_image_as_string"],
-        #     )
-        #     logger.debug(tmp_sim)
-        #     logger.debug(value["meta"])
-        #     logger.debug(value["distance"])
-        #     logger.debug(value["scan_page_no"])
-        #     logger.debug(value["template_page_no"])
-        #     logger.debug(sorted_scan_template_entities[count]["meta_page_text"][0:50])
-        #     logger.debug(sorted_scan_template_entities[count]["form_image_as_string"][0:50])
         logger.debug(f"Top similarity score is: {similarity_score}")
         return similarity_score
 
@@ -1026,6 +1014,23 @@ class ImageProcessor:
 
         return similarity
 
+    def put_error_image_to_bucket(self):
+        try:
+            self.s3.put_object(
+                Bucket=self.iap_bucket,
+                Key=f"iap-{self.uid}-instructions",
+                ServerSideEncryption="AES256",
+                Metadata={
+                    "ContinuationSheetsInstructions": "0",
+                    "ContinuationSheetsPreferences": "0",
+                    "ContinuationSheetsUnknown": "0",
+                    "ProcessError": "1",
+                },
+            )
+            logger.debug("Error file added to S3 bucket.")
+        except Exception as e:
+            raise Exception(f"Error: Failed to add error file to bucket. {e}")
+
     def put_images_to_bucket(self, path_selection):
         for key, value in path_selection.items():
             image = f"iap-{self.uid}-{key}"
@@ -1045,6 +1050,7 @@ class ImageProcessor:
                         "ContinuationSheetsUnknown": str(
                             self.continuation_unknown_count
                         ),
+                        "ProcessError": "0",
                     },
                 )
                 logger.debug(f"File '{image}' added to the '{self.iap_bucket}' bucket.")

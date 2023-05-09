@@ -61,6 +61,9 @@ class ImageRequestHandler:
             # Get the overall status of the image collection based on individual image statuses
             image_collection_status = self.get_image_collection_status(image_statuses)
 
+            if image_collection_status == "COLLECTION_ERROR":
+                raise Exception("Collection Error")
+
             # If image collection has not yet started, try to add temporary images to the bucket and add messages to SQS
             if image_collection_status == "COLLECTION_NOT_STARTED":
                 self.add_temp_images_to_bucket()
@@ -191,6 +194,7 @@ class ImageRequestHandler:
 
         try:
             file = self.s3.head_object(Bucket=self.bucket, Key=image)
+            print(file["Metadata"])
             file_size = file["ContentLength"]
             if image == self.image_to_store_metadata_against:
                 self.continuation_sheet_instructions_count = int(
@@ -202,6 +206,9 @@ class ImageRequestHandler:
                 self.continuation_sheet_unknown_count = int(
                     file["Metadata"]["continuationsheetsunknown"]
                 )
+                process_error = file["Metadata"]["processerror"]
+                if process_error == "1":
+                    return "ERROR"
             image_status = "EXISTS" if file_size > 0 else "IN_PROGRESS"
         except botocore.exceptions.ClientError as e:
             logger.debug(f"Error code: {e.response['Error']['Code']}")
@@ -243,6 +250,7 @@ class ImageRequestHandler:
                         "ContinuationSheetsInstructions": "0",
                         "ContinuationSheetsPreferences": "0",
                         "ContinuationSheetsUnknown": "0",
+                        "ProcessError": "0",
                     },
                 )
                 logger.debug(
@@ -314,12 +322,12 @@ class ImageRequestHandler:
             else:
                 raise Exception("Unexpected status encountered in collection")
 
-        if status_counts["IN_PROGRESS"] > 0:
+        if status_counts["ERROR"] > 0:
+            return "COLLECTION_ERROR"
+        elif status_counts["IN_PROGRESS"] > 0:
             return "COLLECTION_IN_PROGRESS"
         elif status_counts["NOT_FOUND"] == self.total_images:
             return "COLLECTION_NOT_STARTED"
-        elif status_counts["ERROR"] > 0:
-            return "COLLECTION_ERROR"
         else:
             return "COLLECTION_COMPLETE"
 

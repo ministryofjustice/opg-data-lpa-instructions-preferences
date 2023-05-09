@@ -588,6 +588,7 @@ def test_put_images_to_bucket(image_processor):
         "continuationsheetsinstructions": "0",
         "continuationsheetspreferences": "0",
         "continuationsheetsunknown": "0",
+        "processerror": "0",
     }
 
 
