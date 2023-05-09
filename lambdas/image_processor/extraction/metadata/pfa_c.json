@@ -1,0 +1,41 @@
+{
+  "$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+  "name": "pfa-continuation-sheets.pdf",
+  "description": "",
+  "file_format": "",
+  "sensitive": false,
+  "columns": [
+    {
+      "name": "continuation_sheet_p1",
+      "page_number": 1,
+      "bounding_box": {
+        "left": 144,
+        "width": 1372,
+        "top": 592,
+        "height": 922
+      },
+      "type": "string"
+    }
+  ],
+  "primary_key": [],
+  "partitions": [],
+  "form_pages": [
+    {
+      "page_number": 1,
+      "identifier": "(.*(restrictions|restricions).{0,10}(conditions|condiions).*)",
+      "required": true,
+      "duplicates": false,
+      "extra": {
+        "page_text": "pfa_c_1.txt",
+        "barcode": ""
+      }
+    }
+  ],
+  "form_formats": [
+    "pdf"
+  ],
+  "form_identifier": "(.*Continuation s.{0,50} A.{0,50} Ad.{0,50} p.*)",
+  "from_template": "",
+  "excluded_sections": [],
+  "form_template": "extraction/opg_images/pfa_c_images"
+}
