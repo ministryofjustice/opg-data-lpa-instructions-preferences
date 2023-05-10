@@ -24,62 +24,52 @@ paths:
               examples:
                 lpa0047:
                   value:
-                    lpaScans:
-                      locations: ['s3://opg-backoffice-datastore-local/LP1H-Scan.pdf', 's3://opg-backoffice-datastore-local/LPA120.pdf']
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1H-Scan.pdf', 'template': 'LP1H'}, {'location': 's3://opg-backoffice-datastore-local/LPA120.pdf', 'template': 'LPA'}]
                 lpa0138:
                   value:
-                    lpaScans:
-                      locations: ['s3://opg-backoffice-datastore-local/LP1F-Scan.pdf']
-                    continuationSheetScans:
-                      locations: ['s3://opg-backoffice-datastore-local/LPC-Scan.pdf','s3://opg-backoffice-datastore-local/LPC2-Scan.pdf']
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.pdf', 'template': 'LP1F'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-Scan.pdf', 'template': 'LPC'}, {'location': 's3://opg-backoffice-datastore-local/LPC2-Scan.pdf', 'template': 'LPC'}]
                 lpa0088:
                   value:
-                    lpaScans:
-                      locations: ['s3://opg-backoffice-datastore-local/PFA117-Scan.pdf']
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/PFA117-Scan.pdf', 'template': 'PFA'}]
                 lpa0089:
                   value:
-                    lpaScans:
-                      locations: ['s3://opg-backoffice-datastore-local/HW114-Scan.pdf']
-                    continuationSheetScans:
-                      locations: ['s3://opg-backoffice-datastore-local/PFA-C-Scan.pdf']
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/HW114-Scan.pdf', 'template': 'HW'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/PFA-C-Scan.pdf', 'template': 'LPC'}]
                 lpa0090:
                   value:
-                    lpaScans:
-                      locations: ['s3://opg-backoffice-datastore-local/LPA-PW-Scan.pdf']
-                    continuationSheetScans:
-                      locations: ['s3://opg-backoffice-datastore-local/Correspondence-Bad-Continuation-Scan.pdf']
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-PW-Scan.pdf', 'template': 'LPA'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/Correspondence-Bad-Continuation-Scan.pdf', 'template': 'Correspondence'}]
                 lpa0091:
                   value:
-                    lpaScans:
-                      locations: ['s3://opg-backoffice-datastore-local/LP1F-LP-Scan.pdf']
-                    continuationSheetScans:
-                      locations: ['s3://opg-backoffice-datastore-local/LPC-LP-Scan.pdf']
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-LP-Scan.pdf', 'template': 'LP1F'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-LP-Scan.pdf', 'template': 'LPC'}]
               schema:
                 type: object
                 properties:
                   lpaScans:
-                    type: object
-                    properties:
-                      locations:
-                        type: array
-                        items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        location:
                           type: string
                           format: uri
-                        example:
-                          - 's3://opg-backoffice-datastore-local/LP1H-Scan.pdf'
-                  continuationSheetScans:
-                    type: object
-                    properties:
-                      locations:
-                        type: array
-                        items:
+                        template:
+                          type: string
+                  continuationSheets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        location:
                           type: string
                           format: uri
-                        example:
-                          - 's3://opg-backoffice-datastore-local/LPC-Scan.pdf'
+                        template:
+                          type: string
                 required:
                   - lpaScans
-                  - continuationSheetScans
+                  - continuationSheets
         '404':
           description: Document not found
           content:
