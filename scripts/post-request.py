@@ -39,23 +39,22 @@ def get_request_auth(credentials):
 
 
 def handle_request(method, url, auth):
-    response = requests.request(
-        method=method, url=url, auth=auth
-    )
+    response = requests.request(method=method, url=url, auth=auth)
     print(response.text)
     print(response.status_code)
 
 
 def main():
-    branch_prefix = "uml1234"
-    uid = "700000000000"
+    workspace = "development"
+    branch_prefix = "dev" if workspace == "development" else f"{workspace}.dev"
+    uid = "700000158894"
     ver = "v1"
 
     session = get_role_session("sirius-dev", "operator")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 
-    iap_request_url = f"https://{branch_prefix}.dev.lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
+    iap_request_url = f"https://{branch_prefix}.lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
     handle_request("GET", iap_request_url, auth)
 
 
