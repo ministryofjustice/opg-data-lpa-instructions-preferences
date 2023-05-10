@@ -167,7 +167,11 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
         if env == "local":
             url = f'http://localhost:4566{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
         else:
-            url = f'https://{workspace}.dev.lpa-iap.api.opg.service.justice.gov.uk{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
+            seperator = "" if workspace == "development" else "."
+            url = (
+                f"https://{workspace}{seperator}dev.lpa-iap.api.opg.service.justice.gov.uk{setup_rest_url_part}"
+                f'/image-request/{template_data["lpa_uid"]}'
+            )
 
         print(f"url for api gateway: {url}")
         response = call_api_gateway(url)

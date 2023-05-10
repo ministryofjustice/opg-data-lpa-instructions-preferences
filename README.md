@@ -100,3 +100,15 @@ They can be run in docker to save you having to set anything up. Simply run:
 ```commandline
 docker-compose up -d unit-tests
 ```
+
+### Setting up UAT against real sirius
+
+Sirius integration environment does not get wiped between deploys. Our development environment automatically hooks
+up to it after it has completed its development tests. We have got 3 test cases that we can use to test real
+world scenarios (700000158894, 700000158985, 700000159041).
+
+We can check these work by using the script at this path `/scripts/post-request.py` and using the correct uid.
+
+We can use this script `/script/wipe-images-s3.py` to wipe away any images in our iap bucket in dev to refresh the
+environment for further manual testing. The act of removing the extracted images will effectively reset the process
+and the next call will return a collection started response.
