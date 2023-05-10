@@ -1,5 +1,12 @@
 name: "[Workflow] Path to Live"
 
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+
+defaults:
+  run:
+    shell: bash
+
 on:
   pull_request:
     branches:
