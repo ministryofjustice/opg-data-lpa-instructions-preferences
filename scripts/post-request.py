@@ -39,9 +39,7 @@ def get_request_auth(credentials):
 
 
 def handle_request(method, url, auth):
-    response = requests.request(
-        method=method, url=url, auth=auth
-    )
+    response = requests.request(method=method, url=url, auth=auth)
     print(response.text)
     print(response.status_code)
 

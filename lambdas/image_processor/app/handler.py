@@ -308,16 +308,16 @@ class ImageProcessor:
             A dictionary containing the local file paths of the downloaded scanned images.
         """
         # Extract the S3 URLs for the possible LPA sheet scans
-        lpa_scan = s3_urls_dict.get("lpaScans")
-        lpa_locations = lpa_scan.get("locations") if lpa_scan else None
+        lpa_scans = s3_urls_dict.get("lpaScans", [])
+        lpa_locations = []
+        for lpa_scan in lpa_scans:
+            lpa_locations.append(lpa_scan["location"])
 
         # Extract the S3 locations for the possible continuation sheet scans, if they exist
-        continuation_sheet_scan = s3_urls_dict.get("continuationSheetScans", None)
-        continuation_locations = (
-            continuation_sheet_scan.get("locations")
-            if continuation_sheet_scan
-            else None
-        )
+        continuation_sheet_scans = s3_urls_dict.get("continuationSheets", [])
+        continuation_locations = []
+        for continuation_sheet_scan in continuation_sheet_scans:
+            continuation_locations.append(continuation_sheet_scan["location"])
 
         # Download the LPA scan, if it exists
         scan_locations = {}
