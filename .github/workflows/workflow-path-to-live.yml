@@ -22,8 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Extract branch name
     outputs:
-      raw_branch: main
-      formatted_branch: main
+      raw_branch: ${{ steps.extract_branch.outputs.branch_raw }}
+      formatted_branch: ${{ steps.extract_branch.outputs.branch_formatted }}
+    steps:
+      - name: extract branch
+        shell: bash
+        run: |
+          echo "branch_raw=main" >> $GITHUB_OUTPUT
+          echo "branch_formatted=main" >> $GITHUB_OUTPUT
+        id: extract_branch
 
   create_tags:
     name: Create Tags
