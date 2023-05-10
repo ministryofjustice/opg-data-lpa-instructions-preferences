@@ -100,3 +100,5 @@ They can be run in docker to save you having to set anything up. Simply run:
 ```commandline
 docker-compose up -d unit-tests
 ```
+
+### Setting up UAT against real sirius
