@@ -39,9 +39,7 @@ def get_request_auth(credentials):
 
 
 def handle_request(method, url, auth):
-    response = requests.request(
-        method=method, url=url, auth=auth
-    )
+    response = requests.request(method=method, url=url, auth=auth)
     print(response.text)
     print(response.status_code)
 
@@ -55,7 +53,11 @@ def main():
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 
-    iap_request_url = f"https://{branch_prefix}.dev.lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
+    url_seperator = "" if branch_prefix == "" else "."
+    iap_request_url = (
+        f"https://{branch_prefix}{url_seperator}dev."
+        f"lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
+    )
     handle_request("GET", iap_request_url, auth)
 
 
