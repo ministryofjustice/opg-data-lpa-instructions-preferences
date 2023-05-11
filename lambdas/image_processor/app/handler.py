@@ -21,6 +21,8 @@ from form_tools.form_meta.form_meta import FormPage
 from form_tools.utils.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 
+# from app.utility.bucket_manager import BucketManager
+
 logger = custom_logger("processor")
 
 
@@ -120,7 +122,7 @@ class ImageProcessor:
         return paths
 
     @staticmethod
-    def get_timestamp_as_str():
+    def get_timestamp_as_str() -> str:
         return str(int(datetime.datetime.utcnow().timestamp()))
 
     def create_output_dir(self) -> None:
@@ -146,7 +148,7 @@ class ImageProcessor:
         except Exception as e:
             raise Exception(f"Failed to create output directory: {e}")
 
-    def cleanup(self, downloaded_document_locations):
+    def cleanup(self, downloaded_document_locations) -> None:
         """
         Cleans up downloaded images and removes the pass and fail directories created during the image processing.
         Also removes any pdfs older than one hour and any pass and fail folders older than 1 hour.
@@ -217,7 +219,7 @@ class ImageProcessor:
 
     def setup_secret_manager_connection(self) -> boto3.client:
         """
-        Sets up a connection to AWS Secrets Manager based on the environment specified by the instance variable "environment".
+        Sets up a connection to AWS Secrets Manager based on instance variable "environment".
         If the environment is "local", the connection object will use the local endpoint URL for testing purposes.
 
         Returns:
@@ -383,7 +385,7 @@ class ImageProcessor:
         Extracts instructions and preferences from scanned images.
 
         Args:
-            image_locations: A dictionary containing S3 bucket locations of the scanned images.
+            scan_locations: A dictionary containing S3 bucket locations of the scanned images.
 
         Returns:
             A list of file paths that have been selected for upload.
@@ -990,7 +992,19 @@ class ImageProcessor:
         return results
 
     @staticmethod
-    def similarity_score(str1, str2):
+    def similarity_score(str1: str, str2: str) -> float:
+        """
+        Computes the similarity score between two strings by counting the number of common words
+        and the number of unique words in each string separately.
+
+        Args:
+        - str1: A string representing the first input string
+        - str2: A string representing the second input string
+
+        Returns:
+        A float value representing the similarity score between the two strings. The value
+        ranges from 0.0 (no similarity) to 1.0 (exact match).
+        """
         # remove non-alphanumeric characters and split into words
         words1 = re.findall(r"\w+", str1.lower())
         words2 = re.findall(r"\w+", str2.lower())
@@ -1014,7 +1028,11 @@ class ImageProcessor:
 
         return similarity
 
-    def put_error_image_to_bucket(self):
+    def put_error_image_to_bucket(self) -> None:
+        """
+        Puts an error file in the specified S3 bucket.
+        Raises an Exception if there is an error in adding the file to the bucket.
+        """
         try:
             self.s3.put_object(
                 Bucket=self.iap_bucket,
@@ -1031,7 +1049,15 @@ class ImageProcessor:
         except Exception as e:
             raise Exception(f"Error: Failed to add error file to bucket. {e}")
 
-    def put_images_to_bucket(self, path_selection):
+    def put_images_to_bucket(self, path_selection: dict) -> None:
+        """
+        Puts the selected images in the specified S3 bucket.
+        Raises an Exception if there is an error in adding any file to the bucket.
+        Args:
+        path_selection (dict): A dictionary containing the key-value pairs where the key is the image name
+                                and the value is the path of the image file.
+        Returns: None
+        """
         for key, value in path_selection.items():
             image = f"iap-{self.uid}-{key}"
             try:
