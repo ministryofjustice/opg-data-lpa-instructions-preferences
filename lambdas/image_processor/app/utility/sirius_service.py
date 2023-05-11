@@ -1,4 +1,5 @@
 import datetime
+import json
 
 import boto3
 import jwt
@@ -6,16 +7,19 @@ import os
 
 import requests
 from app.utility.custom_logging import custom_logger
+from botocore.exceptions import ClientError
 
 logger = custom_logger("sirius_service")
 
 
-class BucketManager:
+class SiriusService:
     def __init__(self, environment):
         self.environment = environment
         self.target_environment = os.getenv("TARGET_ENVIRONMENT")
         self.sirius_url = os.getenv("SIRIUS_URL")
         self.sirius_url_part = os.getenv("SIRIUS_URL_PART")
+        self.secret_key_prefix = os.getenv("SECRET_PREFIX")
+        self.secret_manager = self.setup_secret_manager_connection()
 
     def build_sirius_headers(self):
         """
