@@ -9,19 +9,15 @@ from collections import Counter
 from pyzbar.pyzbar import decode
 from fuzzywuzzy import fuzz
 
-import jwt
 import cv2
 import numpy as np
 
-import boto3
-import requests
-from botocore.exceptions import ClientError
 from form_tools.form_operators import FormOperator
 from form_tools.form_meta.form_meta import FormPage
 from form_tools.utils.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 
-# from app.utility.bucket_manager import BucketManager
+from app.utility.bucket_manager import BucketManager
 
 logger = custom_logger("processor")
 
@@ -31,12 +27,7 @@ class ImageProcessor:
         self.environment = os.getenv("ENVIRONMENT")
         self.target_environment = os.getenv("TARGET_ENVIRONMENT")
         self.secret_key_prefix = os.getenv("SECRET_PREFIX")
-        self.sirius_url = os.getenv("SIRIUS_URL")
-        self.sirius_url_part = os.getenv("SIRIUS_URL_PART")
         self.event = event
-        self.s3 = self.setup_s3_connection()
-        self.sirius_bucket = f"opg-backoffice-datastore-{self.target_environment}"
-        self.iap_bucket = f"lpa-iap-{self.environment}"
         self.extraction_folder_path = "extraction"
         self.output_folder_path = "/tmp/output"
         self.folder_name = "9999"
@@ -58,6 +49,7 @@ class ImageProcessor:
         Main Process that receives a request triggered from SQS and extracts the
         instructions and preferences and pushes them to S3.
         """
+        bucket_manager = BucketManager()
         try:
             self.uid = self.get_uid_from_event()
             self.info_msg["uid"] = self.uid
@@ -70,8 +62,8 @@ class ImageProcessor:
             logger.debug(f"Response from Sirius: {str(sirius_response_dict)}")
 
             # Download all files from sirius and store their path locations
-            downloaded_scan_locations = self.download_scanned_images(
-                sirius_response_dict
+            downloaded_scan_locations = bucket_manager.download_scanned_images(
+                sirius_response_dict, self.output_folder_path
             )
             self.info_msg["document_paths"] = downloaded_scan_locations
             logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
@@ -87,7 +79,13 @@ class ImageProcessor:
             logger.debug("Updated continuation sheet counts")
 
             # Push images up to the buckets
-            self.put_images_to_bucket(paths_to_extracted_images)
+            bucket_manager.put_images_to_bucket(
+                path_selection=paths_to_extracted_images,
+                uid=self.uid,
+                continuation_instruction_count=self.continuation_instruction_count,
+                continuation_preference_count=self.continuation_preference_count,
+                continuation_unknown_count=self.continuation_unknown_count
+            )
             logger.debug("Finished pushing images to bucket")
 
             # Cleanup all the folders
@@ -100,7 +98,7 @@ class ImageProcessor:
             self.info_msg["status"] = "Error"
             logger.info(json.dumps(self.info_msg))
             logger.error(e)
-            self.put_error_image_to_bucket()
+            bucket_manager.put_error_image_to_bucket(self.uid)
 
     @staticmethod
     def list_files(filepath: str, filetype: str) -> list:
@@ -199,44 +197,6 @@ class ImageProcessor:
                         if os.path.exists(subfolder_path):
                             shutil.rmtree(subfolder_path)
 
-    def setup_s3_connection(self) -> boto3.client:
-        """
-        Sets up an S3 connection object based on the environment specified by the instance variable "environment".
-        If the environment is "local", the connection object will use the local endpoint URL for testing purposes.
-
-        Returns:
-        - An S3 connection object (boto3.client).
-        """
-        if self.environment == "local":
-            s3 = boto3.client(
-                "s3",
-                endpoint_url="http://localstack-request-handler:4566",
-                region_name="eu-west-1",
-            )
-        else:
-            s3 = boto3.client("s3", region_name="eu-west-1")
-        return s3
-
-    def setup_secret_manager_connection(self) -> boto3.client:
-        """
-        Sets up a connection to AWS Secrets Manager based on instance variable "environment".
-        If the environment is "local", the connection object will use the local endpoint URL for testing purposes.
-
-        Returns:
-        - A connection to AWS Secrets Manager (boto3.client).
-        """
-        if self.environment == "local":
-            sm = boto3.client(
-                service_name="secretsmanager",
-                region_name="eu-west-1",
-                endpoint_url="http://localstack-processor:4566",
-                aws_access_key_id="fake",
-                aws_secret_access_key="fake",  # pragma: allowlist secret
-            )
-        else:
-            sm = boto3.client(service_name="secretsmanager", region_name="eu-west-1")
-        return sm
-
     def get_uid_from_event(self) -> str:
         try:
             message = self.event["Records"][0]["body"]
@@ -248,137 +208,6 @@ class ImageProcessor:
         except json.decoder.JSONDecodeError:
             raise Exception("Problem loading JSON from event body")
         return uid
-
-    def make_request_to_sirius(self, uid: str) -> dict:
-        """
-        Sends a GET request to the Sirius API to retrieve scans associated with a given UID.
-
-        Args:
-        - uid (str): A unique identifier for a particular record.
-
-        Returns:
-        - response_dict (dict): A dictionary containing the response from Sirius.
-          If an error occurred, the dictionary will contain an "error" key with an error message as the value.
-        """
-        url = f"{self.sirius_url}{self.sirius_url_part}/lpas/{uid}/scans"
-        headers = self.build_sirius_headers()
-        logger.debug(f"Sending request to Sirius on url: {url}")
-
-        try:
-            response = requests.get(url=url, headers=headers)
-        except requests.exceptions.RequestException as e:
-            raise Exception(f"Error getting response from Sirius: {e}")
-
-        try:
-            response_dict = json.loads(response.text)
-        except json.decoder.JSONDecodeError as e:
-            raise Exception(f"Unable to decode sirius JSON: {e}")
-
-        return response_dict
-
-    @staticmethod
-    def extract_s3_file_path(s3_path: str) -> dict:
-        """
-        Extracts the file path from an S3 path.
-
-        Args:
-            s3_path (str): The S3 path to extract the file path from.
-
-        Returns:
-            The file path and bucket portion of the S3 path as dict.
-        """
-        # Remove the s3:// prefix and split the path into its components.
-        path_components = s3_path[len("s3://") :].split("/", 1)
-        bucket = path_components[0]
-
-        # The first component is the bucket name, so we only need the second component.
-        if len(path_components) == 2:
-            file_path = path_components[1]
-        else:
-            file_path = ""
-
-        return {"bucket": bucket, "file_path": file_path}
-
-    def download_scanned_images(self, s3_urls_dict: dict) -> dict:
-        """
-        Downloads scanned images from S3 and saves them to a local folder.
-
-        Args:
-            s3_urls_dict: A dictionary containing URLs for scanned images in S3.
-
-        Returns:
-            A dictionary containing the local file paths of the downloaded scanned images.
-        """
-        # Extract the S3 URLs for the possible LPA sheet scans
-        lpa_scan = s3_urls_dict.get("lpaScans")
-        lpa_locations = lpa_scan.get("locations") if lpa_scan else None
-
-        # Extract the S3 locations for the possible continuation sheet scans, if they exist
-        continuation_sheet_scan = s3_urls_dict.get("continuationSheetScans", None)
-        continuation_locations = (
-            continuation_sheet_scan.get("locations")
-            if continuation_sheet_scan
-            else None
-        )
-
-        # Download the LPA scan, if it exists
-        scan_locations = {}
-        if not lpa_locations or len(lpa_locations) == 0:
-            raise Exception(
-                f"No documents returned by Sirius. Sirius response dictionary: {s3_urls_dict}"
-            )
-
-        scan_locations["scans"] = []
-        scan_locations["continuations"] = {}
-        for lpa_location in lpa_locations:
-            try:
-                # Extract the file path and bucket name from the S3 URL
-                path_parts = self.extract_s3_file_path(lpa_location)
-                # Construct the local file path for the downloaded scan
-                scan_location = f'{self.output_folder_path}/{path_parts["file_path"]}'
-                logger.debug(
-                    f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
-                )
-                # Download the scan from S3 and save it to the local file path
-                self.s3.download_file(
-                    path_parts["bucket"], path_parts["file_path"], scan_location
-                )
-                # Add the local file path to the dictionary of downloaded scan locations
-                scan_locations["scans"].append(scan_location)
-            except Exception as e:
-                raise Exception(
-                    f"Error downloading scanned document {lpa_location}: {e}"
-                )
-
-        # Download the continuation sheet scans, if they exist
-        if not continuation_locations or len(continuation_locations) == 0:
-            return scan_locations
-
-        location_position = 0
-        for continuation_location in continuation_locations:
-            try:
-                # Extract the file path and bucket name from the S3 URL
-                path_parts = self.extract_s3_file_path(continuation_location)
-                # Construct the local file path for the downloaded scan
-                scan_location = f'{self.output_folder_path}/{path_parts["file_path"]}'
-                logger.debug(
-                    f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
-                )
-                # Download the scan from S3 and save it to the local file path
-                self.s3.download_file(
-                    path_parts["bucket"], path_parts["file_path"], scan_location
-                )
-                # Add the local file path to the dictionary of downloaded scan locations
-                location_position += 1
-                scan_locations["continuations"][
-                    f"continuation_{location_position}"
-                ] = scan_location
-            except Exception as e:
-                raise Exception(
-                    f"Error downloading scanned continuation sheet {continuation_location}: {e}"
-                )
-
-        return scan_locations
 
     def extract_instructions_and_preferences(self, scan_locations: dict) -> dict:
         """
@@ -1028,64 +857,6 @@ class ImageProcessor:
 
         return similarity
 
-    def put_error_image_to_bucket(self) -> None:
-        """
-        Puts an error file in the specified S3 bucket.
-        Raises an Exception if there is an error in adding the file to the bucket.
-        """
-        try:
-            self.s3.put_object(
-                Bucket=self.iap_bucket,
-                Key=f"iap-{self.uid}-instructions",
-                ServerSideEncryption="AES256",
-                Metadata={
-                    "ContinuationSheetsInstructions": "0",
-                    "ContinuationSheetsPreferences": "0",
-                    "ContinuationSheetsUnknown": "0",
-                    "ProcessError": "1",
-                },
-            )
-            logger.debug("Error file added to S3 bucket.")
-        except Exception as e:
-            raise Exception(f"Error: Failed to add error file to bucket. {e}")
-
-    def put_images_to_bucket(self, path_selection: dict) -> None:
-        """
-        Puts the selected images in the specified S3 bucket.
-        Raises an Exception if there is an error in adding any file to the bucket.
-        Args:
-        path_selection (dict): A dictionary containing the key-value pairs where the key is the image name
-                                and the value is the path of the image file.
-        Returns: None
-        """
-        for key, value in path_selection.items():
-            image = f"iap-{self.uid}-{key}"
-            try:
-                self.s3.put_object(
-                    Bucket=self.iap_bucket,
-                    Key=image,
-                    Body=open(value, "rb"),
-                    ServerSideEncryption="AES256",
-                    Metadata={
-                        "ContinuationSheetsInstructions": str(
-                            self.continuation_instruction_count
-                        ),
-                        "ContinuationSheetsPreferences": str(
-                            self.continuation_preference_count
-                        ),
-                        "ContinuationSheetsUnknown": str(
-                            self.continuation_unknown_count
-                        ),
-                        "ProcessError": "0",
-                    },
-                )
-                logger.debug(f"File '{image}' added to the '{self.iap_bucket}' bucket.")
-                self.info_msg["images_uploaded"].append(image)
-            except Exception as e:
-                raise Exception(
-                    f"Failed to add file '{image}' to the '{self.iap_bucket}' bucket: {e}"
-                )
-
     def find_instruction_and_preference_paths(
         self, path_selection: dict, paths: list
     ) -> dict:
@@ -1454,55 +1225,6 @@ class ImageProcessor:
 
         # If the percentage_black (as image is inverted) is above a certain threshold, the image is blank
         return False if percentage_black > 0.99 else True
-
-    def get_secret(self):
-        """
-        Gets and decrypts the JWT secret from AWS Secrets Manager for the chosen environment
-        Args:
-            environment: AWS environment name
-        Returns:
-            JWT secret
-        Raises:
-            ClientError
-        """
-        secret_name = f"{self.secret_key_prefix}/jwt-key"
-
-        try:
-            get_secret_value_response = self.secret_manager.get_secret_value(
-                SecretId=secret_name
-            )
-            secret = get_secret_value_response["SecretString"]
-        except ClientError as e:
-            raise Exception(
-                f"Unable to get secret for JWT key from Secrets Manager: {e}"
-            )
-
-        return secret
-
-    def build_sirius_headers(self):
-        """
-        Builds headers for Sirius request, including JWT auth
-        Returns:
-            Header dictionary with content type and auth token
-        """
-        content_type = "application/json"
-        session_data = os.environ["SESSION_DATA"]
-        secret = self.get_secret()
-
-        encoded_jwt = jwt.encode(
-            {
-                "session-data": session_data,
-                "iat": datetime.datetime.utcnow(),
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=3600),
-            },
-            secret,
-            algorithm="HS256",
-        )
-
-        return {
-            "Content-Type": content_type,
-            "Authorization": "Bearer " + encoded_jwt,
-        }
 
 
 def lambda_handler(event, context):
