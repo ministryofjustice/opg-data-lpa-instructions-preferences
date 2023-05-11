@@ -1,9 +1,7 @@
 import datetime
-import os
 import copy
 import cv2
 import re
-import numpy as np
 from pyzbar.pyzbar import decode
 from collections import Counter
 from fuzzywuzzy import fuzz
@@ -17,67 +15,18 @@ logger = custom_logger("extraction_service")
 
 
 class ExtractionService:
-    def __init__(self, extraction_folder_path, folder_name, output_folder_path):
+    def __init__(
+        self, extraction_folder_path, folder_name, output_folder_path, info_msg
+    ):
         self.extraction_folder_path = extraction_folder_path
         self.folder_name = folder_name
         self.output_folder_path = output_folder_path
+        self.info_msg = info_msg
 
-    def extract_instructions_and_preferences(self, scan_locations: dict) -> dict:
-        """
-        Extracts instructions and preferences from scanned images.
-
-        Args:
-            scan_locations: A dictionary containing S3 bucket locations of the scanned images.
-
-        Returns:
-            A list of file paths that have been selected for upload.
-        """
-        # Create FormOperator instance from config file
+    def run_iap_extraction(self, scan_locations: dict) -> list:
         form_operator = FormOperator.create_from_config(
             f"{self.extraction_folder_path}/opg-config.yaml"
         )
-
-        # Run full pipeline to extract data from the scanned image
-        continuation_keys_to_use = self.run_iap_extraction(
-            scan_locations=scan_locations, form_operator=form_operator
-        )
-
-        # Get the list of file paths that have been extracted from the scanned images
-        paths = self.list_files(
-            f"{self.output_folder_path}/pass/{self.folder_name}", ".jpg"
-        )
-        logger.debug(f"Full list of paths extracted from scanned images: {paths}")
-        # Select the paths to upload based on continuation keys
-        path_selection = self.get_selected_paths_for_upload(
-            paths, continuation_keys_to_use
-        )
-
-        return path_selection
-
-    @staticmethod
-    def list_files(filepath: str, filetype: str) -> list:
-        """
-        Returns a list of file paths that match the specified file type in the specified directory and its subdirectories.
-
-        Args:
-        - filepath (str): The path to the directory to search for files.
-        - filetype (str): The file type to look for, e.g. ".txt", ".pdf", etc.
-
-        Returns:
-        - A list of file paths (str) that match the specified file type.
-        """
-        paths = []
-        for root, dirs, files in os.walk(filepath):
-            for file in files:
-                if file.lower().endswith(filetype.lower()):
-                    paths.append(os.path.join(root, file))
-        return paths
-
-    def run_iap_extraction(
-        self,
-        scan_locations: dict,
-        form_operator: FormOperator,
-    ):
         continuation_keys_to_use = []
         run_timestamp = int(datetime.datetime.utcnow().timestamp())
         form_meta_directory = f"{self.extraction_folder_path}/metadata"
@@ -239,14 +188,14 @@ class ExtractionService:
 
     @staticmethod
     def extract_images(
-            matched_items: dict,
-            meta: dict,
-            meta_id: str,
-            form_operator: FormOperator,
-            scan_path: str,
-            pass_dir: str,
-            fail_dir: str,
-            run_timestamp: int,
+        matched_items: dict,
+        meta: dict,
+        meta_id: str,
+        form_operator: FormOperator,
+        scan_path: str,
+        pass_dir: str,
+        fail_dir: str,
+        run_timestamp: int,
     ) -> None:
         """
         Extracts images and fields from a form, aligns them to a metadata template, and saves the result
@@ -336,10 +285,10 @@ class ExtractionService:
         return rotated_images
 
     def get_ocr_matches(
-            self,
-            processed_images: list,
-            form_operator: FormOperator,
-            form_meta_directory: str,
+        self,
+        processed_images: list,
+        form_operator: FormOperator,
+        form_meta_directory: str,
     ) -> dict:
         """
         Applies OCR to extract text from images, filters metadata by matching form regex,
@@ -441,7 +390,7 @@ class ExtractionService:
                             ]
                             images_used.append(img_count)
                             form_pages_used.append(form_page.page_number)
-                            self.info_msg["matched_templates"].append(
+                            self.info_msg.matched_templates.append(
                                 f"Match on {meta_id } with barcode {template_barcode} "
                                 f"for scan page number {img_count} from template page {form_page.page_number}"
                             )
@@ -491,9 +440,9 @@ class ExtractionService:
 
     @staticmethod
     def match_first_form_image_text_to_form_meta(
-            form_meta_directory: str,
-            form_images_as_strings: list,
-            form_operator: FormOperator,
+        form_meta_directory: str,
+        form_images_as_strings: list,
+        form_operator: FormOperator,
     ) -> dict:
         """Filters form meta directory using given form image string
         of first page
@@ -684,5 +633,5 @@ class ExtractionService:
                 f"from template page number {template_page_no}"
             )
             logger.debug(msg)
-            self.info_msg["matched_templates"].append(msg)
+            self.info_msg.matched_templates.append(msg)
         return matching_image_results

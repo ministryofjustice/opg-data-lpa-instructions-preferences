@@ -4,11 +4,12 @@ import shutil
 import datetime
 import time
 
-from app.utility.custom_logging import custom_logger
+from app.utility.custom_logging import custom_logger, LogMessageDetails
 
 from app.utility.bucket_manager import BucketManager
 from app.utility.sirius_service import SiriusService
 from app.utility.extraction_service import ExtractionService
+from app.utility.path_selection_service import PathSelectionService
 
 logger = custom_logger("processor")
 
@@ -24,13 +25,7 @@ class ImageProcessor:
         self.continuation_preference_count = 0
         self.continuation_unknown_count = 0
         self.uid = ""
-        self.info_msg = {
-            "uid": "",
-            "document_paths": {},
-            "matched_templates": [],
-            "images_uploaded": [],
-            "status": "Not Started",
-        }
+        self.info_msg = LogMessageDetails()
 
     def process_request(self):
         """
@@ -42,11 +37,13 @@ class ImageProcessor:
         extraction_service = ExtractionService(
             extraction_folder_path=self.extraction_folder_path,
             folder_name=self.folder_name,
-            output_folder_path=self.output_folder_path
+            output_folder_path=self.output_folder_path,
+            info_msg=self.info_msg,
         )
+        path_selection_service = PathSelectionService(folder_name=self.folder_name)
         try:
             self.uid = self.get_uid_from_event()
-            self.info_msg["uid"] = self.uid
+            self.info_msg.uid = self.uid
 
             logger.info(f"==== Starting processing on {self.uid} ====")
             self.create_output_dir()
@@ -59,12 +56,25 @@ class ImageProcessor:
             downloaded_scan_locations = bucket_manager.download_scanned_images(
                 sirius_response_dict, self.output_folder_path
             )
-            self.info_msg["document_paths"] = downloaded_scan_locations
+            self.info_msg.document_paths = downloaded_scan_locations
             logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
 
             # Extract all relevant images relating to instructions and preferences from downloaded documents
-            paths_to_extracted_images = extraction_service.extract_instructions_and_preferences(
+            continuation_keys_to_use = extraction_service.run_iap_extraction(
                 downloaded_scan_locations
+            )
+
+            # Get the list of file paths that have been extracted from the scanned images
+            paths = self.list_files(
+                f"{self.output_folder_path}/pass/{self.folder_name}", ".jpg"
+            )
+            logger.debug(f"Full list of paths extracted from scanned images: {paths}")
+
+            # Select the paths to upload based on continuation keys
+            paths_to_extracted_images = (
+                path_selection_service.get_selected_paths_for_upload(
+                    paths, continuation_keys_to_use
+                )
             )
             logger.debug(f"Paths to extracted images: {paths_to_extracted_images}")
 
@@ -78,20 +88,20 @@ class ImageProcessor:
                 uid=self.uid,
                 continuation_instruction_count=self.continuation_instruction_count,
                 continuation_preference_count=self.continuation_preference_count,
-                continuation_unknown_count=self.continuation_unknown_count
+                continuation_unknown_count=self.continuation_unknown_count,
             )
+            self.info_msg.images_uploaded = uploaded_images
             logger.debug("Finished pushing images to bucket")
-            self.info_msg["images_uploaded"] = uploaded_images
 
             # Cleanup all the folders
             self.cleanup(downloaded_scan_locations)
             logger.debug("Cleaned down paths")
 
-            self.info_msg["status"] = "Completed"
-            logger.info(json.dumps(self.info_msg))
+            self.info_msg.status = "Completed"
+            logger.info(json.dumps(self.info_msg.get_info_message()))
         except Exception as e:
-            self.info_msg["status"] = "Error"
-            logger.info(json.dumps(self.info_msg))
+            self.info_msg.status = "Error"
+            logger.info(json.dumps(self.info_msg.get_info_message()))
             logger.error(e)
             bucket_manager.put_error_image_to_bucket(self.uid)
 
@@ -121,6 +131,25 @@ class ImageProcessor:
                 os.mkdir(fail_dir)
         except Exception as e:
             raise Exception(f"Failed to create output directory: {e}")
+
+    @staticmethod
+    def list_files(filepath: str, filetype: str) -> list:
+        """
+        Returns a list of file paths that match the specified file type in the specified directory and its subdirectories.
+
+        Args:
+        - filepath (str): The path to the directory to search for files.
+        - filetype (str): The file type to look for, e.g. ".txt", ".pdf", etc.
+
+        Returns:
+        - A list of file paths (str) that match the specified file type.
+        """
+        paths = []
+        for root, dirs, files in os.walk(filepath):
+            for file in files:
+                if file.lower().endswith(filetype.lower()):
+                    paths.append(os.path.join(root, file))
+        return paths
 
     def cleanup(self, downloaded_document_locations) -> None:
         """
