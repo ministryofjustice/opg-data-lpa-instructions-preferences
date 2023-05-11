@@ -1,5 +1,8 @@
 name: "[Workflow] Pull Request Path"
 
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+
 on:
   pull_request:
     branches:
