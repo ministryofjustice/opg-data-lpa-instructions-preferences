@@ -1,20 +1,23 @@
 name: "[Workflow] Path to Live"
 
 on:
-  push:
+  pull_request:
     branches:
       - main
+#  push:
+#    branches:
+#      - main
 
 permissions:
   actions: read
   checks: read
-  contents: read
+  contents: write
   deployments: none
   issues: none
   packages: none
-  pull-requests: none
+  pull-requests: write
   repository-projects: none
-  security-events: none
+  security-events: write
   statuses: none
 
 jobs:
