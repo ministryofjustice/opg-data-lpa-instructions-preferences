@@ -3,7 +3,7 @@ name: "[Workflow] Pull Request Path"
 on:
   pull_request:
     branches:
-      - main
+      - non_existent_branch
 
 permissions:
   actions: read
