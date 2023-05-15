@@ -167,7 +167,13 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
         if env == "local":
             url = f'http://localhost:4566{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
         else:
-            url = f'https://{workspace}.dev.lpa-iap.api.opg.service.justice.gov.uk{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
+            workspace_url_part = (
+                "dev" if workspace == "development" else f"{workspace}.dev"
+            )
+            url = (
+                f"https://{workspace_url_part}.lpa-iap.api.opg.service.justice.gov.uk{setup_rest_url_part}"
+                f'/image-request/{template_data["lpa_uid"]}'
+            )
 
         print(f"url for api gateway: {url}")
         response = call_api_gateway(url)
@@ -196,7 +202,7 @@ def test_collection_in_progress(setup_rest_url_part):
 
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
-    total_sleep_time = 5 * 60  # sleep for 5 minutes
+    total_sleep_time = 7 * 60  # sleep for 7 minutes
     time_remaining = total_sleep_time
 
     while time_remaining > 0:

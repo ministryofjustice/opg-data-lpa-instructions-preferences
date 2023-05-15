@@ -48,13 +48,17 @@ def test_setup_s3_connection(mock_boto3, bucket_manager):
 def test_download_scanned_images(bucket_manager, monkeypatch):
     # Define test data
     s3_urls_dict = {
-        "lpaScans": {"locations": ["s3://my_bucket/my_scan.pdf"]},
-        "continuationSheetScans": {
-            "locations": [
-                "s3://my_bucket/my_continuation_sheet1.pdf",
-                "s3://my_bucket/my_continuation_sheet2.pdf",
-            ]
-        },
+        "lpaScans": [{"location": "s3://my_bucket/my_scan.pdf", "template": "TEST"}],
+        "continuationSheets": [
+            {
+                "location": "s3://my_bucket/my_continuation_sheet1.pdf",
+                "template": "TEST",
+            },
+            {
+                "location": "s3://my_bucket/my_continuation_sheet2.pdf",
+                "template": "TEST",
+            },
+        ],
     }
     output_folder_path = "/tmp/output"
     # Define mock objects

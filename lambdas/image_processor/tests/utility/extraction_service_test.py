@@ -1,5 +1,7 @@
 from unittest.mock import MagicMock, Mock
+
 import pytest
+import cv2
 from app.utility.extraction_service import ExtractionService
 from app.utility.custom_logging import LogMessageDetails
 from form_tools.form_operators import FormOperator
@@ -49,6 +51,33 @@ def mock_form_metastore():
                 MockFormPage(page_number=2, barcode="", page_text="meta2_page_2_text"),
             ]
         ),
+    }
+
+
+@pytest.fixture
+def mock_form_metastore_barcode_single():
+    return {
+        "meta_1": MockFormMeta(
+            form_pages=[
+                MockFormPage(page_number=1, barcode="1H7", page_text="meta_page_1_text")
+            ]
+        )
+    }
+
+
+@pytest.fixture
+def mock_form_metastore_barcode_multiple():
+    return {
+        "meta_1": MockFormMeta(
+            form_pages=[
+                MockFormPage(
+                    page_number=1, barcode="1C2", page_text="meta_page_1_text"
+                ),
+                MockFormPage(
+                    page_number=2, barcode="1C2", page_text="meta_page_2_text"
+                ),
+            ]
+        )
     }
 
 
@@ -264,8 +293,62 @@ def test_get_ocr_matches(monkeypatch, form_operator, extraction_service):
     assert result == {"image_page_map": {"1": ["numpyarray"]}}
 
 
-def test_find_matches_from_barcodes():
-    pass
+def test_find_matches_from_barcodes_no_match(
+    extraction_service, mock_form_metastore_barcode_single, monkeypatch
+):
+    images = []
+    image_path = "extraction/opg_images/hw114_images/page_1.ppm"
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+    images.append(image)
+
+    result = extraction_service.find_matches_from_barcodes(
+        images, mock_form_metastore_barcode_single
+    )
+
+    assert isinstance(result, dict)
+    assert result["meta_id"] == "meta_1"
+    assert len(result["image_page_map"]) == 0
+
+
+def test_find_matches_from_barcodes_single_match(
+    extraction_service, mock_form_metastore_barcode_single, monkeypatch
+):
+    images = []
+    image_path = "extraction/opg_images/lp1h_images/page_1.ppm"
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+
+    images.append(image)
+
+    result = extraction_service.find_matches_from_barcodes(
+        images, mock_form_metastore_barcode_single
+    )
+
+    assert isinstance(result, dict)
+    assert result["meta_id"] == "meta_1"
+    assert len(result["image_page_map"]) == 1
+
+
+def test_find_matches_from_barcodes_multiple_matches(
+    extraction_service, mock_form_metastore_barcode_multiple, monkeypatch
+):
+    images = []
+    image1 = cv2.imread(
+        "extraction/opg_images/lpc_images/page_1.ppm", cv2.IMREAD_GRAYSCALE
+    )
+    image2 = cv2.imread(
+        "extraction/opg_images/lpc_images/page_2.ppm", cv2.IMREAD_GRAYSCALE
+    )
+    images.append(image1)
+    images.append(image2)
+
+    result = extraction_service.find_matches_from_barcodes(
+        images, mock_form_metastore_barcode_multiple
+    )
+
+    assert isinstance(result, dict)
+    assert result["meta_id"] == "meta_1"
+    assert len(result["image_page_map"]) == 2
 
 
 def test_double_image_size():
@@ -273,6 +356,7 @@ def test_double_image_size():
 
 
 def test_match_first_form_image_text_to_form_meta():
+    # This is largely covered by form tool tests
     pass
 
 
@@ -304,8 +388,66 @@ def test_similarity_score(extraction_service):
     assert extraction_service.similarity_score(str1, str2) == 1.0
 
 
-def test_mixed_mode_page_identifier():
-    pass
+def test_mixed_mode_page_identifier(
+    form_operator, extraction_service, monkeypatch, mock_form_metastore
+):
+    form_images_as_strings = ["recognized text from form images"]
+    form_metastore = mock_form_metastore
+    form_images = []
+
+    expected_results = {
+        "meta_id": {"meta_id": "pfa117", "image_page_map": {1: []}},
+        "image_page_map": {},
+    }  # Replace with the expected matching image results
+
+    # Patch any necessary dependencies
+    mock_create_scan_to_template_distances = MagicMock()
+    mock_create_scan_to_template_distances.return_value = [
+        {
+            "meta": "pfa117",
+            "distance": 42,
+            "scan_page_no": 1,
+            "template_page_no": 1,
+            "form_image_as_string": "",
+            "meta_page_text": "",
+        },
+        {
+            "meta": "hw114",
+            "distance": 600,
+            "scan_page_no": 1,
+            "template_page_no": 1,
+            "form_image_as_string": "",
+            "meta_page_text": "",
+        },
+    ]
+    monkeypatch.setattr(
+        extraction_service,
+        "create_scan_to_template_distances",
+        mock_create_scan_to_template_distances,
+    )
+
+    mock_get_similarity_score = MagicMock()
+    mock_get_similarity_score.return_value = 0.74
+    monkeypatch.setattr(
+        extraction_service, "get_similarity_score", mock_get_similarity_score
+    )
+
+    mock_extraction_service = MagicMock()
+    mock_extraction_service.return_value = {
+        "meta_id": "pfa117",
+        "image_page_map": {1: []},
+    }
+
+    monkeypatch.setattr(
+        extraction_service, "get_meta_id_to_use", mock_extraction_service
+    )
+
+    results = extraction_service.mixed_mode_page_identifier(
+        form_images_as_strings, form_metastore, form_images
+    )
+
+    # Assert the results
+    assert results == expected_results
 
 
 @pytest.fixture
@@ -348,24 +490,123 @@ def test_create_scan_to_template_distances(
     assert distances[-1]["meta_page_text"] == "meta_page_1_text"
 
 
-def test_get_meta_page_text():
-    pass
+def test_get_meta_page_text(extraction_service):
+    form_page = MockFormPage(page_number=1, barcode="", page_text="test_text.txt")
+    expected_meta_page_text = "hello world"
+
+    extraction_service.extraction_folder_path = "tests/extraction"
+    # Call the method being tested
+    meta_page_text = extraction_service.get_meta_page_text(form_page)
+
+    # Assert the results
+    assert meta_page_text == expected_meta_page_text
 
 
-def test_calculate_similarity_ratio():
-    pass
+def test_calculate_similarity_ratio(extraction_service, monkeypatch):
+    form_page = MockFormPage(page_number=1, barcode="", page_text="meta_page_1_text")
+    form_image_as_string = "Expects meta_page_1 as regex"
+    meta_page_text = "Expects meta_page_1 as regex"
+
+    expected_ratio = 100
+
+    # Call the method being tested
+    ratio = extraction_service.calculate_similarity_ratio(
+        form_page, form_image_as_string, meta_page_text
+    )
+
+    # Assert the results
+    assert ratio == expected_ratio
 
 
-def test_get_similarity_score():
-    pass
+def test_calculate_similarity_ratio_no_regex(extraction_service, monkeypatch):
+    form_page = MockFormPage(page_number=1, barcode="", page_text="meta_page_1_text")
+    form_image_as_string = "Form image as string"
+    meta_page_text = "Form image as string"
+
+    expected_ratio = 0  # Replace with the expected similarity ratio
+
+    # Call the method being tested
+    ratio = extraction_service.calculate_similarity_ratio(
+        form_page, form_image_as_string, meta_page_text
+    )
+
+    # Assert the results
+    assert ratio == expected_ratio
 
 
-def test_get_meta_id_to_use():
-    pass
+def test_get_similarity_score(extraction_service):
+    sorted_sim_scores = [
+        {
+            "meta": "pfa117",
+            "distance": 42,
+            "scan_page_no": 1,
+            "template_page_no": 1,
+            "form_image_as_string": "full match meta_page_1",
+            "meta_page_text": "full match meta_page_1",
+        },
+        {
+            "meta": "hw114",
+            "distance": 600,
+            "scan_page_no": 1,
+            "template_page_no": 1,
+            "form_image_as_string": "no match",
+            "meta_page_text": "no match at all",
+        },
+    ]
+    expected = 1.0
+    actual = extraction_service.get_similarity_score(sorted_sim_scores)
+
+    assert actual == expected
 
 
-def test_get_matching_image_results():
-    pass
+def test_get_meta_id_to_use(extraction_service):
+    sorted_sim_scores = [
+        {
+            "meta": "pfa117",
+            "distance": 42,
+            "scan_page_no": 1,
+            "template_page_no": 1,
+            "form_image_as_string": "full match meta_page_1",
+            "meta_page_text": "full match meta_page_1",
+        },
+        {
+            "meta": "hw114",
+            "distance": 600,
+            "scan_page_no": 1,
+            "template_page_no": 1,
+            "form_image_as_string": "no match",
+            "meta_page_text": "no match at all",
+        },
+    ]
+
+    meta_id = extraction_service.get_meta_id_to_use(sorted_sim_scores)
+    expected_meta_id = "pfa117"
+
+    assert meta_id == expected_meta_id
+
+
+def test_get_matching_image_results(extraction_service):
+    meta_id_to_use = "meta_1"
+    similarity_score = 0.8
+    sorted_scan_template_entities = [
+        {"template_page_no": 1, "scan_page_no": 1, "meta": "meta_1"},
+        {"template_page_no": 2, "scan_page_no": 2, "meta": "meta_1"},
+        {"template_page_no": 3, "scan_page_no": 3, "meta": "meta_1"},
+    ]
+    form_images = ["image1", "image2", "image3"]
+
+    expected_matching_image_results = {
+        "meta_id": "meta_1",
+        "image_page_map": {1: ["image1"], 2: ["image2"], 3: ["image3"]},
+    }
+
+    # Call the method being tested
+    matching_image_results = extraction_service.get_matching_image_results(
+        meta_id_to_use, similarity_score, sorted_scan_template_entities, form_images
+    )
+
+    # Assert the results
+    assert matching_image_results == expected_matching_image_results
 
 
 # def test_extract_instructions_and_preferences(extraction_service, monkeypatch):

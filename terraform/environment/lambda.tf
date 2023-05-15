@@ -10,8 +10,9 @@ module "request_handler_lamdba" {
   description       = "Function to return signed urls and kick off iap processing"
   working_directory = "/var/task"
   environment_variables = {
-    ENVIRONMENT = local.environment
-    VERSION     = "v1"
+    ENVIRONMENT  = local.environment
+    VERSION      = "v1"
+    LOGGER_LEVEL = "INFO"
   }
   image_uri         = "${data.aws_ecr_repository.lpa_iap_request_handler.repository_url}:${var.image_tag}"
   ecr_arn           = data.aws_ecr_repository.lpa_iap_request_handler.arn
@@ -40,6 +41,7 @@ module "processor_lamdba" {
     TARGET_ENVIRONMENT = local.account.target_environment
     SECRET_PREFIX      = local.account.secret_prefix
     SIRIUS_URL_PART    = "/api/public/v1"
+    LOGGER_LEVEL       = "INFO"
   }
   image_uri          = "${data.aws_ecr_repository.lpa_iap_processor.repository_url}:${var.image_tag}"
   ecr_arn            = data.aws_ecr_repository.lpa_iap_request_handler.arn
