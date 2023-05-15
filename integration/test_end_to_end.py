@@ -202,7 +202,7 @@ def test_collection_in_progress(setup_rest_url_part):
 
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
-    total_sleep_time = 7 * 60  # sleep for 5 minutes
+    total_sleep_time = 7 * 60  # sleep for 7 minutes
     time_remaining = total_sleep_time
 
     while time_remaining > 0:
