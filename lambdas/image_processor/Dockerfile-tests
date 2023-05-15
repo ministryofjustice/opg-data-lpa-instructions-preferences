@@ -38,5 +38,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
+COPY run-tests.sh run-tests.sh
+RUN pip3 install coverage==7.2.5 && chmod 755 run-tests.sh
 # Set the entrypoint for the unit tests
-ENTRYPOINT [ "python", "-m", "pytest", "/function/tests/" ]
+ENTRYPOINT [ "/function/run-tests.sh" ]

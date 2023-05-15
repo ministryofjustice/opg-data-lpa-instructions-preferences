@@ -20,5 +20,7 @@ RUN python -m pip install \
         --requirement requirements-dev.txt
 
 ENV PYTHONPATH "${PYTHONPATH}:${FUNCTION_DIR}"
-
-ENTRYPOINT [ "python", "-m", "pytest", "/lambdas/image_request_handler/tests/" ]
+COPY run-tests.sh run-tests.sh
+RUN pip3 install coverage==7.2.5 && chmod 755 run-tests.sh
+# Set the entrypoint for the unit tests
+ENTRYPOINT [ "./run-tests.sh" ]
