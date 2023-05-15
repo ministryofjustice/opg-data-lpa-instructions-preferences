@@ -1,5 +1,5 @@
 module "mock_sirius" {
-  count               = contains(keys(var.accounts), local.environment) ? 0 : 1
+  count               = contains(keys(var.accounts), local.environment) && local.environment != "development" ? 0 : 1
   source              = "./modules/mock_sirius"
   vpc_id              = local.account.vpc_id
   environment         = local.environment
