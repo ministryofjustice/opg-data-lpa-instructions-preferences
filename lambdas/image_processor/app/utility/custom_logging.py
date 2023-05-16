@@ -100,3 +100,21 @@ def custom_logger(name):
         logging.basicConfig()
 
     return logger
+
+
+class LogMessageDetails:
+    def __init__(self):
+        self.uid = ""
+        self.document_paths = {}
+        self.matched_templates = []
+        self.images_uploaded = []
+        self.status = "Not Started"
+
+    def get_info_message(self):
+        return {
+            "uid": self.uid,
+            "document_paths": self.document_paths,
+            "matched_templates": self.matched_templates,
+            "images_uploaded": self.images_uploaded,
+            "status": self.status,
+        }

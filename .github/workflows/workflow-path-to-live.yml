@@ -180,7 +180,7 @@ jobs:
 
   workflow_complete:
     name: Workflow Complete
-    needs: ['production_account_plan_apply']
+    needs: ['production_environment_plan_apply']
     runs-on: ubuntu-latest
     steps:
       - name: Completion message
