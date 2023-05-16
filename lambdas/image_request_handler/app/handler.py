@@ -13,7 +13,7 @@ class ImageRequestHandler:
         self.environment = os.getenv("ENVIRONMENT")
         self.s3 = self.setup_s3_connection()
         self.sqs = self.setup_sqs_connection()
-        self.uid = uid
+        self.uid = str(int(uid))
         self.bucket = bucket
         self.sqs_queue = sqs_queue
         self.images_to_check = self.images_to_check()
@@ -342,6 +342,8 @@ def get_healthcheck_response(event):
 
 
 def lambda_handler(event, context):
+    logger.debug(event)
+    logger.debug(context)
     environment = os.getenv("ENVIRONMENT")
     version = os.getenv("VERSION")
 
