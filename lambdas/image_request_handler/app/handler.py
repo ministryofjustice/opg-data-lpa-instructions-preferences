@@ -13,7 +13,7 @@ class ImageRequestHandler:
         self.environment = os.getenv("ENVIRONMENT")
         self.s3 = self.setup_s3_connection()
         self.sqs = self.setup_sqs_connection()
-        self.uid = uid
+        self.uid = str(int(uid))
         self.bucket = bucket
         self.sqs_queue = sqs_queue
         self.images_to_check = self.images_to_check()
@@ -194,7 +194,6 @@ class ImageRequestHandler:
 
         try:
             file = self.s3.head_object(Bucket=self.bucket, Key=image)
-            print(file["Metadata"])
             file_size = file["ContentLength"]
             if image == self.image_to_store_metadata_against:
                 self.continuation_sheet_instructions_count = int(
