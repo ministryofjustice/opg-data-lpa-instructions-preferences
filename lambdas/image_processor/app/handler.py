@@ -428,11 +428,8 @@ class ImageProcessor:
         logger.debug(f"Reading form from path: {form_path}")
         _, imgs = ImageReader.read(form_path)
 
-        logger.debug("Pre-processing raw form images...")
-        preprocessed_imgs = form_operator.preprocess_form_images(imgs)
-
         logger.debug("Auto-rotating images based on text direction...")
-        rotated_images = form_operator.auto_rotate_form_images(preprocessed_imgs)
+        rotated_images = form_operator.auto_rotate_form_images(imgs)
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
@@ -626,6 +623,7 @@ class ImageProcessor:
             processed_images = self.get_preprocessed_images(
                 scan_location, form_operator
             )
+
             logger.debug(f"Attempting to match {scan_location} based on barcodes...")
             matched_items = self.find_matches_from_barcodes(
                 processed_images, complete_meta_store
