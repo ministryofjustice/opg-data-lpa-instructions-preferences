@@ -45,7 +45,7 @@ def handle_request(method, url, auth):
 
 
 def main():
-    workspace = "uml2771"
+    workspace = "development"
     workspace_mapping = {
         "development": "dev.",
         "preproduction": "pre.",
@@ -55,10 +55,10 @@ def main():
         branch_prefix = workspace_mapping[workspace]
     except KeyError:
         branch_prefix = f"{workspace}.dev."
-    uid = "700000000047"
+    uid = "700000000000"
     ver = "v1"
 
-    session = get_role_session("sirius-dev", "operator")
+    session = get_role_session("sirius-dev", "breakglass")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 

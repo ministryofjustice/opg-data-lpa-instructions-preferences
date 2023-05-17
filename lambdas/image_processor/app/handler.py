@@ -41,6 +41,7 @@ class ImageProcessor:
             info_msg=self.info_msg,
         )
         path_selection_service = PathSelectionService(folder_name=self.folder_name)
+
         try:
             self.uid = self.get_uid_from_event()
             self.info_msg.uid = self.uid
