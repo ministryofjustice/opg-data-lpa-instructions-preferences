@@ -4,6 +4,7 @@ from unittest.mock import patch, MagicMock
 from moto import mock_s3
 import pytest
 from app.utility.bucket_manager import BucketManager
+from app.utility.custom_logging import LogMessageDetails
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +15,8 @@ def setup_environment_variables():
 
 @pytest.fixture
 def bucket_manager():
-    return BucketManager()
+    info_msg = LogMessageDetails()
+    return BucketManager(info_msg)
 
 
 def test_extract_s3_file_path(bucket_manager):
@@ -88,10 +90,16 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
 
     # Check that the function returned the expected file paths
     expected_result = {
-        "scans": ["/tmp/output/my_scan.pdf"],
+        "scans": [{"location": "/tmp/output/my_scan.pdf", "template": "TEST"}],
         "continuations": {
-            "continuation_1": "/tmp/output/my_continuation_sheet1.pdf",
-            "continuation_2": "/tmp/output/my_continuation_sheet2.pdf",
+            "continuation_1": {
+                "location": "/tmp/output/my_continuation_sheet1.pdf",
+                "template": "TEST",
+            },
+            "continuation_2": {
+                "location": "/tmp/output/my_continuation_sheet2.pdf",
+                "template": "TEST",
+            },
         },
     }
 
@@ -155,3 +163,27 @@ def test_put_error_image_to_bucket(bucket_manager):
         "continuationsheetsunknown": "0",
         "processerror": "1",
     }
+
+
+def test_reorder_list_by_relevance(bucket_manager):
+    scan_list = [
+        {"location": "blah", "template": "LPA123"},
+        {"location": "blah", "template": None},
+        {"location": "blah", "template": "FOO"},
+        {"location": "blah", "template": "LPA456"},
+        {"location": "blah", "template": "BAR"},
+        {"location": "blah", "template": None},
+    ]
+
+    expected_result = [
+        {"location": "blah", "template": "LPA123"},
+        {"location": "blah", "template": "LPA456"},
+        {"location": "blah", "template": "FOO"},
+        {"location": "blah", "template": "BAR"},
+        {"location": "blah", "template": None},
+        {"location": "blah", "template": None},
+    ]
+
+    result = bucket_manager.reorder_list_by_relevance(scan_list)
+
+    assert result == expected_result

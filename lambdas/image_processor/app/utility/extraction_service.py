@@ -1,7 +1,11 @@
 import datetime
 import copy
+import os
+
 import cv2
 import re
+
+import numpy as np
 from pyzbar.pyzbar import decode
 from collections import Counter
 from fuzzywuzzy import fuzz
@@ -14,6 +18,26 @@ from app.utility.custom_logging import custom_logger
 logger = custom_logger("extraction_service")
 
 
+class MatchingMetaToImages:
+    def __init__(self, meta_id: str, image_page_map: dict):
+        self.meta_id = meta_id
+        self.image_page_map = image_page_map
+
+
+class MatchingItem:
+    def __init__(self, match: MatchingMetaToImages, scan_location: str):
+        self.match = match
+        self.scan_location = scan_location
+
+
+class MatchingItemsStore:
+    def __init__(self):
+        self.items = {}
+
+    def add_item(self, key, matching_item: MatchingItem):
+        self.items[key] = matching_item
+
+
 class ExtractionService:
     def __init__(
         self, extraction_folder_path, folder_name, output_folder_path, info_msg
@@ -22,6 +46,7 @@ class ExtractionService:
         self.folder_name = folder_name
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
+        self.matched_continuations_from_scans = {}
 
     def run_iap_extraction(self, scan_locations: dict) -> list:
         form_operator = FormOperator.create_from_config(
@@ -34,18 +59,26 @@ class ExtractionService:
 
         # Find matches based on Scans (only one should match)
         scan_sheet_store = self.get_matching_scan_item(
-            scan_locations, complete_meta_store, form_meta_directory, form_operator
+            scan_locations, complete_meta_store, form_operator
         )
 
         # Find matches based on Continuation sheets (multiple matches possible)
         continuation_sheet_store = self.get_matching_continuation_items(
-            scan_locations, form_meta_directory, form_operator
+            scan_locations, complete_meta_store, form_operator
         )
 
-        complete_matching_store = {**scan_sheet_store, **continuation_sheet_store}
+        combined_continuation_sheet_store = self.combine_continuation_stores(
+            form_scan_continuation_store=self.matched_continuations_from_scans,
+            continuation_sheet_store=continuation_sheet_store,
+        )
 
-        if len(complete_matching_store) == 0:
+        if len(scan_sheet_store) == 0:
             raise Exception("No matches found in any documents")
+
+        complete_matching_store = {
+            **scan_sheet_store,
+            **combined_continuation_sheet_store,
+        }
 
         for key, matched_document_store_item in complete_matching_store.items():
             pass_dir = f"{self.output_folder_path}/pass/{self.folder_name}/{key}"
@@ -54,6 +87,7 @@ class ExtractionService:
             meta = complete_meta_store[meta_id]
             document_path = matched_document_store_item["scan_location"]
             matched_document_items = matched_document_store_item["match"]
+
             self.extract_images(
                 matched_document_items,
                 meta,
@@ -71,79 +105,125 @@ class ExtractionService:
 
         return continuation_keys_to_use
 
+    @staticmethod
+    def combine_continuation_stores(
+        form_scan_continuation_store, continuation_sheet_store
+    ):
+        final_continuation_store = {}
+        continuation_count = 1
+        for _, value in form_scan_continuation_store.items():
+            final_continuation_store[f"continuation_{continuation_count}"] = value
+            continuation_count += 1
+
+        for _, value in continuation_sheet_store.items():
+            final_continuation_store[f"continuation_{continuation_count}"] = value
+            continuation_count += 1
+
+        return final_continuation_store
+
+    @staticmethod
+    def filter_metastore_based_on_template(complete_meta_store, template):
+        metastore_mapping = {
+            "LPA117": ["pfa117"],
+            "LPA114": ["hw114"],
+            "LP1H": ["lp1h"],
+            "LP1F": ["lp1f"],
+            "LPC": ["lpc", "lpc_lp", "pfa_c"],
+        }
+        filtered_metastore = {}
+        try:
+            matched_metas = metastore_mapping[template]
+            for matched_meta in matched_metas:
+                filtered_metastore[matched_meta] = complete_meta_store[matched_meta]
+            return filtered_metastore
+        except KeyError:
+            return complete_meta_store
+
     def get_matching_scan_item(
         self,
         scan_locations: dict,
         complete_meta_store: dict,
-        form_meta_directory: str,
         form_operator: FormOperator,
-    ) -> dict:
+    ) -> MatchingItemsStore:
         """
         Find the matching scan item from a list of scan locations by attempting to match based on barcodes and OCR.
         Returns a dictionary containing the match and the scan location.
         """
-        matched_lpa_scans_store = {"scan": {"match": {}, "scan_location": ""}}
         matches = []
         # Attempt to match based on barcodes
         for scan_location in scan_locations["scans"]:
+            filtered_metastore = self.filter_metastore_based_on_template(
+                complete_meta_store, scan_location["template"]
+            )
             processed_images = self.get_preprocessed_images(
-                scan_location, form_operator
+                scan_location["location"], form_operator
             )
             logger.debug(f"Attempting to match {scan_location} based on barcodes...")
             matched_items = self.find_matches_from_barcodes(
-                processed_images, complete_meta_store
+                processed_images, filtered_metastore, scan_location["location"]
             )
             logger.debug(
-                f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}"
+                f"Barcode matches for {scan_location['location']}: {len(matched_items.image_page_map)}"
             )
-            if len(matched_items["image_page_map"]) > 0:
-                matched_lpa_scans_store["scan"]["match"] = matched_items
-                matched_lpa_scans_store["scan"]["scan_location"] = scan_location
+            if len(matched_items.image_page_map) > 0:
+                matching_item = MatchingItem(matched_items, scan_location["location"])
+                matched_lpa_scans_store = MatchingItemsStore()
+                matched_lpa_scans_store.add_item("scan", matching_item)
                 matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
                 matches.append(matched_lpa_scans_store_deep)
+                break
 
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
         if len(matches) > 1:
+            # should not be possible with current logic
             raise Exception(
                 "More than one matching document path for LPA barcode scans"
             )
         elif len(matches) == 1:
-            return matched_lpa_scans_store
+            return matches[0]
 
         # Attempt to match based on OCR
         logger.debug("Attempting to match scans based on OCR...")
         for scan_location in scan_locations["scans"]:
+            filtered_metastore = self.filter_metastore_based_on_template(
+                complete_meta_store, scan_location["template"]
+            )
             processed_images = self.get_preprocessed_images(
-                scan_location, form_operator
+                scan_location["location"], form_operator, filtered_metastore
             )
             matched_items = self.get_ocr_matches(
-                processed_images, form_operator, form_meta_directory
+                processed_images, form_operator, filtered_metastore
             )
-            if len(matched_items["image_page_map"]) > 0:
-                matched_lpa_scans_store["scan"]["match"] = matched_items
-                matched_lpa_scans_store["scan"]["scan_location"] = scan_location
+            if len(matched_items.image_page_map) > 0:
+                matching_item = MatchingItem(matched_items, scan_location["location"])
+                matched_lpa_scans_store = MatchingItemsStore()
+                matched_lpa_scans_store.add_item("scan", matching_item)
                 matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
                 matches.append(matched_lpa_scans_store_deep)
+                break
 
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on OCR: {len(matches)}")
         if len(matches) > 1:
+            # should not be possible with current logic
             raise Exception("More than one matching document path for LPA OCR scans")
         elif len(matches) == 1:
             return matches[0]
 
+        return MatchingItemsStore()
+
     def get_matching_continuation_items(
         self,
         scan_locations: dict,
-        form_meta_directory: str,
+        complete_meta_store: dict,
         form_operator: FormOperator,
     ) -> dict:
         """
         This function attempts to match continuation scan locations with corresponding items using barcodes and OCR.
 
         :param scan_locations: Dictionary containing scan locations of the form.
-        :param form_meta_directory: Directory containing the form meta data.
+        :param complete_meta_store: Complete store of the form meta data.
         :param form_operator: Operator for handling form data.
         :return: Dictionary containing matched continuation documents.
         """
@@ -151,36 +231,42 @@ class ExtractionService:
 
         # Loop through scan locations and attempt to match them
         for key, scan_location in scan_locations["continuations"].items():
+            filtered_metastore = self.filter_metastore_based_on_template(
+                complete_meta_store, scan_location["template"]
+            )
             # Get preprocessed images for current scan location
             processed_images = self.get_preprocessed_images(
-                scan_location, form_operator
+                scan_location["location"], form_operator
             )
 
-            # Get form meta data
-            matching_meta_store = form_operator.form_meta_store(form_meta_directory)
-
-            logger.debug(f"Attempting to match {scan_location} based on barcodes...")
+            logger.debug(
+                f"Attempting to match {scan_location['location']} based on barcodes..."
+            )
             # Attempt to match based on barcodes
             matched_items = self.find_matches_from_barcodes(
-                processed_images, matching_meta_store
+                processed_images, filtered_metastore, scan_location["location"]
             )
             logger.debug(
-                f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}"
+                f"Barcode matches for {scan_location['location']}: {len(matched_items.image_page_map)}"
             )
 
             # If no matches found using barcodes, attempt to match using OCR
-            if len(matched_items["image_page_map"]) == 0:
-                logger.debug(f"Attempting to match {scan_location} based on OCR...")
+            if len(matched_items.image_page_map) == 0:
+                logger.debug(
+                    f"Attempting to match {scan_location['location']} based on OCR..."
+                )
                 matched_items = self.get_ocr_matches(
-                    processed_images, form_operator, form_meta_directory
+                    processed_images, form_operator, filtered_metastore
                 )
 
             # If matches found, store them in the matched LPA scans store
-            if len(matched_items["image_page_map"]) > 0:
+            if len(matched_items.image_page_map) > 0:
                 if "continuation_" in key:
                     matched_lpa_scans_store[key] = {}
                     matched_lpa_scans_store[key]["match"] = matched_items
-                    matched_lpa_scans_store[key]["scan_location"] = scan_location
+                    matched_lpa_scans_store[key]["scan_location"] = scan_location[
+                        "location"
+                    ]
 
         logger.debug(f"Matched continuation documents: {len(matched_lpa_scans_store)}")
 
@@ -258,8 +344,9 @@ class ExtractionService:
             )
             raise Exception(e)
 
-    @staticmethod
-    def get_preprocessed_images(form_path: str, form_operator: FormOperator) -> list:
+    def get_preprocessed_images(
+        self, form_path: str, form_operator: FormOperator, metastore: dict
+    ) -> list:
         """
         Preprocesses the images of a form at the specified file path using the
         provided FormOperator object.
@@ -267,6 +354,7 @@ class ExtractionService:
         Args:
             form_path (str): A string containing the file path of the form to be processed.
             form_operator (FormOperator): A FormOperator object used to preprocess the form images.
+            metastore (dict): store of meta templates
 
         Returns:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
@@ -274,22 +362,83 @@ class ExtractionService:
         logger.debug(f"Reading form from path: {form_path}")
         _, imgs = ImageReader.read(form_path)
 
-        logger.debug("Pre-processing raw form images...")
-        preprocessed_imgs = form_operator.preprocess_form_images(imgs)
-
         logger.debug("Auto-rotating images based on text direction...")
-        rotated_images = form_operator.auto_rotate_form_images(preprocessed_imgs)
+        rotated_images = form_operator.auto_rotate_form_images(imgs)
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
-        return rotated_images
+        # If we have narrowed it down to 1 meta then we can safely mask away
+        # where we would find the contents of the file to make matches more accurate
+        if len(metastore) == 1:
+            logger.debug("Further image processing...")
+            masked_images = self.mask_images(metastore, rotated_images)
+            final_images = self.smart_threshold_images(masked_images)
+        else:
+            final_images = rotated_images
+
+        return final_images
+
+    @staticmethod
+    def smart_threshold_images(image_list):
+        # Create an empty list to store the new images
+        thresholded_images = []
+
+        # Loop through each image in the input list
+        for image in image_list:
+            # Get the current size of the image
+            # Convert the image to grayscale
+            grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            average_intensity = np.mean(grayscale)
+            # Apply the threshold using the average intensity
+            _, thresholded = cv2.threshold(
+                grayscale, average_intensity - 50, 255, cv2.THRESH_BINARY
+            )
+
+            thresholded_images.append(thresholded)
+
+        # Return the list of doubled-size images
+        return thresholded_images
+
+    @staticmethod
+    def mask_images(metastore, images):
+        updated_images = []
+        for image in images:
+            for meta_id, meta in metastore.items():
+                form_meta_loc = meta.form_template
+                template_files = os.listdir(form_meta_loc)
+                template = cv2.imread(os.path.join(form_meta_loc, template_files[0]))
+
+                # Get the height and width of the template image
+                template_height, template_width, _ = template.shape
+
+                # Resize the input image to match the template size
+                resized_image = cv2.resize(image, (template_width, template_height))
+
+                form_fields = meta.form_fields
+                average_color = np.mean(image, axis=(0, 1))
+                for field in form_fields:
+                    field_bb = field.bounding_box
+                    top_left = (field_bb.left, field_bb.top)
+                    bottom_right = (field_bb.right, field_bb.bottom)
+
+                    cv2.rectangle(
+                        resized_image,
+                        top_left,
+                        bottom_right,
+                        average_color,
+                        thickness=cv2.FILLED,
+                    )
+
+            updated_images.append(resized_image)
+
+        return updated_images
 
     def get_ocr_matches(
         self,
         processed_images: list,
         form_operator: FormOperator,
-        form_meta_directory: str,
-    ) -> dict:
+        metastore: dict,
+    ) -> MatchingMetaToImages:
         """
         Applies OCR to extract text from images, filters metadata by matching form regex,
         and attempts to identify matches based on text identification.
@@ -297,7 +446,7 @@ class ExtractionService:
         Args:
             - processed_images (List[Any]): A list of processed images to extract text from.
             - form_operator (Any): A form operator object with `form_images_to_text` method.
-            - form_meta_directory (str): A directory containing form metadata documents.
+            - metastore (dict): A directory containing form metadata documents.
 
         Returns:
             - matched_items (Dict[str, Any]): A dictionary containing the results of the matching process.
@@ -306,30 +455,52 @@ class ExtractionService:
                 (form_index, image_index) to a list of matched page indices in metadata documents.
               - 'match_confidences' (List[float]): A list of match confidences for all matched items.
         """
-        logger.debug("Further image processing...")
-        form_images_doubled = self.double_image_size(processed_images)
         logger.debug("Applying OCR to extract text from images...")
-        form_images_text = form_operator.form_images_to_text(form_images_doubled)
-        logger.debug("Filtering metadata store by form regex...")
-        # this is based on matching the form regex to filter down the number of matching metadata docs
-        matching_meta_store = self.match_first_form_image_text_to_form_meta(
-            form_meta_directory, form_images_text, form_operator
-        )
-        logger.debug(
-            f"Created following metadata store based on form regex: {matching_meta_store}"
-        )
+        form_images_text = form_operator.form_images_to_text(processed_images)
 
         logger.debug("Attempting to identify matches based on text identification")
         matched_items = self.mixed_mode_page_identifier(
-            form_images_text, matching_meta_store, processed_images
+            form_images_text, metastore, processed_images
         )
-        logger.debug(
-            f"Total matched based on OCR: {len(matched_items['image_page_map'])}"
-        )
+        logger.debug(f"Total matched based on OCR: {len(matched_items.image_page_map)}")
 
         return matched_items
 
-    def find_matches_from_barcodes(self, images: list, form_metastore: dict) -> dict:
+    @staticmethod
+    def barcode_combination_conditions_correct(matched_meta_ids):
+        count_lp1f = matched_meta_ids.count("lp1f")
+        count_lp1h = matched_meta_ids.count("lp1h")
+
+        if count_lp1f > 1 or count_lp1h > 1:
+            return False
+
+        if count_lp1f > 0 and count_lp1h > 0:
+            return False
+
+        return True
+
+    def split_out_scans_from_continuation_matches(self, matching_images, scan_location):
+        matched_scan = None
+        matched_continuations = []
+        for matching_image in matching_images:
+            if matching_image["meta_id"] in ["lp1f", "lp1h"]:
+                matched_scan = matching_image
+            elif matching_image["meta_id"] == "lpc":
+                # Use the one page config template for extraction
+                matching_image["meta_id"] = "lpc_as_part_of_scan"
+                matched_continuations.append(matching_image)
+
+        for count, matched_continuation in enumerate(matched_continuations):
+            self.matched_continuations_from_scans[f"continuation_{count}"] = {
+                "match": matched_continuation,
+                "scan_location": scan_location,
+            }
+
+        return matched_scan
+
+    def find_matches_from_barcodes(
+        self, images: list, form_metastore: dict, scan_location: str
+    ) -> MatchingMetaToImages:
         """
         Finds and matches barcodes in the input images to the corresponding template pages in the
         form metastore.
@@ -337,6 +508,7 @@ class ExtractionService:
         Args:
             images (List[np.ndarray]): A list of images to be matched with templates.
             form_metastore (Dict[str, Any]): A dictionary containing form template metadata.
+            scan_location (str): used for updating the location of continuation sheets that are part of the main scan
 
         Returns:
             Union[Dict[str, Any], List[Dict[str, Any]]]: If a match is found, a dictionary containing
@@ -348,7 +520,7 @@ class ExtractionService:
         """
         img_count = 0
         image_barcode_dict = {}
-        matched_meta = {"meta_id": "", "image_page_map": {}}
+        matching_meta_images = MatchingMetaToImages()
 
         # Iterate over each image and find its barcode
         for img in images:
@@ -395,22 +567,33 @@ class ExtractionService:
                                 f"for scan page number {img_count} from template page {form_page.page_number}"
                             )
 
-            matched_meta["meta_id"] = meta_id
-            matched_meta["image_page_map"] = matching_image_page
+            matching_meta_images.meta_id = meta_id
+            matching_meta_images.image_page_map = matching_image_page
 
-            if len(matched_meta["image_page_map"]) > 0:
-                matched_meta_deep = copy.deepcopy(matched_meta)
+            if len(matching_meta_images.image_page_map) > 0:
+                matched_meta_deep = copy.deepcopy(matching_meta_images)
                 matching_images.append(matched_meta_deep)
 
         # Handle the cases where we have too many or too few matches
         if len(matching_images) > 1:
             logger.debug("Too many matches on Barcodes")
-            matched_meta["image_page_map"] = {}
-            return matched_meta
+
+            matched_meta_ids = []
+            for image in matching_images:
+                matched_meta_ids.append(image.meta_id)
+
+            if self.barcode_combination_conditions_correct(matched_meta_ids):
+                matched_image = self.split_out_scans_from_continuation_matches(
+                    matching_images, scan_location
+                )
+                return matched_image
+
+            matching_meta_images.image_page_map = {}
+            return matching_meta_images
 
         if len(matching_images) == 0:
             logger.debug("No matches on barcodes")
-            return matched_meta
+            return matching_meta_images
 
         # If we have exactly one match, return it
         return matching_images[0]
@@ -440,7 +623,7 @@ class ExtractionService:
 
     @staticmethod
     def match_first_form_image_text_to_form_meta(
-        form_meta_directory: str,
+        metastore: dict,
         form_images_as_strings: list,
         form_operator: FormOperator,
     ) -> dict:
@@ -452,9 +635,8 @@ class ExtractionService:
         contains the given metadata's identifier
 
         Params:
-            form_meta_directory (str):
-                The local path to the directory containing
-                `FormMetadata` compliant json files
+            metastore (dict):
+                The metastore of all our config items
             form_images_as_strings (List[str]):
                 List of recognised text from a set of form images
 
@@ -463,7 +645,7 @@ class ExtractionService:
                 A dictionary of `FormMetadata` objects
         """
         results = {}
-        for id, meta in form_operator.form_meta_store(form_meta_directory).items():
+        for id, meta in metastore.items():
             valid, _ = form_operator.form_identifier_match(
                 [form_images_as_strings[0]], meta
             )
@@ -510,7 +692,7 @@ class ExtractionService:
 
     def mixed_mode_page_identifier(
         self, form_images_as_strings: list, form_metastore: dict, form_images: list
-    ) -> dict:
+    ) -> MatchingMetaToImages:
         scan_to_template_distances = self.create_scan_to_template_distances(
             form_images_as_strings, form_metastore
         )
@@ -518,6 +700,7 @@ class ExtractionService:
             scan_to_template_distances,
             key=lambda x: (-x["distance"], x["template_page_no"], x["scan_page_no"]),
         )
+
         similarity_score = self.get_similarity_score(sorted_scan_template_entities)
         meta_id_to_use = self.get_meta_id_to_use(sorted_scan_template_entities)
         matching_image_results = self.get_matching_image_results(
@@ -550,7 +733,7 @@ class ExtractionService:
     def get_meta_page_text(self, form_page):
         template_page_text_file = f"{self.extraction_folder_path}/target_texts/{form_page.additional_args['extra']['page_text']}"
         with open(template_page_text_file, "r") as file:
-            meta_page_text = file.read().replace("\n", "")
+            meta_page_text = file.read()
         return meta_page_text
 
     @staticmethod
@@ -602,10 +785,11 @@ class ExtractionService:
         similarity_score,
         sorted_scan_template_entities,
         form_images,
-    ):
-        matching_image_results = {"meta_id": meta_id_to_use, "image_page_map": {}}
+    ) -> MatchingMetaToImages:
+        matching_meta_images = MatchingMetaToImages()
+        matching_meta_images.meta_id = meta_id_to_use
         if similarity_score < 0.7:
-            return matching_image_results
+            return matching_meta_images
         template_pages_used = set()
         scan_pages_used = set()
         templates_to_keep = []
@@ -625,13 +809,13 @@ class ExtractionService:
         for template_to_keep in templates_to_keep:
             template_page_no = template_to_keep["template_page_no"]
             scan_page_no = template_to_keep["scan_page_no"]
-            matching_image_results["image_page_map"].setdefault(
-                template_page_no, []
-            ).append(form_images[scan_page_no - 1])
+            matching_meta_images.image_page_map.setdefault(template_page_no, []).append(
+                form_images[scan_page_no - 1]
+            )
             msg = (
                 f"Match on {meta_id_to_use} with OCR match for scan page number {scan_page_no} "
                 f"from template page number {template_page_no}"
             )
             logger.debug(msg)
             self.info_msg.matched_templates.append(msg)
-        return matching_image_results
+        return matching_meta_images

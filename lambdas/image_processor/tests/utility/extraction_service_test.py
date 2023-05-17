@@ -89,11 +89,11 @@ def test_get_matching_continuation_items(
     # Create test data
     scan_locations = {
         "continuations": {
-            "continuation_1": "path/to/image1",
-            "continuation_2": "path/to/image2",
+            "continuation_1": {"location": "path/to/image1", "template": "LPC"},
+            "continuation_2": {"location": "path/to/image2", "template": "LPC"},
         }
     }
-    form_meta_directory = "path/to/meta/directory"
+    meta_store = {"meta1": {"field1": "value1"}, "meta2": {"field2": "value2"}}
 
     # Set up mock for form_operator methods
     monkeypatch.setattr(
@@ -119,7 +119,7 @@ def test_get_matching_continuation_items(
 
     # Call the function
     result = extraction_service.get_matching_continuation_items(
-        scan_locations, form_meta_directory, form_operator
+        scan_locations, meta_store, form_operator
     )
     expected = {
         "continuation_1": {
@@ -152,7 +152,7 @@ def test_get_matching_continuation_items(
         ),
     )
     result = extraction_service.get_matching_continuation_items(
-        scan_locations, form_meta_directory, form_operator
+        scan_locations, meta_store, form_operator
     )
     expected = {
         "continuation_1": {
@@ -249,7 +249,6 @@ def test_get_preprocessed_images(monkeypatch, tmp_path, extraction_service):
     mock_image_reader.read.assert_called_once_with(pdf_path)
 
     # Assert that the form operator methods were called with the correct arguments
-    mock_form_operator.preprocess_form_images.assert_called_once_with([None, None])
     mock_form_operator.auto_rotate_form_images.assert_called_once_with([None, None])
 
 
@@ -266,11 +265,6 @@ def test_get_ocr_matches(monkeypatch, form_operator, extraction_service):
     )
     monkeypatch.setattr(
         extraction_service,
-        "match_first_form_image_text_to_form_meta",
-        MagicMock(return_value=["meta1", "meta2"]),
-    )
-    monkeypatch.setattr(
-        extraction_service,
         "mixed_mode_page_identifier",
         MagicMock(return_value={"image_page_map": {"1": ["numpyarray"]}}),
     )
@@ -282,12 +276,8 @@ def test_get_ocr_matches(monkeypatch, form_operator, extraction_service):
     # assert that the form_images_to_text method was called with the correct input
     form_operator.form_images_to_text.assert_called_once_with(["img1", "img2"])
     # assert that the methods were called with the correct input
-    extraction_service.double_image_size.assert_called_once_with(["img1", "img2"])
-    extraction_service.match_first_form_image_text_to_form_meta.assert_called_once_with(
-        "/path/to/form/meta", ["text1", "text2"], form_operator
-    )
     extraction_service.mixed_mode_page_identifier.assert_called_once_with(
-        ["text1", "text2"], ["meta1", "meta2"], ["img1", "img2"]
+        ["text1", "text2"], "/path/to/form/meta", ["img1", "img2"]
     )
     # assert that the function returned the correct output
     assert result == {"image_page_map": {"1": ["numpyarray"]}}
@@ -303,7 +293,7 @@ def test_find_matches_from_barcodes_no_match(
     images.append(image)
 
     result = extraction_service.find_matches_from_barcodes(
-        images, mock_form_metastore_barcode_single
+        images, mock_form_metastore_barcode_single, None
     )
 
     assert isinstance(result, dict)
@@ -321,7 +311,7 @@ def test_find_matches_from_barcodes_single_match(
     images.append(image)
 
     result = extraction_service.find_matches_from_barcodes(
-        images, mock_form_metastore_barcode_single
+        images, mock_form_metastore_barcode_single, None
     )
 
     assert isinstance(result, dict)
@@ -343,7 +333,7 @@ def test_find_matches_from_barcodes_multiple_matches(
     images.append(image2)
 
     result = extraction_service.find_matches_from_barcodes(
-        images, mock_form_metastore_barcode_multiple
+        images, mock_form_metastore_barcode_multiple, None
     )
 
     assert isinstance(result, dict)
@@ -492,7 +482,7 @@ def test_create_scan_to_template_distances(
 
 def test_get_meta_page_text(extraction_service):
     form_page = MockFormPage(page_number=1, barcode="", page_text="test_text.txt")
-    expected_meta_page_text = "hello world"
+    expected_meta_page_text = "hello world\n"
 
     extraction_service.extraction_folder_path = "tests/extraction"
     # Call the method being tested

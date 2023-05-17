@@ -12,11 +12,7 @@ def custom_logger(name=None):
     Returns:
         Logger instance
     """
-    logger_name = name if name else "lpa_code_generator"
-    formatter = logging.Formatter(
-        fmt=f"%(asctime)s - %(levelname)s - {logger_name} - in %("
-        f"funcName)s:%(lineno)d - %(message)s"
-    )
+    formatter = logging.Formatter(fmt="%(asctime)s - %(levelname)s - %(message)s")
 
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
@@ -27,6 +23,8 @@ def custom_logger(name=None):
         logger.setLevel(os.environ["LOGGER_LEVEL"])
     except KeyError:
         logger.setLevel("INFO")
+
+    logging.getLogger().handlers.clear()
     logger.addHandler(handler)
     return logger
 
@@ -34,7 +32,7 @@ def custom_logger(name=None):
 class LogMessageDetails:
     def __init__(self):
         self.uid = ""
-        self.document_paths = {}
+        self.document_templates = []
         self.matched_templates = []
         self.images_uploaded = []
         self.status = "Not Started"
@@ -42,7 +40,7 @@ class LogMessageDetails:
     def get_info_message(self):
         return {
             "uid": self.uid,
-            "document_paths": self.document_paths,
+            "document_templates": self.document_templates,
             "matched_templates": self.matched_templates,
             "images_uploaded": self.images_uploaded,
             "status": self.status,
