@@ -31,10 +31,10 @@ paths:
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/LPC-Scan.pdf', 'template': 'LPC'}, { 'location': 's3://opg-backoffice-datastore-integration/LPC2-Scan.pdf', 'template': 'LPC'}]
                 lpa0088:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/PFA117-Scan.pdf', 'template': 'PFA'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/PFA117-Scan.pdf', 'template': 'LPA117'}]
                 lpa0089:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/HW114-Scan.pdf', 'template': 'HW'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/HW114-Scan.pdf', 'template': 'LPA114'}]
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/PFA-C-Scan.pdf', 'template': 'LPC'}]
                 lpa0090:
                   value:
@@ -42,7 +42,7 @@ paths:
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/Correspondence-Bad-Continuation-Scan.pdf', 'template': 'Correspondence'}]
                 lpa0091:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LP1F-LP-Scan.pdf', 'template': 'LP1F'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LP1F-LP-Scan.pdf', 'template': ''}]
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/LPC-LP-Scan.pdf', 'template': 'LPC'}]
               schema:
                 type: object
