@@ -274,11 +274,8 @@ class ExtractionService:
         logger.debug(f"Reading form from path: {form_path}")
         _, imgs = ImageReader.read(form_path)
 
-        logger.debug("Pre-processing raw form images...")
-        preprocessed_imgs = form_operator.preprocess_form_images(imgs)
-
         logger.debug("Auto-rotating images based on text direction...")
-        rotated_images = form_operator.auto_rotate_form_images(preprocessed_imgs)
+        rotated_images = form_operator.auto_rotate_form_images(imgs)
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
@@ -359,6 +356,7 @@ class ExtractionService:
             barcodes_decoded = []
             for barcode in barcodes:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
+                print(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
                 image_barcode_dict[img_count] = barcodes_decoded[0]
