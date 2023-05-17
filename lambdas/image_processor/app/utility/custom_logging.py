@@ -27,6 +27,8 @@ def custom_logger(name=None):
         logger.setLevel(os.environ["LOGGER_LEVEL"])
     except KeyError:
         logger.setLevel("INFO")
+
+    logging.getLogger().handlers.clear()
     logger.addHandler(handler)
     return logger
 

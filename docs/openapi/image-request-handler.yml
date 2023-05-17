@@ -86,16 +86,6 @@ x-amazon-apigateway-gateway-responses:
     "Version": "2012-10-17",
     "Statement": [
       {
-        "Effect": "Deny",
-        "Principal": {
-          "AWS": [ "arn:aws:iam::${account_id}:root" ]
-        },
-        "Action": "execute-api:Invoke",
-        "Resource": [
-          "arn:aws:execute-api:eu-west-1:${account_id}:*/*/*/*"
-        ]
-      },
-      {
           "Effect": "Allow",
           "Principal": {
             "AWS": ["${allowed_roles}"]

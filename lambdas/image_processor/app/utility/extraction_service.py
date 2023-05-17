@@ -22,6 +22,7 @@ class ExtractionService:
         self.folder_name = folder_name
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
+        self.matched_continuations_from_scans = {}
 
     def run_iap_extraction(self, scan_locations: dict) -> list:
         form_operator = FormOperator.create_from_config(
@@ -42,7 +43,15 @@ class ExtractionService:
             scan_locations, form_meta_directory, form_operator
         )
 
-        complete_matching_store = {**scan_sheet_store, **continuation_sheet_store}
+        combined_continuation_sheet_store = self.combine_continuation_stores(
+            form_scan_continuation_store=self.matched_continuations_from_scans,
+            continuation_sheet_store=continuation_sheet_store,
+        )
+
+        complete_matching_store = {
+            **scan_sheet_store,
+            **combined_continuation_sheet_store,
+        }
 
         if len(complete_matching_store) == 0:
             raise Exception("No matches found in any documents")
@@ -54,6 +63,7 @@ class ExtractionService:
             meta = complete_meta_store[meta_id]
             document_path = matched_document_store_item["scan_location"]
             matched_document_items = matched_document_store_item["match"]
+
             self.extract_images(
                 matched_document_items,
                 meta,
@@ -70,6 +80,22 @@ class ExtractionService:
                 continuation_keys_to_use.append(key)
 
         return continuation_keys_to_use
+
+    @staticmethod
+    def combine_continuation_stores(
+        form_scan_continuation_store, continuation_sheet_store
+    ):
+        final_continuation_store = {}
+        continuation_count = 1
+        for _, value in form_scan_continuation_store.items():
+            final_continuation_store[f"continuation_{continuation_count}"] = value
+            continuation_count += 1
+
+        for _, value in continuation_sheet_store.items():
+            final_continuation_store[f"continuation_{continuation_count}"] = value
+            continuation_count += 1
+
+        return final_continuation_store
 
     def get_matching_scan_item(
         self,
@@ -91,7 +117,7 @@ class ExtractionService:
             )
             logger.debug(f"Attempting to match {scan_location} based on barcodes...")
             matched_items = self.find_matches_from_barcodes(
-                processed_images, complete_meta_store
+                processed_images, complete_meta_store, scan_location
             )
             logger.debug(
                 f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}"
@@ -162,7 +188,7 @@ class ExtractionService:
             logger.debug(f"Attempting to match {scan_location} based on barcodes...")
             # Attempt to match based on barcodes
             matched_items = self.find_matches_from_barcodes(
-                processed_images, matching_meta_store
+                processed_images, matching_meta_store, scan_location
             )
             logger.debug(
                 f"Barcode matches for {scan_location}: {len(matched_items['image_page_map'])}"
@@ -274,11 +300,8 @@ class ExtractionService:
         logger.debug(f"Reading form from path: {form_path}")
         _, imgs = ImageReader.read(form_path)
 
-        logger.debug("Pre-processing raw form images...")
-        preprocessed_imgs = form_operator.preprocess_form_images(imgs)
-
         logger.debug("Auto-rotating images based on text direction...")
-        rotated_images = form_operator.auto_rotate_form_images(preprocessed_imgs)
+        rotated_images = form_operator.auto_rotate_form_images(imgs)
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
@@ -329,7 +352,41 @@ class ExtractionService:
 
         return matched_items
 
-    def find_matches_from_barcodes(self, images: list, form_metastore: dict) -> dict:
+    @staticmethod
+    def barcode_combination_conditions_correct(matched_meta_ids):
+        count_lp1f = matched_meta_ids.count("lp1f")
+        count_lp1h = matched_meta_ids.count("lp1h")
+
+        if count_lp1f > 1 or count_lp1h > 1:
+            return False
+
+        if count_lp1f > 0 and count_lp1h > 0:
+            return False
+
+        return True
+
+    def split_out_scans_from_continuation_matches(self, matching_images, scan_location):
+        matched_scan = None
+        matched_continuations = []
+        for matching_image in matching_images:
+            if matching_image["meta_id"] in ["lp1f", "lp1h"]:
+                matched_scan = matching_image
+            elif matching_image["meta_id"] == "lpc":
+                # Use the one page config template for extraction
+                matching_image["meta_id"] = "lpc_as_part_of_scan"
+                matched_continuations.append(matching_image)
+
+        for count, matched_continuation in enumerate(matched_continuations):
+            self.matched_continuations_from_scans[f"continuation_{count}"] = {
+                "match": matched_continuation,
+                "scan_location": scan_location,
+            }
+
+        return matched_scan
+
+    def find_matches_from_barcodes(
+        self, images: list, form_metastore: dict, scan_location: str
+    ) -> dict:
         """
         Finds and matches barcodes in the input images to the corresponding template pages in the
         form metastore.
@@ -337,6 +394,7 @@ class ExtractionService:
         Args:
             images (List[np.ndarray]): A list of images to be matched with templates.
             form_metastore (Dict[str, Any]): A dictionary containing form template metadata.
+            scan_location (str): used for updating the location of continuation sheets that are part of the main scan
 
         Returns:
             Union[Dict[str, Any], List[Dict[str, Any]]]: If a match is found, a dictionary containing
@@ -405,6 +463,17 @@ class ExtractionService:
         # Handle the cases where we have too many or too few matches
         if len(matching_images) > 1:
             logger.debug("Too many matches on Barcodes")
+
+            matched_meta_ids = []
+            for image in matching_images:
+                matched_meta_ids.append(image["meta_id"])
+
+            if self.barcode_combination_conditions_correct(matched_meta_ids):
+                matched_image = self.split_out_scans_from_continuation_matches(
+                    matching_images, scan_location
+                )
+                return matched_image
+
             matched_meta["image_page_map"] = {}
             return matched_meta
 
