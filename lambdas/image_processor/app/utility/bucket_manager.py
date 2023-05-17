@@ -54,6 +54,19 @@ class BucketManager:
 
         return {"bucket": bucket, "file_path": file_path}
 
+    @staticmethod
+    def reorder_list_by_relevance(scan_list: list) -> list:
+        def key_func(item):
+            template = item.get("template")
+            if template and template.startswith("LPA"):
+                return 0
+            elif template is not None and template != "":
+                return 1
+            else:
+                return 2
+
+        return sorted(scan_list, key=key_func)
+
     def download_scanned_images(
         self, s3_urls_dict: dict, output_folder_path: str
     ) -> dict:
@@ -71,38 +84,50 @@ class BucketManager:
         lpa_scans = s3_urls_dict.get("lpaScans", [])
         lpa_locations = []
         for lpa_scan in lpa_scans:
-            lpa_locations.append(lpa_scan["location"])
+            lpa_locations.append(
+                {"location": lpa_scan["location"], "template": lpa_scan["template"]}
+            )
+
+        lpa_locations_reordered = self.reorder_list_by_relevance(lpa_locations)
 
         # Extract the S3 locations for the possible continuation sheet scans, if they exist
         continuation_sheet_scans = s3_urls_dict.get("continuationSheets", [])
         continuation_locations = []
         for continuation_sheet_scan in continuation_sheet_scans:
-            continuation_locations.append(continuation_sheet_scan["location"])
+            continuation_locations.append(
+                {
+                    "location": continuation_sheet_scan["location"],
+                    "template": continuation_sheet_scan["template"],
+                }
+            )
 
         # Download the LPA scan, if it exists
         scan_locations = {}
-        if not lpa_locations or len(lpa_locations) == 0:
+        if not lpa_locations_reordered or len(lpa_locations_reordered) == 0:
             raise Exception(
                 f"No documents returned by Sirius. Sirius response dictionary: {s3_urls_dict}"
             )
 
         scan_locations["scans"] = []
         scan_locations["continuations"] = {}
-        for lpa_location in lpa_locations:
+        for lpa_location in lpa_locations_reordered:
             try:
                 # Extract the file path and bucket name from the S3 URL
-                path_parts = self.extract_s3_file_path(lpa_location)
+                path_parts = self.extract_s3_file_path(lpa_location["location"])
                 # Construct the local file path for the downloaded scan
                 scan_location = f'{output_folder_path}/{path_parts["file_path"]}'
                 logger.debug(
-                    f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
+                    f"Attempting download from bucket: {path_parts['bucket']}, "
+                    f"key: {path_parts['file_path']}, path: {scan_location}"
                 )
                 # Download the scan from S3 and save it to the local file path
                 self.s3.download_file(
                     path_parts["bucket"], path_parts["file_path"], scan_location
                 )
                 # Add the local file path to the dictionary of downloaded scan locations
-                scan_locations["scans"].append(scan_location)
+                scan_locations["scans"].append(
+                    {"location": scan_location, "template": lpa_location["template"]}
+                )
             except Exception as e:
                 raise Exception(
                     f"Error downloading scanned document {lpa_location}: {e}"
@@ -116,11 +141,14 @@ class BucketManager:
         for continuation_location in continuation_locations:
             try:
                 # Extract the file path and bucket name from the S3 URL
-                path_parts = self.extract_s3_file_path(continuation_location)
+                path_parts = self.extract_s3_file_path(
+                    continuation_location["location"]
+                )
                 # Construct the local file path for the downloaded scan
                 scan_location = f'{output_folder_path}/{path_parts["file_path"]}'
                 logger.debug(
-                    f"Attempting download from bucket: {path_parts['bucket']}, key: {path_parts['file_path']}, path: {scan_location}"
+                    f"Attempting download from bucket: {path_parts['bucket']}, "
+                    f"key: {path_parts['file_path']}, path: {scan_location}"
                 )
                 # Download the scan from S3 and save it to the local file path
                 self.s3.download_file(
@@ -128,9 +156,10 @@ class BucketManager:
                 )
                 # Add the local file path to the dictionary of downloaded scan locations
                 location_position += 1
-                scan_locations["continuations"][
-                    f"continuation_{location_position}"
-                ] = scan_location
+                scan_locations["continuations"][f"continuation_{location_position}"] = {
+                    "location": scan_location,
+                    "template": continuation_location["template"],
+                }
             except Exception as e:
                 raise Exception(
                     f"Error downloading scanned continuation sheet {continuation_location}: {e}"

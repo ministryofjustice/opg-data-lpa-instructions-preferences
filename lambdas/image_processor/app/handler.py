@@ -3,6 +3,7 @@ import json
 import shutil
 import datetime
 import time
+import traceback
 
 from app.utility.custom_logging import custom_logger, LogMessageDetails
 
@@ -41,6 +42,7 @@ class ImageProcessor:
             info_msg=self.info_msg,
         )
         path_selection_service = PathSelectionService(folder_name=self.folder_name)
+
         try:
             self.uid = self.get_uid_from_event()
             self.info_msg.uid = self.uid
@@ -102,7 +104,8 @@ class ImageProcessor:
         except Exception as e:
             self.info_msg.status = "Error"
             logger.info(json.dumps(self.info_msg.get_info_message()))
-            logger.error(e)
+            stack_trace = traceback.format_exc()
+            logger.error(f"{e} --- {stack_trace}")
             bucket_manager.put_error_image_to_bucket(self.uid)
 
     @staticmethod
@@ -163,12 +166,12 @@ class ImageProcessor:
         # Extract the paths from the 'scans' key and add them to the list
         if "scans" in downloaded_document_locations:
             for path in downloaded_document_locations["scans"]:
-                downloaded_document_paths.append(path)
+                downloaded_document_paths.append(path["location"])
 
         # Extract the paths from the 'continuations' keys and add them to the list
         if "continuations" in downloaded_document_locations:
-            for key, value in downloaded_document_locations["continuations"].items():
-                downloaded_document_paths.append(value)
+            for key, path in downloaded_document_locations["continuations"].items():
+                downloaded_document_paths.append(path["location"])
 
         # Remove downloaded images
         for path in downloaded_document_paths:
