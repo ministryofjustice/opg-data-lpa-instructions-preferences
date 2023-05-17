@@ -31,18 +31,18 @@ paths:
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-Scan.pdf', 'template': 'LPC'}, {'location': 's3://opg-backoffice-datastore-local/LPC2-Scan.pdf', 'template': 'LPC'}]
                 lpa0088:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/PFA117-Scan.pdf', 'template': 'PFA'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/PFA117-Scan.pdf', 'template': 'LPA117'}]
                 lpa0089:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/HW114-Scan.pdf', 'template': 'HW'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/HW114-Scan.pdf', 'template': 'LPA114'}]
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/PFA-C-Scan.pdf', 'template': 'LPC'}]
                 lpa0090:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-PW-Scan.pdf', 'template': 'LPA'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-PW-Scan.pdf', 'template': ''}]
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/Correspondence-Bad-Continuation-Scan.pdf', 'template': 'Correspondence'}]
                 lpa0091:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-LP-Scan.pdf', 'template': 'LP1F'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-LP-Scan.pdf', 'template': ''}]
                     continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-LP-Scan.pdf', 'template': 'LPC'}]
               schema:
                 type: object
