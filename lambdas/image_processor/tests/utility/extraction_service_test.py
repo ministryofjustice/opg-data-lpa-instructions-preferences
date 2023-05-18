@@ -89,11 +89,11 @@ def test_get_matching_continuation_items(
     # Create test data
     scan_locations = {
         "continuations": {
-            "continuation_1": "path/to/image1",
-            "continuation_2": "path/to/image2",
+            "continuation_1": {"location": "path/to/image1", "template": "LPC"},
+            "continuation_2": {"location": "path/to/image2", "template": "LPC"},
         }
     }
-    form_meta_directory = "path/to/meta/directory"
+    meta_store = {"meta1": {"field1": "value1"}, "meta2": {"field2": "value2"}}
 
     # Set up mock for form_operator methods
     monkeypatch.setattr(
@@ -119,7 +119,7 @@ def test_get_matching_continuation_items(
 
     # Call the function
     result = extraction_service.get_matching_continuation_items(
-        scan_locations, form_meta_directory, form_operator
+        scan_locations, meta_store, form_operator
     )
     expected = {
         "continuation_1": {
@@ -152,7 +152,7 @@ def test_get_matching_continuation_items(
         ),
     )
     result = extraction_service.get_matching_continuation_items(
-        scan_locations, form_meta_directory, form_operator
+        scan_locations, meta_store, form_operator
     )
     expected = {
         "continuation_1": {
@@ -249,7 +249,6 @@ def test_get_preprocessed_images(monkeypatch, tmp_path, extraction_service):
     mock_image_reader.read.assert_called_once_with(pdf_path)
 
     # Assert that the form operator methods were called with the correct arguments
-    mock_form_operator.preprocess_form_images.assert_called_once_with([None, None])
     mock_form_operator.auto_rotate_form_images.assert_called_once_with([None, None])
 
 
@@ -303,7 +302,7 @@ def test_find_matches_from_barcodes_no_match(
     images.append(image)
 
     result = extraction_service.find_matches_from_barcodes(
-        images, mock_form_metastore_barcode_single
+        images, mock_form_metastore_barcode_single, None
     )
 
     assert isinstance(result, dict)
@@ -321,7 +320,7 @@ def test_find_matches_from_barcodes_single_match(
     images.append(image)
 
     result = extraction_service.find_matches_from_barcodes(
-        images, mock_form_metastore_barcode_single
+        images, mock_form_metastore_barcode_single, None
     )
 
     assert isinstance(result, dict)
@@ -343,7 +342,7 @@ def test_find_matches_from_barcodes_multiple_matches(
     images.append(image2)
 
     result = extraction_service.find_matches_from_barcodes(
-        images, mock_form_metastore_barcode_multiple
+        images, mock_form_metastore_barcode_multiple, None
     )
 
     assert isinstance(result, dict)
