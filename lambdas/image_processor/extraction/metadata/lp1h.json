@@ -49,7 +49,7 @@
 	"partitions": [],
 	"form_pages": [{
 		"page_number": 1,
-		"identifier": "(.*Health.*)",
+		"identifier": "(.*instructions.*)",
 		"required": true,
 		"duplicates": false,
 		"extra": {
@@ -58,7 +58,7 @@
 		}
 	}],
 	"form_formats": ["pdf"],
-	"form_identifier": "(.*Health and care decisions.*)",
+	"form_identifier": "(.*health and welfare.*)",
 	"from_template": "",
 	"excluded_sections": [],
 	"form_template": "extraction/opg_images/lp1h_images"
