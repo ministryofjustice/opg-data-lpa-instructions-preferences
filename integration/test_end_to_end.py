@@ -22,7 +22,7 @@ def setup_rest_url_part() -> str:
     return get_localstack_rest_api() if env == "local" else "/v1"
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture()
 def cleanup_iap_buckets() -> list:
     """
     Delete images from the IAP bucket specified in the configuration.
@@ -187,7 +187,8 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
 
 
 @pytest.mark.order(1)
-def test_collection_started(setup_rest_url_part):
+def test_collection_started(setup_rest_url_part, cleanup_iap_buckets):
+    print(f"Buckets cleaned up: {cleanup_iap_buckets}")
     make_calls_and_assertions(
         "expected_collection_started_response", setup_rest_url_part
     )
