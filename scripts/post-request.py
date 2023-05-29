@@ -45,7 +45,7 @@ def handle_request(method, url, auth):
 
 
 def main():
-    workspace = "development"
+    workspace = "production"
     workspace_mapping = {
         "development": "dev.",
         "preproduction": "pre.",
@@ -60,11 +60,12 @@ def main():
         branch_prefix = workspace_mapping[workspace]
     except KeyError:
         branch_prefix = f"{workspace}.dev."
-    uid = "700000000000"
+
+    uid = "700354570280"
 
     ver = "v1"
 
-    session = get_role_session(role_session[workspace], "breakglass")
+    session = get_role_session(role_session[workspace], "operator")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 

@@ -7,7 +7,7 @@ import traceback
 
 from app.utility.custom_logging import custom_logger, LogMessageDetails
 
-from app.utility.bucket_manager import BucketManager
+from app.utility.bucket_manager import BucketManager, ScanLocationStore
 from app.utility.sirius_service import SiriusService
 from app.utility.extraction_service import ExtractionService
 from app.utility.path_selection_service import PathSelectionService
@@ -58,8 +58,6 @@ class ImageProcessor:
             downloaded_scan_locations = bucket_manager.download_scanned_images(
                 sirius_response_dict, self.output_folder_path
             )
-            self.info_msg.document_paths = downloaded_scan_locations
-            logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
 
             # Extract all relevant images relating to instructions and preferences from downloaded documents
             continuation_keys_to_use = extraction_service.run_iap_extraction(
@@ -154,7 +152,7 @@ class ImageProcessor:
                     paths.append(os.path.join(root, file))
         return paths
 
-    def cleanup(self, downloaded_document_locations) -> None:
+    def cleanup(self, downloaded_document_locations: ScanLocationStore) -> None:
         """
         Cleans up downloaded images and removes the pass and fail directories created during the image processing.
         Also removes any pdfs older than one hour and any pass and fail folders older than 1 hour.
@@ -164,14 +162,12 @@ class ImageProcessor:
         """
         downloaded_document_paths = []
         # Extract the paths from the 'scans' key and add them to the list
-        if "scans" in downloaded_document_locations:
-            for path in downloaded_document_locations["scans"]:
-                downloaded_document_paths.append(path["location"])
+        for path in downloaded_document_locations.scans:
+            downloaded_document_paths.append(path.location)
 
         # Extract the paths from the 'continuations' keys and add them to the list
-        if "continuations" in downloaded_document_locations:
-            for key, path in downloaded_document_locations["continuations"].items():
-                downloaded_document_paths.append(path["location"])
+        for key, path in downloaded_document_locations.continuations.items():
+            downloaded_document_paths.append(path.location)
 
         # Remove downloaded images
         for path in downloaded_document_paths:
