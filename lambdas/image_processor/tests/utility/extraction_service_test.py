@@ -2,7 +2,12 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 import cv2
-from app.utility.extraction_service import ExtractionService
+from app.utility.extraction_service import (
+    ExtractionService,
+    MatchingMetaToImages,
+    FilteredMetastore,
+)
+from app.utility.bucket_manager import ScanLocationStore, ScanLocation
 from app.utility.custom_logging import LogMessageDetails
 from form_tools.form_operators import FormOperator
 
@@ -38,7 +43,7 @@ class MockFormPage:
 
 @pytest.fixture
 def mock_form_metastore():
-    return {
+    meta_object = {
         "meta_1": MockFormMeta(
             form_pages=[
                 MockFormPage(page_number=1, barcode="", page_text="meta_page_1_text"),
@@ -52,22 +57,46 @@ def mock_form_metastore():
             ]
         ),
     }
+    filtered_metastore = FilteredMetastore(
+        filtered_metastore=meta_object, filtered_continuation_metastore={}
+    )
+    return filtered_metastore
+
+
+@pytest.fixture
+def mock_form_metastore_single_match():
+    meta_object = {
+        "meta_1": MockFormMeta(
+            form_pages=[
+                MockFormPage(page_number=1, barcode="", page_text="meta_page_1_text"),
+                MockFormPage(page_number=2, barcode="", page_text="meta_page_2_text"),
+            ]
+        )
+    }
+    filtered_metastore = FilteredMetastore(
+        filtered_metastore=meta_object, filtered_continuation_metastore={}
+    )
+    return filtered_metastore
 
 
 @pytest.fixture
 def mock_form_metastore_barcode_single():
-    return {
+    meta_object = {
         "meta_1": MockFormMeta(
             form_pages=[
                 MockFormPage(page_number=1, barcode="1H7", page_text="meta_page_1_text")
             ]
         )
     }
+    filtered_metastore = FilteredMetastore(
+        filtered_metastore=meta_object, filtered_continuation_metastore={}
+    )
+    return filtered_metastore
 
 
 @pytest.fixture
 def mock_form_metastore_barcode_multiple():
-    return {
+    meta_object = {
         "meta_1": MockFormMeta(
             form_pages=[
                 MockFormPage(
@@ -79,6 +108,10 @@ def mock_form_metastore_barcode_multiple():
             ]
         )
     }
+    filtered_metastore = FilteredMetastore(
+        filtered_metastore=meta_object, filtered_continuation_metastore={}
+    )
+    return filtered_metastore
 
 
 def test_get_matching_continuation_items(
@@ -87,12 +120,13 @@ def test_get_matching_continuation_items(
     # Barcode match scenario
 
     # Create test data
-    scan_locations = {
-        "continuations": {
-            "continuation_1": {"location": "path/to/image1", "template": "LPC"},
-            "continuation_2": {"location": "path/to/image2", "template": "LPC"},
-        }
-    }
+
+    s1 = ScanLocation(location="path/to/image1", template="LPC")
+    s2 = ScanLocation(location="path/to/image2", template="LPC")
+    sls = ScanLocationStore()
+    sls.add_continuation("continuation_1", s1)
+    sls.add_continuation("continuation_2", s2)
+
     meta_store = {"meta1": {"field1": "value1"}, "meta2": {"field2": "value2"}}
 
     # Set up mock for form_operator methods
@@ -109,7 +143,9 @@ def test_get_matching_continuation_items(
         extraction_service,
         "find_matches_from_barcodes",
         MagicMock(
-            return_value={"image_page_map": {"1": ["numpy_image"]}, "meta_id": "lpc"}
+            return_value=MatchingMetaToImages(
+                image_page_map={"1": ["numpy_image"]}, meta_id="lpc"
+            )
         ),
     )
 
@@ -119,7 +155,7 @@ def test_get_matching_continuation_items(
 
     # Call the function
     result = extraction_service.get_matching_continuation_items(
-        scan_locations, meta_store, form_operator
+        sls, meta_store, form_operator
     )
     expected = {
         "continuation_1": {
@@ -135,24 +171,45 @@ def test_get_matching_continuation_items(
     assert (
         extraction_service.get_preprocessed_images.call_count == 2
     )  # Called once for each scan location
-    assert result == expected
+    match1 = result.matching_items["continuation_1"].match
+    match2 = result.matching_items["continuation_2"].match
+
+    assert (
+        match1.image_page_map == expected["continuation_1"]["match"]["image_page_map"]
+    )
+    assert match1.meta_id == expected["continuation_1"]["match"]["meta_id"]
+    assert (
+        result.matching_items["continuation_1"].scan_location
+        == expected["continuation_1"]["scan_location"]
+    )
+
+    assert (
+        match2.image_page_map == expected["continuation_2"]["match"]["image_page_map"]
+    )
+    assert match2.meta_id == expected["continuation_2"]["match"]["meta_id"]
+    assert (
+        result.matching_items["continuation_2"].scan_location
+        == expected["continuation_2"]["scan_location"]
+    )
 
     # OCR match scenario
     monkeypatch.setattr(
         extraction_service,
         "find_matches_from_barcodes",
-        MagicMock(return_value={"image_page_map": {}, "meta_id": ""}),
+        MagicMock(return_value=MatchingMetaToImages(image_page_map={}, meta_id="")),
     )
 
     monkeypatch.setattr(
         extraction_service,
         "get_ocr_matches",
         MagicMock(
-            return_value={"image_page_map": {"1": ["numpy_image2"]}, "meta_id": "lpc2"}
+            return_value=MatchingMetaToImages(
+                image_page_map={"1": ["numpy_image2"]}, meta_id="lpc2"
+            )
         ),
     )
     result = extraction_service.get_matching_continuation_items(
-        scan_locations, meta_store, form_operator
+        sls, meta_store, form_operator
     )
     expected = {
         "continuation_1": {
@@ -164,12 +221,31 @@ def test_get_matching_continuation_items(
             "scan_location": "path/to/image2",
         },
     }
-    assert result == expected
+    match1 = result.matching_items["continuation_1"].match
+    match2 = result.matching_items["continuation_2"].match
+
+    assert (
+        match1.image_page_map == expected["continuation_1"]["match"]["image_page_map"]
+    )
+    assert match1.meta_id == expected["continuation_1"]["match"]["meta_id"]
+    assert (
+        result.matching_items["continuation_1"].scan_location
+        == expected["continuation_1"]["scan_location"]
+    )
+
+    assert (
+        match2.image_page_map == expected["continuation_2"]["match"]["image_page_map"]
+    )
+    assert match2.meta_id == expected["continuation_2"]["match"]["meta_id"]
+    assert (
+        result.matching_items["continuation_2"].scan_location
+        == expected["continuation_2"]["scan_location"]
+    )
 
 
 def test_extract_images(monkeypatch, extraction_service, form_operator):
     # Setup
-    matched_items = {"image_page_map": {(0, 0): [0]}}
+    matched_items = MatchingMetaToImages(meta_id="meta_1", image_page_map={(0, 0): [0]})
     meta = {}
     meta_id = "test_meta_id"
     scan_path = "test_scan_path"
@@ -252,7 +328,13 @@ def test_get_preprocessed_images(monkeypatch, tmp_path, extraction_service):
     mock_form_operator.auto_rotate_form_images.assert_called_once_with([None, None])
 
 
-def test_get_ocr_matches(monkeypatch, form_operator, extraction_service):
+def test_get_ocr_matches(
+    monkeypatch,
+    form_operator,
+    extraction_service,
+    mock_form_metastore_single_match,
+    mock_form_metastore,
+):
     # mock the double_image_size and match_first_form_image_text_to_form_meta methods
     monkeypatch.setattr(
         extraction_service,
@@ -266,21 +348,30 @@ def test_get_ocr_matches(monkeypatch, form_operator, extraction_service):
     monkeypatch.setattr(
         extraction_service,
         "mixed_mode_page_identifier",
-        MagicMock(return_value={"image_page_map": {"1": ["numpyarray"]}}),
+        MagicMock(
+            return_value=[
+                MatchingMetaToImages(
+                    meta_id="meta_1", image_page_map={"1": ["numpyarray"]}
+                )
+            ]
+        ),
     )
     # call the get_ocr_matches function with mock inputs
     result = extraction_service.get_ocr_matches(
-        ["img1", "img2"], form_operator, "/path/to/form/meta"
+        ["img1", "img2"], form_operator, mock_form_metastore, "/path/to/form/meta"
     )
 
     # assert that the form_images_to_text method was called with the correct input
     form_operator.form_images_to_text.assert_called_once_with(["img1", "img2"])
     # assert that the methods were called with the correct input
     extraction_service.mixed_mode_page_identifier.assert_called_once_with(
-        ["text1", "text2"], "/path/to/form/meta", ["img1", "img2"]
+        form_images_as_strings=["text1", "text2"],
+        form_metastore=mock_form_metastore.filtered_metastore,
+        form_images=["img1", "img2"],
+        inline_continuation=False,
     )
     # assert that the function returned the correct output
-    assert result == {"image_page_map": {"1": ["numpyarray"]}}
+    assert result.image_page_map == {"1": ["numpyarray"]}
 
 
 def test_find_matches_from_barcodes_no_match(
@@ -296,9 +387,9 @@ def test_find_matches_from_barcodes_no_match(
         images, mock_form_metastore_barcode_single, None
     )
 
-    assert isinstance(result, dict)
-    assert result["meta_id"] == "meta_1"
-    assert len(result["image_page_map"]) == 0
+    assert isinstance(result, MatchingMetaToImages)
+    assert result.meta_id == "meta_1"
+    assert len(result.image_page_map) == 0
 
 
 def test_find_matches_from_barcodes_single_match(
@@ -314,9 +405,9 @@ def test_find_matches_from_barcodes_single_match(
         images, mock_form_metastore_barcode_single, None
     )
 
-    assert isinstance(result, dict)
-    assert result["meta_id"] == "meta_1"
-    assert len(result["image_page_map"]) == 1
+    assert isinstance(result, MatchingMetaToImages)
+    assert result.meta_id == "meta_1"
+    assert len(result.image_page_map) == 1
 
 
 def test_find_matches_from_barcodes_multiple_matches(
@@ -336,9 +427,9 @@ def test_find_matches_from_barcodes_multiple_matches(
         images, mock_form_metastore_barcode_multiple, None
     )
 
-    assert isinstance(result, dict)
-    assert result["meta_id"] == "meta_1"
-    assert len(result["image_page_map"]) == 2
+    assert isinstance(result, MatchingMetaToImages)
+    assert result.meta_id == "meta_1"
+    assert len(result.image_page_map) == 2
 
 
 def test_double_image_size():
@@ -383,27 +474,22 @@ def test_mixed_mode_page_identifier(
 ):
     form_images_as_strings = ["recognized text from form images"]
     form_metastore = mock_form_metastore
-    form_images = []
-
-    expected_results = {
-        "meta_id": {"meta_id": "pfa117", "image_page_map": {1: []}},
-        "image_page_map": {},
-    }  # Replace with the expected matching image results
+    form_images = ["img_1", "img_2"]
 
     # Patch any necessary dependencies
     mock_create_scan_to_template_distances = MagicMock()
     mock_create_scan_to_template_distances.return_value = [
         {
-            "meta": "pfa117",
-            "distance": 42,
+            "meta": "hw114",
+            "distance": 20,
             "scan_page_no": 1,
             "template_page_no": 1,
             "form_image_as_string": "",
             "meta_page_text": "",
         },
         {
-            "meta": "hw114",
-            "distance": 600,
+            "meta": "pfa117",
+            "distance": 80,
             "scan_page_no": 1,
             "template_page_no": 1,
             "form_image_as_string": "",
@@ -422,22 +508,13 @@ def test_mixed_mode_page_identifier(
         extraction_service, "get_similarity_score", mock_get_similarity_score
     )
 
-    mock_extraction_service = MagicMock()
-    mock_extraction_service.return_value = {
-        "meta_id": "pfa117",
-        "image_page_map": {1: []},
-    }
-
-    monkeypatch.setattr(
-        extraction_service, "get_meta_id_to_use", mock_extraction_service
-    )
-
     results = extraction_service.mixed_mode_page_identifier(
         form_images_as_strings, form_metastore, form_images
     )
 
     # Assert the results
-    assert results == expected_results
+    assert results[0].meta_id == "pfa117"
+    assert results[0].image_page_map == {1: ["img_1"]}
 
 
 @pytest.fixture
@@ -456,7 +533,7 @@ def test_create_scan_to_template_distances(
     )
 
     distances = extraction_service.create_scan_to_template_distances(
-        mock_form_images_as_strings, mock_form_metastore
+        mock_form_images_as_strings, mock_form_metastore.filtered_metastore
     )
 
     assert (
@@ -585,10 +662,9 @@ def test_get_matching_image_results(extraction_service):
     ]
     form_images = ["image1", "image2", "image3"]
 
-    expected_matching_image_results = {
-        "meta_id": "meta_1",
-        "image_page_map": {1: ["image1"], 2: ["image2"], 3: ["image3"]},
-    }
+    expected_matching_image_results = MatchingMetaToImages(
+        meta_id="meta_1", image_page_map={1: ["image1"], 2: ["image2"], 3: ["image3"]}
+    )
 
     # Call the method being tested
     matching_image_results = extraction_service.get_matching_image_results(
@@ -596,7 +672,11 @@ def test_get_matching_image_results(extraction_service):
     )
 
     # Assert the results
-    assert matching_image_results == expected_matching_image_results
+    assert matching_image_results.meta_id == expected_matching_image_results.meta_id
+    assert (
+        matching_image_results.image_page_map
+        == expected_matching_image_results.image_page_map
+    )
 
 
 # def test_extract_instructions_and_preferences(extraction_service, monkeypatch):
