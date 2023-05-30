@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import boto3
 import botocore.exceptions
@@ -13,7 +14,7 @@ class ImageRequestHandler:
         self.environment = os.getenv("ENVIRONMENT")
         self.s3 = self.setup_s3_connection()
         self.sqs = self.setup_sqs_connection()
-        self.uid = uid
+        self.uid = str(int(uid))
         self.bucket = bucket
         self.sqs_queue = sqs_queue
         self.images_to_check = self.images_to_check()
@@ -194,7 +195,6 @@ class ImageRequestHandler:
 
         try:
             file = self.s3.head_object(Bucket=self.bucket, Key=image)
-            print(file["Metadata"])
             file_size = file["ContentLength"]
             if image == self.image_to_store_metadata_against:
                 self.continuation_sheet_instructions_count = int(
@@ -341,6 +341,13 @@ def get_healthcheck_response(event):
     }
 
 
+def sanitize_path_parameter(value):
+    if value is None:
+        return None
+    # Keep only numeric characters to avoid injection
+    return re.sub(r"[^0-9]", "", value)
+
+
 def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
     version = os.getenv("VERSION")
@@ -355,8 +362,9 @@ def lambda_handler(event, context):
         "/image-request/{uid}",
         "/" + version + "/image-request/{uid}",
     ]:
+        uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
         s3_image_request_handler = ImageRequestHandler(
-            uid=event["pathParameters"]["uid"],
+            uid=uid,
             bucket=f"lpa-iap-{environment}",
             sqs_queue=f"{environment}-lpa-iap-requests",
             event=event,
