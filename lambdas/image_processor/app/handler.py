@@ -3,10 +3,11 @@ import json
 import shutil
 import datetime
 import time
+import traceback
 
 from app.utility.custom_logging import custom_logger, LogMessageDetails
 
-from app.utility.bucket_manager import BucketManager
+from app.utility.bucket_manager import BucketManager, ScanLocationStore
 from app.utility.sirius_service import SiriusService
 from app.utility.extraction_service import ExtractionService
 from app.utility.path_selection_service import PathSelectionService
@@ -32,7 +33,7 @@ class ImageProcessor:
         Main Process that receives a request triggered from SQS and extracts the
         instructions and preferences and pushes them to S3.
         """
-        bucket_manager = BucketManager()
+        bucket_manager = BucketManager(info_msg=self.info_msg)
         sirius_service = SiriusService(environment=self.environment)
         extraction_service = ExtractionService(
             extraction_folder_path=self.extraction_folder_path,
@@ -41,6 +42,7 @@ class ImageProcessor:
             info_msg=self.info_msg,
         )
         path_selection_service = PathSelectionService(folder_name=self.folder_name)
+
         try:
             self.uid = self.get_uid_from_event()
             self.info_msg.uid = self.uid
@@ -56,8 +58,6 @@ class ImageProcessor:
             downloaded_scan_locations = bucket_manager.download_scanned_images(
                 sirius_response_dict, self.output_folder_path
             )
-            self.info_msg.document_paths = downloaded_scan_locations
-            logger.debug(f"Downloaded scan locations: {str(downloaded_scan_locations)}")
 
             # Extract all relevant images relating to instructions and preferences from downloaded documents
             continuation_keys_to_use = extraction_service.run_iap_extraction(
@@ -102,7 +102,8 @@ class ImageProcessor:
         except Exception as e:
             self.info_msg.status = "Error"
             logger.info(json.dumps(self.info_msg.get_info_message()))
-            logger.error(e)
+            stack_trace = traceback.format_exc()
+            logger.error(f"{e} --- {stack_trace}")
             bucket_manager.put_error_image_to_bucket(self.uid)
 
     @staticmethod
@@ -151,7 +152,7 @@ class ImageProcessor:
                     paths.append(os.path.join(root, file))
         return paths
 
-    def cleanup(self, downloaded_document_locations) -> None:
+    def cleanup(self, downloaded_document_locations: ScanLocationStore) -> None:
         """
         Cleans up downloaded images and removes the pass and fail directories created during the image processing.
         Also removes any pdfs older than one hour and any pass and fail folders older than 1 hour.
@@ -161,14 +162,12 @@ class ImageProcessor:
         """
         downloaded_document_paths = []
         # Extract the paths from the 'scans' key and add them to the list
-        if "scans" in downloaded_document_locations:
-            for path in downloaded_document_locations["scans"]:
-                downloaded_document_paths.append(path)
+        for path in downloaded_document_locations.scans:
+            downloaded_document_paths.append(path.location)
 
         # Extract the paths from the 'continuations' keys and add them to the list
-        if "continuations" in downloaded_document_locations:
-            for key, value in downloaded_document_locations["continuations"].items():
-                downloaded_document_paths.append(value)
+        for key, path in downloaded_document_locations.continuations.items():
+            downloaded_document_paths.append(path.location)
 
         # Remove downloaded images
         for path in downloaded_document_paths:

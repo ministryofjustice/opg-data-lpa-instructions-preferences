@@ -3,7 +3,8 @@ import boto3
 from unittest.mock import patch, MagicMock
 from moto import mock_s3
 import pytest
-from app.utility.bucket_manager import BucketManager
+from app.utility.bucket_manager import BucketManager, ScanLocation
+from app.utility.custom_logging import LogMessageDetails
 
 
 @pytest.fixture(autouse=True)
@@ -14,7 +15,8 @@ def setup_environment_variables():
 
 @pytest.fixture
 def bucket_manager():
-    return BucketManager()
+    info_msg = LogMessageDetails()
+    return BucketManager(info_msg)
 
 
 def test_extract_s3_file_path(bucket_manager):
@@ -88,14 +90,37 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
 
     # Check that the function returned the expected file paths
     expected_result = {
-        "scans": ["/tmp/output/my_scan.pdf"],
+        "scans": [{"location": "/tmp/output/my_scan.pdf", "template": "TEST"}],
         "continuations": {
-            "continuation_1": "/tmp/output/my_continuation_sheet1.pdf",
-            "continuation_2": "/tmp/output/my_continuation_sheet2.pdf",
+            "continuation_1": {
+                "location": "/tmp/output/my_continuation_sheet1.pdf",
+                "template": "TEST",
+            },
+            "continuation_2": {
+                "location": "/tmp/output/my_continuation_sheet2.pdf",
+                "template": "TEST",
+            },
         },
     }
 
-    assert result == expected_result
+    assert result.scans[0].template == expected_result["scans"][0]["template"]
+    assert result.scans[0].location == expected_result["scans"][0]["location"]
+    assert (
+        result.continuations["continuation_1"].location
+        == expected_result["continuations"]["continuation_1"]["location"]
+    )
+    assert (
+        result.continuations["continuation_1"].template
+        == expected_result["continuations"]["continuation_1"]["template"]
+    )
+    assert (
+        result.continuations["continuation_2"].location
+        == expected_result["continuations"]["continuation_2"]["location"]
+    )
+    assert (
+        result.continuations["continuation_2"].template
+        == expected_result["continuations"]["continuation_2"]["template"]
+    )
 
 
 @mock_s3
@@ -155,3 +180,27 @@ def test_put_error_image_to_bucket(bucket_manager):
         "continuationsheetsunknown": "0",
         "processerror": "1",
     }
+
+
+def test_reorder_list_by_relevance(bucket_manager):
+    scan_list = [
+        ScanLocation(location="blah", template="LPA123"),
+        ScanLocation(location="blah", template=None),
+        ScanLocation(location="blah", template="FOO"),
+        ScanLocation(location="blah", template="LPA456"),
+        ScanLocation(location="blah", template="BAR"),
+        ScanLocation(location="blah", template=None),
+    ]
+
+    expected_result = [
+        {"location": "blah", "template": "LPA123"},
+        {"location": "blah", "template": "LPA456"},
+        {"location": "blah", "template": "FOO"},
+        {"location": "blah", "template": "BAR"},
+        {"location": "blah", "template": None},
+        {"location": "blah", "template": None},
+    ]
+
+    result = bucket_manager.reorder_list_by_relevance(scan_list)
+    for i in range(len(result)):
+        assert result[i].template == expected_result[i]["template"]
