@@ -58,6 +58,7 @@ jobs:
           image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
           format: 'sarif'
+          security-checks: "vuln"
           ignore-unfixed: true
           output: 'trivy-results.sarif'
 
@@ -96,7 +97,6 @@ jobs:
           docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.tag }}
           if [ $BRANCH_NAME == "main" ]; then
             docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-            docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ inputs.tag }}
           fi
             echo "skipping push for now..."
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY

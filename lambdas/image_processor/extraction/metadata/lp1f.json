@@ -49,7 +49,7 @@
 	"partitions": [],
 	"form_pages": [{
 		"page_number": 1,
-		"identifier": "(.*Property.*)",
+		"identifier": "(.*instructions.*)",
 		"required": true,
 		"duplicates": false,
 		"extra": {
@@ -58,7 +58,7 @@
 		}
 	}],
 	"form_formats": ["pdf"],
-	"form_identifier": "(.*Financial decisions.*)",
+	"form_identifier": "(.*property and financial.*)",
 	"from_template": "",
 	"excluded_sections": [],
 	"form_template": "extraction/opg_images/lp1f_images"

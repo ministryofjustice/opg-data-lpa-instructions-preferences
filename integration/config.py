@@ -1,30 +1,30 @@
 # Setup Data
 
 environment = {
-    'local': {
+    "local": {
         "sirius_url": "http://localhost:4566",
         "sirius_bucket": "opg-backoffice-datastore-local",
-        "iap_bucket": "lpa-iap"
+        "iap_bucket": "lpa-iap",
     },
-    'development': {
+    "development": {
         "sirius_url": "http://api.integration.ecs",
         "sirius_bucket": "opg-backoffice-datastore-integration",
-        "iap_bucket": "lpa-iap"
-    }
+        "iap_bucket": "lpa-iap",
+    },
 }
 
 templates = {
-    "LP1H_New": {
+    "LP1H": {
         "lpa_uid": "700000000047",
         "expected_collection_started_response": {
             "uid": "700000000047",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {}
+            "signed_urls": {},
         },
         "expected_collection_in_progress_response": {
             "uid": "700000000047",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {}
+            "signed_urls": {},
         },
         "expected_collection_completed_response": {
             "uid": "700000000047",
@@ -32,43 +32,118 @@ templates = {
             "signed_urls": {
                 "iap-700000000047-instructions": "",
                 "iap-700000000047-preferences": "",
-            }
+            },
         },
     },
-    # "LP1F_New": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1H_Large_Print": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1F_Large_Print": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1H_Old": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1F_Old": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1H_Older": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1F_Older": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1H_Correspondence": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
-    # "LP1F_Correspondence": {
-    #     "lpa_uid": "700000000048",
-    #     "sirius_url": sirius_url
-    # },
+    "LP1F": {
+        "lpa_uid": "700000000138",
+        "expected_collection_started_response": {
+            "uid": "700000000138",
+            "status": "COLLECTION_NOT_STARTED",
+            "signed_urls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uid": "700000000138",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signed_urls": {},
+        },
+        "expected_collection_completed_response": {
+            "uid": "700000000138",
+            "status": "COLLECTION_COMPLETE",
+            "signed_urls": {
+                "iap-700000000138-instructions": "",
+                "iap-700000000138-preferences": "",
+                "iap-700000000138-continuation_instructions_1": "",
+                "iap-700000000138-continuation_instructions_2": "",
+                "iap-700000000138-continuation_preferences_1": "",
+            },
+        },
+    },
+    "PFA117": {
+        "lpa_uid": "700000000088",
+        "expected_collection_started_response": {
+            "uid": "700000000088",
+            "status": "COLLECTION_NOT_STARTED",
+            "signed_urls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uid": "700000000088",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signed_urls": {},
+        },
+        "expected_collection_completed_response": {
+            "uid": "700000000088",
+            "status": "COLLECTION_COMPLETE",
+            "signed_urls": {
+                "iap-700000000088-instructions": "",
+                "iap-700000000088-preferences": "",
+            },
+        },
+    },
+    "HW114": {
+        "lpa_uid": "700000000089",
+        "expected_collection_started_response": {
+            "uid": "700000000089",
+            "status": "COLLECTION_NOT_STARTED",
+            "signed_urls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uid": "700000000089",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signed_urls": {},
+        },
+        "expected_collection_completed_response": {
+            "uid": "700000000089",
+            "status": "COLLECTION_COMPLETE",
+            "signed_urls": {
+                "iap-700000000089-instructions": "",
+                "iap-700000000089-preferences": "",
+                "iap-700000000089-continuation_unknown_1": "",
+                "iap-700000000089-continuation_unknown_2": "",
+            },
+        },
+    },
+    "LPA_PW": {
+        "lpa_uid": "700000000090",
+        "expected_collection_started_response": {
+            "uid": "700000000090",
+            "status": "COLLECTION_NOT_STARTED",
+            "signed_urls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uid": "700000000090",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signed_urls": {},
+        },
+        "expected_collection_completed_response": {
+            "uid": "700000000090",
+            "status": "COLLECTION_COMPLETE",
+            "signed_urls": {
+                "iap-700000000090-instructions": "",
+                "iap-700000000090-preferences": "",
+            },
+        },
+    },
+    "LP1F_LP": {
+        "lpa_uid": "700000000091",
+        "expected_collection_started_response": {
+            "uid": "700000000091",
+            "status": "COLLECTION_NOT_STARTED",
+            "signed_urls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uid": "700000000091",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signed_urls": {},
+        },
+        "expected_collection_completed_response": {
+            "uid": "700000000091",
+            "status": "COLLECTION_COMPLETE",
+            "signed_urls": {
+                "iap-700000000091-instructions": "",
+                "iap-700000000091-preferences": "",
+                "iap-700000000091-continuation_preferences_1": "",
+            },
+        },
+    },
 }

@@ -1,5 +1,12 @@
 name: "[Workflow] Path to Live"
 
+concurrency:
+  group: ${{ github.ref }}-${{ github.workflow }}
+
+defaults:
+  run:
+    shell: bash
+
 on:
   push:
     branches:
@@ -8,13 +15,13 @@ on:
 permissions:
   actions: read
   checks: read
-  contents: read
+  contents: write
   deployments: none
   issues: none
   packages: none
-  pull-requests: none
+  pull-requests: write
   repository-projects: none
-  security-events: none
+  security-events: write
   statuses: none
 
 jobs:
@@ -22,8 +29,15 @@ jobs:
     runs-on: ubuntu-latest
     name: Extract branch name
     outputs:
-      raw_branch: main
-      formatted_branch: main
+      raw_branch: ${{ steps.extract_branch.outputs.branch_raw }}
+      formatted_branch: ${{ steps.extract_branch.outputs.branch_formatted }}
+    steps:
+      - name: extract branch
+        shell: bash
+        run: |
+          echo "branch_raw=main" >> $GITHUB_OUTPUT
+          echo "branch_formatted=main" >> $GITHUB_OUTPUT
+        id: extract_branch
 
   create_tags:
     name: Create Tags
@@ -84,7 +98,7 @@ jobs:
     uses: ./.github/workflows/sub-task-integration-tests.yml
     with:
       environment: 'development'
-      workspace: development
+      workspace: 'development'
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
@@ -149,24 +163,24 @@ jobs:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
-#  production_environment_plan_apply:
-#    name: Production Environment Terraform Plan and Apply
-#    needs: [
-#      'production_account_plan_apply',
-#      'create_tags'
-#    ]
-#    uses: ./.github/workflows/sub-task-terraform.yml
-#    with:
-#      terraform_path: 'terraform/environment'
-#      image_tag: ${{ needs.create_tags.outputs.version_tag }}
-#      workspace: production
-#    secrets:
-#      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-#      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+  production_environment_plan_apply:
+    name: Production Environment Terraform Plan and Apply
+    needs: [
+      'production_account_plan_apply',
+      'create_tags'
+    ]
+    uses: ./.github/workflows/sub-task-terraform.yml
+    with:
+      terraform_path: 'terraform/environment'
+      image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      workspace: production
+    secrets:
+      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
   workflow_complete:
     name: Workflow Complete
-    needs: ['production_account_plan_apply']
+    needs: ['production_environment_plan_apply']
     runs-on: ubuntu-latest
     steps:
       - name: Completion message

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import boto3
 import botocore.exceptions
@@ -13,7 +14,7 @@ class ImageRequestHandler:
         self.environment = os.getenv("ENVIRONMENT")
         self.s3 = self.setup_s3_connection()
         self.sqs = self.setup_sqs_connection()
-        self.uid = uid
+        self.uid = str(int(uid))
         self.bucket = bucket
         self.sqs_queue = sqs_queue
         self.images_to_check = self.images_to_check()
@@ -21,6 +22,7 @@ class ImageRequestHandler:
         self.image_to_store_metadata_against = f"iap-{self.uid}-instructions"
         self.continuation_sheet_instructions_count = 0
         self.continuation_sheet_preferences_count = 0
+        self.continuation_sheet_unknown_count = 0
         self.url_expiration = 60
         self.event = event
 
@@ -59,6 +61,9 @@ class ImageRequestHandler:
 
             # Get the overall status of the image collection based on individual image statuses
             image_collection_status = self.get_image_collection_status(image_statuses)
+
+            if image_collection_status == "COLLECTION_ERROR":
+                raise Exception("Collection Error")
 
             # If image collection has not yet started, try to add temporary images to the bucket and add messages to SQS
             if image_collection_status == "COLLECTION_NOT_STARTED":
@@ -115,10 +120,7 @@ class ImageRequestHandler:
         # Check the status of each image in the list
         for image in images_to_check:
             logger.debug(f"Checking image status for {image}")
-            try:
-                image_statuses[image] = self.image_status_in_bucket(image)
-            except Exception:
-                raise Exception(f"Error assigning image status for image {image}")
+            image_statuses[image] = self.image_status_in_bucket(image)
 
         # Check the status of continuation instruction images
         for index in range(self.continuation_sheet_instructions_count):
@@ -132,9 +134,10 @@ class ImageRequestHandler:
                 image_statuses[
                     continuation_instruction_image
                 ] = self.image_status_in_bucket(continuation_instruction_image)
-            except Exception:
+            except Exception as e:
                 raise Exception(
-                    f"Error assigning image status for instruction continuation sheets {continuation_instruction_image}"
+                    f"Error assigning image status for instruction "
+                    f"continuation sheets {continuation_instruction_image}: {e}"
                 )
 
         # Check the status of continuation preference images
@@ -149,9 +152,28 @@ class ImageRequestHandler:
                 image_statuses[
                     continuation_preference_image
                 ] = self.image_status_in_bucket(continuation_preference_image)
-            except Exception:
+            except Exception as e:
                 raise Exception(
-                    f"Error assigning image status for instruction continuation sheets {continuation_preference_image}"
+                    f"Error assigning image status for preference  "
+                    f"continuation sheets {continuation_preference_image}: {e}"
+                )
+
+        # Check the status of continuation preference images
+        for index in range(self.continuation_sheet_unknown_count):
+            continuation_unknown_image = (
+                f"iap-{self.uid}-continuation_unknown_{index + 1}"
+            )
+            try:
+                logger.debug(
+                    f"Checking continuation preference image status for: {continuation_unknown_image}"
+                )
+                image_statuses[
+                    continuation_unknown_image
+                ] = self.image_status_in_bucket(continuation_unknown_image)
+            except Exception as e:
+                raise Exception(
+                    f"Error assigning image status for unknown  "
+                    f"continuation sheets {continuation_unknown_image}: {e}"
                 )
 
         logger.debug(f"Image statuses: {image_statuses}")
@@ -181,6 +203,12 @@ class ImageRequestHandler:
                 self.continuation_sheet_preferences_count = int(
                     file["Metadata"]["continuationsheetspreferences"]
                 )
+                self.continuation_sheet_unknown_count = int(
+                    file["Metadata"]["continuationsheetsunknown"]
+                )
+                process_error = file["Metadata"]["processerror"]
+                if process_error == "1":
+                    return "ERROR"
             image_status = "EXISTS" if file_size > 0 else "IN_PROGRESS"
         except botocore.exceptions.ClientError as e:
             logger.debug(f"Error code: {e.response['Error']['Code']}")
@@ -221,6 +249,8 @@ class ImageRequestHandler:
                     Metadata={
                         "ContinuationSheetsInstructions": "0",
                         "ContinuationSheetsPreferences": "0",
+                        "ContinuationSheetsUnknown": "0",
+                        "ProcessError": "0",
                     },
                 )
                 logger.debug(
@@ -292,12 +322,12 @@ class ImageRequestHandler:
             else:
                 raise Exception("Unexpected status encountered in collection")
 
-        if status_counts["IN_PROGRESS"] > 0:
+        if status_counts["ERROR"] > 0:
+            return "COLLECTION_ERROR"
+        elif status_counts["IN_PROGRESS"] > 0:
             return "COLLECTION_IN_PROGRESS"
         elif status_counts["NOT_FOUND"] == self.total_images:
             return "COLLECTION_NOT_STARTED"
-        elif status_counts["ERROR"] > 0:
-            return "COLLECTION_ERROR"
         else:
             return "COLLECTION_COMPLETE"
 
@@ -309,6 +339,13 @@ def get_healthcheck_response(event):
         "statusCode": 200,
         "body": "LPA IAP Request Handler Lambda Health - OK",
     }
+
+
+def sanitize_path_parameter(value):
+    if value is None:
+        return None
+    # Keep only numeric characters to avoid injection
+    return re.sub(r"[^0-9]", "", value)
 
 
 def lambda_handler(event, context):
@@ -325,8 +362,9 @@ def lambda_handler(event, context):
         "/image-request/{uid}",
         "/" + version + "/image-request/{uid}",
     ]:
+        uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
         s3_image_request_handler = ImageRequestHandler(
-            uid=event["pathParameters"]["uid"],
+            uid=uid,
             bucket=f"lpa-iap-{environment}",
             sqs_queue=f"{environment}-lpa-iap-requests",
             event=event,
