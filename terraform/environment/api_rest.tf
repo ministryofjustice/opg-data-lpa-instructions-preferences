@@ -1,7 +1,7 @@
 locals {
   allowed_apigateway_arns = [
-    "arn:aws:iam::${local.account.ual_account_id}:role/${local.environment}-api-task-role",
-    "arn:aws:iam::${local.account.account_id}:role/breakglass"
+    "arn:aws:iam::${local.account.account_id}:role/${local.environment}-api-task-role",
+    "arn:aws:iam::${local.account.ual_account_id}:role/breakglass"
   ]
 }
 
