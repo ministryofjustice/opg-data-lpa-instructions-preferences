@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "api_invoke_aws_rest_api" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["*"]
+      identifiers = ["arn:aws:iam::367815980639:role/development-api-task-role", "arn:aws:iam::288342028542:role/breakglass"]
     }
 
     actions = [
