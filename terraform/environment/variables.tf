@@ -45,17 +45,18 @@ variable "use_mock_sirius" {
 variable "accounts" {
   type = map(
     object({
-      name                 = string
-      account_id           = string
-      ual_account_id       = string
-      force_destroy_bucket = bool
-      is_production        = bool
-      opg_hosted_zone      = string
-      extra_allowed_roles  = list(string)
-      vpc_id               = string
-      target_environment   = string
-      secret_prefix        = string
-      s3_vpc_endpoint_ids  = set(string)
+      name                    = string
+      account_id              = string
+      allowed_apigateway_arns = list(string)
+      ual_account_id          = string
+      force_destroy_bucket    = bool
+      is_production           = bool
+      opg_hosted_zone         = string
+      extra_allowed_roles     = list(string)
+      vpc_id                  = string
+      target_environment      = string
+      secret_prefix           = string
+      s3_vpc_endpoint_ids     = set(string)
     })
   )
 }
