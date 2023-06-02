@@ -24,7 +24,7 @@ data "aws_iam_policy_document" "api_invoke_aws_rest_api" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = local.account.allowed_apigateway_arns
+      identifiers = "*"
     }
 
     actions = [
