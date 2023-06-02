@@ -47,7 +47,6 @@ variable "accounts" {
     object({
       name                    = string
       account_id              = string
-      allowed_apigateway_arns = list(string)
       ual_account_id          = string
       force_destroy_bucket    = bool
       is_production           = bool

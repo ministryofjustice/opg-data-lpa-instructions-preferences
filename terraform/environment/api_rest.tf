@@ -1,3 +1,10 @@
+locals { 
+  allowed_apigateway_arns = [
+    "arn:aws:iam::${local.account.ual_account_id}:role/${local.environment}-api-task-role",
+    "arn:aws:iam::${local.account.account_id}:role/breakglass"
+  ]
+}
+
 data "template_file" "_" {
   template = local.openapi_spec
   vars     = local.api_template_vars
@@ -24,7 +31,7 @@ data "aws_iam_policy_document" "api_invoke_aws_rest_api" {
     effect = "Allow"
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::367815980639:role/development-api-task-role", "arn:aws:iam::288342028542:role/breakglass"]
+      identifiers = local.allowed_apigateway_arns
     }
 
     actions = [
