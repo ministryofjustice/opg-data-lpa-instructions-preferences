@@ -12,3 +12,25 @@ resource "aws_api_gateway_rest_api" "lpa_iap" {
     types = ["REGIONAL"]
   }
 }
+
+resource "aws_api_gateway_rest_api_policy" "lpa_iap" {
+  rest_api_id = aws_api_gateway_rest_api.lpa_iap.id
+  policy      = data.aws_iam_policy_document.api_invoke_aws_rest_api.json
+}
+
+data "aws_iam_policy_document" "api_invoke_aws_rest_api" {
+  statement {
+    sid    = "AllowInvokeOnAPIGateway"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::367815980639:role/development-api-task-role", "arn:aws:iam::288342028542:role/breakglass"]
+    }
+
+    actions = [
+      "execute-api:Invoke"
+    ]
+
+    resources = ["${aws_api_gateway_rest_api.lpa_iap.execution_arn}/*"]
+  }
+}
