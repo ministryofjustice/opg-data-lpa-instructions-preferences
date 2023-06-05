@@ -1,6 +1,6 @@
 locals {
   allowed_apigateway_arns = [
-    "arn:aws:iam::${local.account.ual_account_id}:role/${local.environment}-api-task-role",
+    "arn:aws:iam::${local.account.ual_account_id}:role/*-api-task-role",
     "arn:aws:iam::${local.account.account_id}:role/breakglass"
   ]
 }
@@ -40,4 +40,8 @@ data "aws_iam_policy_document" "api_invoke_aws_rest_api" {
 
     resources = ["${aws_api_gateway_rest_api.lpa_iap.execution_arn}/*"]
   }
+
+  depends_on = [
+    aws_iam_role_policy.example
+  ]
 }
