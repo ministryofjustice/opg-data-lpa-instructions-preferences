@@ -40,8 +40,4 @@ data "aws_iam_policy_document" "api_invoke_aws_rest_api" {
 
     resources = ["${aws_api_gateway_rest_api.lpa_iap.execution_arn}/*"]
   }
-
-  depends_on = [
-    aws_iam_role_policy.example
-  ]
 }
