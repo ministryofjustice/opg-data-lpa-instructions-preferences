@@ -245,9 +245,9 @@ def test_formatted_message_returns_correct_message():
     )
 
     expected_message = {
-        "uid": int(image_request_handler.uid),
+        "uId": int(image_request_handler.uid),
         "status": collection_status,
-        "signed_urls": signed_urls,
+        "signedUrls": signed_urls,
     }
 
     assert actual_message == expected_message
@@ -310,18 +310,18 @@ def test_process_request(image_request_handler):
     response_body = json.loads(response["body"])
 
     assert response["statusCode"] == 200
-    assert len(response_body["signed_urls"].items()) == 0
+    assert len(response_body["signedUrls"].items()) == 0
     assert response_body["status"] == "COLLECTION_NOT_STARTED"
-    assert response_body["uid"] == test_uid
+    assert response_body["uId"] == test_uid
 
     # Check in progress on second attempt
     response = image_request_handler.process_request()
     response_body = json.loads(response["body"])
 
     assert response["statusCode"] == 200
-    assert len(response_body["signed_urls"].items()) == 0
+    assert len(response_body["signedUrls"].items()) == 0
     assert response_body["status"] == "COLLECTION_IN_PROGRESS"
-    assert response_body["uid"] == test_uid
+    assert response_body["uId"] == test_uid
 
     stubber = Stubber(image_request_handler.s3)
     stubber.add_client_error("put_object")
@@ -345,5 +345,5 @@ def test_process_request(image_request_handler):
         response = image_request_handler.process_request()
         response_body = json.loads(response["body"])
         assert response["statusCode"] == 200
-        assert len(response_body["signed_urls"].items()) == 5
+        assert len(response_body["signedUrls"].items()) == 5
         assert response_body["status"] == "COLLECTION_COMPLETE"

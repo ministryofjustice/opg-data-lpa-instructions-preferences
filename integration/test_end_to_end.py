@@ -40,7 +40,7 @@ def cleanup_iap_buckets() -> list:
             "expected_collection_completed_response",
         ]:
             collection = template_data[collection_type]
-            signed_urls = collection["signed_urls"]
+            signed_urls = collection["signedUrls"]
 
             # Add all images to be removed to a list
             for item_to_remove, data in signed_urls.items():
@@ -181,8 +181,8 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
 
         assert response.status_code == 200
         assert response_object["status"] == template_data[response_type]["status"]
-        assert len(response_object["signed_urls"]) == len(
-            template_data[response_type]["signed_urls"]
+        assert len(response_object["signedUrls"]) == len(
+            template_data[response_type]["signedUrls"]
         )
 
 
