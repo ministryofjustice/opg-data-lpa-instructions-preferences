@@ -17,19 +17,19 @@ templates = {
     "LP1H": {
         "lpa_uid": "700000000047",
         "expected_collection_started_response": {
-            "uid": "700000000047",
+            "uId": "700000000047",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_in_progress_response": {
-            "uid": "700000000047",
+            "uId": "700000000047",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_completed_response": {
-            "uid": "700000000047",
+            "uId": "700000000047",
             "status": "COLLECTION_COMPLETE",
-            "signed_urls": {
+            "signedUrls": {
                 "iap-700000000047-instructions": "",
                 "iap-700000000047-preferences": "",
             },
@@ -38,19 +38,19 @@ templates = {
     "LP1F": {
         "lpa_uid": "700000000138",
         "expected_collection_started_response": {
-            "uid": "700000000138",
+            "uId": "700000000138",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_in_progress_response": {
-            "uid": "700000000138",
+            "uId": "700000000138",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_completed_response": {
-            "uid": "700000000138",
+            "uId": "700000000138",
             "status": "COLLECTION_COMPLETE",
-            "signed_urls": {
+            "signedUrls": {
                 "iap-700000000138-instructions": "",
                 "iap-700000000138-preferences": "",
                 "iap-700000000138-continuation_instructions_1": "",
@@ -62,19 +62,19 @@ templates = {
     "PFA117": {
         "lpa_uid": "700000000088",
         "expected_collection_started_response": {
-            "uid": "700000000088",
+            "uId": "700000000088",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_in_progress_response": {
-            "uid": "700000000088",
+            "uId": "700000000088",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_completed_response": {
-            "uid": "700000000088",
+            "uId": "700000000088",
             "status": "COLLECTION_COMPLETE",
-            "signed_urls": {
+            "signedUrls": {
                 "iap-700000000088-instructions": "",
                 "iap-700000000088-preferences": "",
             },
@@ -83,19 +83,19 @@ templates = {
     "HW114": {
         "lpa_uid": "700000000089",
         "expected_collection_started_response": {
-            "uid": "700000000089",
+            "uId": "700000000089",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_in_progress_response": {
-            "uid": "700000000089",
+            "uId": "700000000089",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_completed_response": {
-            "uid": "700000000089",
+            "uId": "700000000089",
             "status": "COLLECTION_COMPLETE",
-            "signed_urls": {
+            "signedUrls": {
                 "iap-700000000089-instructions": "",
                 "iap-700000000089-preferences": "",
                 "iap-700000000089-continuation_unknown_1": "",
@@ -106,19 +106,19 @@ templates = {
     "LPA_PW": {
         "lpa_uid": "700000000090",
         "expected_collection_started_response": {
-            "uid": "700000000090",
+            "uId": "700000000090",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_in_progress_response": {
-            "uid": "700000000090",
+            "uId": "700000000090",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_completed_response": {
-            "uid": "700000000090",
+            "uId": "700000000090",
             "status": "COLLECTION_COMPLETE",
-            "signed_urls": {
+            "signedUrls": {
                 "iap-700000000090-instructions": "",
                 "iap-700000000090-preferences": "",
             },
@@ -127,19 +127,19 @@ templates = {
     "LP1F_LP": {
         "lpa_uid": "700000000091",
         "expected_collection_started_response": {
-            "uid": "700000000091",
+            "uId": "700000000091",
             "status": "COLLECTION_NOT_STARTED",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_in_progress_response": {
-            "uid": "700000000091",
+            "uId": "700000000091",
             "status": "COLLECTION_IN_PROGRESS",
-            "signed_urls": {},
+            "signedUrls": {},
         },
         "expected_collection_completed_response": {
-            "uid": "700000000091",
+            "uId": "700000000091",
             "status": "COLLECTION_COMPLETE",
-            "signed_urls": {
+            "signedUrls": {
                 "iap-700000000091-instructions": "",
                 "iap-700000000091-preferences": "",
                 "iap-700000000091-continuation_preferences_1": "",

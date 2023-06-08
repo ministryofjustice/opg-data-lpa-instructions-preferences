@@ -290,9 +290,9 @@ class ImageRequestHandler:
         formats the message to be ingested by UAL
         """
         message = {
-            "uid": int(self.uid),
+            "uId": int(self.uid),
             "status": collection_status,
-            "signed_urls": signed_urls,
+            "signedUrls": signed_urls,
         }
         return message
 
