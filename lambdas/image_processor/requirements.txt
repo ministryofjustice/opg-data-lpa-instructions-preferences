@@ -1,7 +1,7 @@
 boto3==1.26.42
 awslambdaric==2.0.4
 setuptools==65.5.1
-requests==2.28.1
+requests==2.31.0
 pyjwt==2.4.0
 pyopengl==3.1.6
 form-tools==0.1.2
