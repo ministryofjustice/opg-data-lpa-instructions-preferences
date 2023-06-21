@@ -4,7 +4,7 @@ module "iap_queues" {
   alarm_actions_enabled       = false
   alarm_sns_topic_arn         = ""
   allowed_arn_list            = [module.request_handler_lamdba.lambda_execution_role.arn, module.processor_lamdba.lambda_execution_role.arn]
-  visibility_timeout_seconds  = 600
+  visibility_timeout_seconds  = 900
   enable_message_age_alarm    = true
   message_age_alarm_threshold = 86400
   fifo_queue                  = false
@@ -17,4 +17,5 @@ module "iap_queues" {
 resource "aws_lambda_event_source_mapping" "lpa_iap_processor" {
   event_source_arn = module.iap_queues.queue.arn
   function_name    = module.processor_lamdba.lambda.function_name
+  batch_size       = 1
 }
