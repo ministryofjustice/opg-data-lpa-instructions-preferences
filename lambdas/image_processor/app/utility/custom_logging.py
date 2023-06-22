@@ -2,6 +2,21 @@ import os
 import logging
 
 
+def key_exists(element, *keys):
+    if not isinstance(element, dict):
+        raise AttributeError("keys_exists() expects dict as first argument.")
+    if len(keys) == 0:
+        raise AttributeError("keys_exists() expects at least two arguments, one given.")
+
+    _element = element
+    for key in keys:
+        try:
+            _element = _element[key]
+        except KeyError:
+            return False
+    return True
+
+
 def custom_logger(name=None):
     """
     For consistent logger message formatting
@@ -32,6 +47,7 @@ def custom_logger(name=None):
 class LogMessageDetails:
     def __init__(self):
         self.uid = ""
+        self.request_id = ""
         self.document_templates = []
         self.matched_templates = []
         self.images_uploaded = []
@@ -40,6 +56,7 @@ class LogMessageDetails:
     def get_info_message(self):
         return {
             "uid": self.uid,
+            "request_id": self.request_id,
             "document_templates": self.document_templates,
             "matched_templates": self.matched_templates,
             "images_uploaded": self.images_uploaded,
