@@ -8,10 +8,10 @@
 		"name": "preferences",
 		"page_number": 1,
 		"bounding_box": {
-			"left": 115,
-			"width": 1424,
-			"top": 845,
-			"height": 327
+			"left": 110,
+			"width": 1435,
+			"top": 840,
+			"height": 335
 		},
 		"type": "string"
 	}, {
@@ -28,10 +28,10 @@
 		"name": "instructions",
 		"page_number": 1,
 		"bounding_box": {
-			"left": 115,
-			"width": 1424,
-			"top": 1682,
-			"height": 327
+			"left": 110,
+			"width": 1435,
+			"top": 1675,
+			"height": 335
 		},
 		"type": "string"
 	}, {

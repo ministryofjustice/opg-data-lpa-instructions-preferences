@@ -32,6 +32,7 @@ def custom_logger(name=None):
 class LogMessageDetails:
     def __init__(self):
         self.uid = ""
+        self.request_id = ""
         self.document_templates = []
         self.matched_templates = []
         self.images_uploaded = []
@@ -40,6 +41,7 @@ class LogMessageDetails:
     def get_info_message(self):
         return {
             "uid": self.uid,
+            "request_id": self.request_id,
             "document_templates": self.document_templates,
             "matched_templates": self.matched_templates,
             "images_uploaded": self.images_uploaded,
