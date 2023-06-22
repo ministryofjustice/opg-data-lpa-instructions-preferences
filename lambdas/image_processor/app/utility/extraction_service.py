@@ -6,6 +6,7 @@ import cv2
 import re
 
 import numpy as np
+import pypdf
 from pyzbar.pyzbar import decode
 from collections import Counter
 from fuzzywuzzy import fuzz
@@ -208,6 +209,15 @@ class ExtractionService:
                 filtered_continuation_metastore={},
             )
 
+    @staticmethod
+    def is_pdf_file(file_path):
+        try:
+            with open(file_path, "rb") as file:
+                pdf = pypdf.PdfFileReader(file)
+                return pdf.numPages > 0
+        except pypdf.utils.PdfReadError:
+            return False
+
     def get_matching_scan_item(
         self,
         scan_locations: ScanLocationStore,
@@ -221,6 +231,9 @@ class ExtractionService:
         matches = []
         # Attempt to match based on barcodes
         for scan_location in scan_locations.scans:
+            if not self.is_pdf_file(scan_location.location):
+                continue
+
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
