@@ -33,7 +33,7 @@ def cleanup_iap_buckets() -> list:
     images_to_remove = []
 
     # Iterate over all templates and collections in the config file
-    for template, template_data in config.templates.items():
+    for _, template_data in config.templates.items():
         for collection_type in [
             "expected_collection_started_response",
             "expected_collection_in_progress_response",
