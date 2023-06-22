@@ -9,10 +9,10 @@
       "name": "continuation_sheet_p1",
       "page_number": 1,
       "bounding_box": {
-        "left": 176,
-        "width": 1342,
-        "top": 1698,
-        "height": 505
+        "left": 170,
+        "width": 1350,
+        "top": 1695,
+        "height": 515
       },
       "type": "string"
     },
@@ -42,10 +42,10 @@
       "name": "continuation_sheet_p2",
       "page_number": 2,
       "bounding_box": {
-        "left": 176,
-        "width": 1341,
-        "top": 1666,
-        "height": 529
+        "left": 170,
+        "width": 1350,
+        "top": 1660,
+        "height": 540
       },
       "type": "string"
     },
