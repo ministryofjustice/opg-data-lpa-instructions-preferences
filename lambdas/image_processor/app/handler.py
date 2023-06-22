@@ -5,7 +5,7 @@ import datetime
 import time
 import traceback
 
-from app.utility.custom_logging import custom_logger, LogMessageDetails
+from app.utility.custom_logging import custom_logger, key_exists, LogMessageDetails
 
 from app.utility.bucket_manager import BucketManager, ScanLocationStore
 from app.utility.sirius_service import SiriusService
@@ -19,6 +19,11 @@ class ImageProcessor:
     def __init__(self, event):
         self.environment = os.getenv("ENVIRONMENT")
         self.event = event
+        self.request_id = (
+            event["requestContext"]["requestId"]
+            if key_exists(event, "requestContext", "requestId")
+            else ""
+        )
         self.extraction_folder_path = "extraction"
         self.output_folder_path = "/tmp/output"
         self.folder_name = self.get_timestamp_as_str()
@@ -27,6 +32,7 @@ class ImageProcessor:
         self.continuation_unknown_count = 0
         self.uid = ""
         self.info_msg = LogMessageDetails()
+        self.info_msg.request_id = self.request_id
 
     def process_request(self):
         """
@@ -101,9 +107,10 @@ class ImageProcessor:
             logger.info(json.dumps(self.info_msg.get_info_message()))
         except Exception as e:
             self.info_msg.status = "Error"
-            logger.info(json.dumps(self.info_msg.get_info_message()))
+            logger.error(json.dumps(self.info_msg.get_info_message()))
             stack_trace = traceback.format_exc()
-            logger.error(f"{e} --- {stack_trace}")
+            error_message = f"{self.request_id} {e} --- {stack_trace}"
+            logger.error(error_message)
             bucket_manager.put_error_image_to_bucket(self.uid)
 
     @staticmethod
