@@ -2,21 +2,6 @@ import os
 import logging
 
 
-def key_exists(element, *keys):
-    if not isinstance(element, dict):
-        raise AttributeError("keys_exists() expects dict as first argument.")
-    if len(keys) == 0:
-        raise AttributeError("keys_exists() expects at least two arguments, one given.")
-
-    _element = element
-    for key in keys:
-        try:
-            _element = _element[key]
-        except KeyError:
-            return False
-    return True
-
-
 def custom_logger(name=None):
     """
     For consistent logger message formatting

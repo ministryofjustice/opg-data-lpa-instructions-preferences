@@ -5,7 +5,7 @@ import datetime
 import time
 import traceback
 
-from app.utility.custom_logging import custom_logger, key_exists, LogMessageDetails
+from app.utility.custom_logging import custom_logger, LogMessageDetails
 
 from app.utility.bucket_manager import BucketManager, ScanLocationStore
 from app.utility.sirius_service import SiriusService
@@ -16,14 +16,10 @@ logger = custom_logger("processor")
 
 
 class ImageProcessor:
-    def __init__(self, event):
+    def __init__(self, event, context):
         self.environment = os.getenv("ENVIRONMENT")
         self.event = event
-        self.request_id = (
-            event["requestContext"]["requestId"]
-            if key_exists(event, "requestContext", "requestId")
-            else ""
-        )
+        self.request_id = context.aws_request_id
         self.extraction_folder_path = "extraction"
         self.output_folder_path = "/tmp/output"
         self.folder_name = self.get_timestamp_as_str()
@@ -245,5 +241,5 @@ class ImageProcessor:
 
 
 def lambda_handler(event, context):
-    image_processor = ImageProcessor(event)
+    image_processor = ImageProcessor(event, context)
     image_processor.process_request()
