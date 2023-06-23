@@ -18,6 +18,7 @@ from form_tools.utils.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
+from PIL import UnidentifiedImageError
 
 logger = custom_logger("extraction_service")
 
@@ -453,8 +454,13 @@ class ExtractionService:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
         """
         logger.debug(f"Reading form from path: {form_path}")
+        try:
+            _, imgs = ImageReader.read(form_path, conversion_parameters={"output_folder": "/tmp/"})
+        except UnidentifiedImageError:
+            logger.debug(f"Error on {form_path}")
+            pass
 
-        _, imgs = ImageReader.read(form_path, conversion_parameters={"fmt": "jpeg"})
+
 
         logger.debug("Auto-rotating images based on text direction...")
         rotated_images = form_operator.auto_rotate_form_images(imgs)
