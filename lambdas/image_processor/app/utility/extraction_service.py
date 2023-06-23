@@ -2,7 +2,7 @@ import datetime
 import copy
 import os
 import sys
-from pympler.tracker import SummaryTracker
+import mock
 
 import cv2
 import re
@@ -22,6 +22,27 @@ from typing import List
 
 logger = custom_logger("extraction_service")
 
+def monkey_patch_read_pdf(
+    cls,
+    file_path: str,
+    **bytes_kwargs,
+) -> List[np.ndarray]:
+    
+    conversion_parameters = {"output_folder": "/tmp/"}
+    raw_img = cls._read_bytes(file_path, **bytes_kwargs)
+    if conversion_parameters is None:
+        conversion_parameters = {}
+
+    converted_imgs = convert_from_bytes(raw_img, **conversion_parameters)
+
+    if isinstance(converted_imgs, list):
+        cv2_images = [cls._convert_PIL_to_cv2(img) for img in converted_imgs]
+        multipage = True if len(cv2_images) > 1 else False
+    else:
+        cv2_images = [cls._convert_PIL_to_cv2(converted_imgs)]
+        multipage = False
+
+    return multipage, cv2_images
 
 class FilteredMetastore:
     def __init__(self, filtered_metastore: dict, filtered_continuation_metastore: dict):
@@ -79,7 +100,6 @@ class ExtractionService:
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
         self.matched_continuations_from_scans = MatchingItemsStore()
-        self.tracker = SummaryTracker()
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
@@ -104,11 +124,6 @@ class ExtractionService:
             form_scan_continuation_store=self.matched_continuations_from_scans,
             continuation_sheet_store=continuation_sheet_store,
         )
-        logger.debug("T1 {}".format(self.tracker.print_diff()))
-        logger.debug('continuation_sheet_store size before deletion: {} bytes'.format(sys.getsizeof(continuation_sheet_store)))
-        continuation_sheet_store = None
-        logger.debug('continuation_sheet_store size after deletion: {} bytes'.format(sys.getsizeof(continuation_sheet_store)))
-
 
         if scan_sheet_store.size() == 0:
             raise Exception("No matches found in any documents")
@@ -116,10 +131,6 @@ class ExtractionService:
         complete_matching_store = self.combine_meta_stores(
             scan_sheet_store, combined_continuation_sheet_store
         )
-        logger.debug("T2 {}".format(self.tracker.print_diff()))
-        logger.debug('scan_sheet_store size before deletion: {} bytes'.format(sys.getsizeof(scan_sheet_store)))
-        scan_sheet_store = None
-        logger.debug('scan_sheet_store size after deletion: {} bytes'.format(sys.getsizeof(scan_sheet_store)))
         
         for (
             key,
@@ -261,10 +272,6 @@ class ExtractionService:
                 processed_images, filtered_metastore, scan_location.location
             )
 
-            logger.debug('processed_images (barcode) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
-            processed_images = None
-            logger.debug('processed_images (barcode) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
-
             logger.debug(
                 f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
             )
@@ -304,10 +311,6 @@ class ExtractionService:
                 filtered_metastore,
                 scan_location.location,
             )
-            logger.debug("T8 {}".format(self.tracker.print_diff()))
-            logger.debug('processed_images (OCR) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
-            processed_images = None
-            logger.debug('processed_images (OCR) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
 
             if len(matched_items.image_page_map) > 0:
                 matching_item = MatchingItem(matched_items, scan_location.location)
@@ -377,10 +380,6 @@ class ExtractionService:
                     filtered_metastore,
                     scan_location.location,
                 )
-
-            logger.debug('processed_images (get_matching_continuation_items) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
-            processed_images = None
-            logger.debug('processed_images (get_matching_continuation_items) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
 
             # If matches found, store them in the matched LPA scans store
             if len(matched_items.image_page_map) > 0:
@@ -482,7 +481,9 @@ class ExtractionService:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
         """
         logger.debug(f"Reading form from path: {form_path}")
-        _, imgs = ImageReader.read(form_path)
+
+        with mock.patch('form_tools.utils.image_reader.ImageReader._read_pdf', monkey_patch_read_pdf):
+            _, imgs = ImageReader.read(form_path)
 
         logger.debug('imgs size: {} bytes'.format(sys.getsizeof(imgs)))
 
