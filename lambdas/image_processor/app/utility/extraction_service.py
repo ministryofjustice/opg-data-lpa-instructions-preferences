@@ -1,6 +1,7 @@
 import datetime
 import copy
 import os
+import sys
 
 import cv2
 import re
@@ -102,6 +103,11 @@ class ExtractionService:
             continuation_sheet_store=continuation_sheet_store,
         )
 
+        logger.debug('continuation_sheet_store size before deletion: {} bytes'.format(sys.getsizeof(continuation_sheet_store)))
+        continuation_sheet_store = None
+        logger.debug('continuation_sheet_store size after deletion: {} bytes'.format(sys.getsizeof(continuation_sheet_store)))
+
+
         if scan_sheet_store.size() == 0:
             raise Exception("No matches found in any documents")
 
@@ -109,6 +115,11 @@ class ExtractionService:
             scan_sheet_store, combined_continuation_sheet_store
         )
 
+        logger.debug('scan_sheet_store size before deletion: {} bytes'.format(sys.getsizeof(scan_sheet_store)))
+        scan_sheet_store = None
+        logger.debug('scan_sheet_store size after deletion: {} bytes'.format(sys.getsizeof(scan_sheet_store)))
+
+        
         for (
             key,
             matched_document_store_item,
@@ -119,7 +130,7 @@ class ExtractionService:
             meta_id = matched_document_items.meta_id
             meta = complete_meta_store[meta_id]
             document_path = matched_document_store_item.scan_location
-
+            
             self.extract_images(
                 matched_document_items,
                 meta,
@@ -248,6 +259,10 @@ class ExtractionService:
                 processed_images, filtered_metastore, scan_location.location
             )
 
+            logger.debug('processed_images (barcode) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
+            processed_images = None
+            logger.debug('processed_images (barcode) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
+
             logger.debug(
                 f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
             )
@@ -285,6 +300,11 @@ class ExtractionService:
                 filtered_metastore,
                 scan_location.location,
             )
+
+            logger.debug('processed_images (OCR) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
+            processed_images = None
+            logger.debug('processed_images (OCR) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
+
             if len(matched_items.image_page_map) > 0:
                 matching_item = MatchingItem(matched_items, scan_location.location)
                 matched_lpa_scans_store = MatchingItemsStore()
@@ -353,6 +373,10 @@ class ExtractionService:
                     filtered_metastore,
                     scan_location.location,
                 )
+
+            logger.debug('processed_images (get_matching_continuation_items) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
+            processed_images = None
+            logger.debug('processed_images (get_matching_continuation_items) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
 
             # If matches found, store them in the matched LPA scans store
             if len(matched_items.image_page_map) > 0:
