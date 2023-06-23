@@ -133,6 +133,7 @@ def test_get_matching_continuation_items(
     monkeypatch.setattr(
         extraction_service, "get_preprocessed_images", MagicMock(return_value=[])
     )
+    monkeypatch.setattr(extraction_service, "is_pdf_file", MagicMock(return_value=True))
     monkeypatch.setattr(
         "form_tools.form_operators.FormOperator.form_meta_store",
         MagicMock(

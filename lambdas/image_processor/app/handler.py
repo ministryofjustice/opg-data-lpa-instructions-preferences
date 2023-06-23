@@ -16,9 +16,10 @@ logger = custom_logger("processor")
 
 
 class ImageProcessor:
-    def __init__(self, event):
+    def __init__(self, event, context):
         self.environment = os.getenv("ENVIRONMENT")
         self.event = event
+        self.request_id = context.aws_request_id
         self.extraction_folder_path = "extraction"
         self.output_folder_path = "/tmp/output"
         self.folder_name = self.get_timestamp_as_str()
@@ -27,6 +28,7 @@ class ImageProcessor:
         self.continuation_unknown_count = 0
         self.uid = ""
         self.info_msg = LogMessageDetails()
+        self.info_msg.request_id = self.request_id
 
     def process_request(self):
         """
@@ -101,9 +103,10 @@ class ImageProcessor:
             logger.info(json.dumps(self.info_msg.get_info_message()))
         except Exception as e:
             self.info_msg.status = "Error"
-            logger.info(json.dumps(self.info_msg.get_info_message()))
+            logger.error(json.dumps(self.info_msg.get_info_message()))
             stack_trace = traceback.format_exc()
-            logger.error(f"{e} --- {stack_trace}")
+            error_message = f"{self.request_id} {e} --- {stack_trace}"
+            logger.error(error_message)
             bucket_manager.put_error_image_to_bucket(self.uid)
 
     @staticmethod
@@ -238,5 +241,5 @@ class ImageProcessor:
 
 
 def lambda_handler(event, context):
-    image_processor = ImageProcessor(event)
+    image_processor = ImageProcessor(event, context)
     image_processor.process_request()
