@@ -2,6 +2,7 @@ import datetime
 import copy
 import os
 import sys
+from pympler.tracker import SummaryTracker
 
 import cv2
 import re
@@ -78,6 +79,7 @@ class ExtractionService:
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
         self.matched_continuations_from_scans = MatchingItemsStore()
+        self.tracker = SummaryTracker()
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
@@ -102,7 +104,7 @@ class ExtractionService:
             form_scan_continuation_store=self.matched_continuations_from_scans,
             continuation_sheet_store=continuation_sheet_store,
         )
-
+        logger.debug("T1 {}".format(self.tracker.print_diff()))
         logger.debug('continuation_sheet_store size before deletion: {} bytes'.format(sys.getsizeof(continuation_sheet_store)))
         continuation_sheet_store = None
         logger.debug('continuation_sheet_store size after deletion: {} bytes'.format(sys.getsizeof(continuation_sheet_store)))
@@ -114,11 +116,10 @@ class ExtractionService:
         complete_matching_store = self.combine_meta_stores(
             scan_sheet_store, combined_continuation_sheet_store
         )
-
+        logger.debug("T2 {}".format(self.tracker.print_diff()))
         logger.debug('scan_sheet_store size before deletion: {} bytes'.format(sys.getsizeof(scan_sheet_store)))
         scan_sheet_store = None
         logger.debug('scan_sheet_store size after deletion: {} bytes'.format(sys.getsizeof(scan_sheet_store)))
-
         
         for (
             key,
@@ -130,7 +131,7 @@ class ExtractionService:
             meta_id = matched_document_items.meta_id
             meta = complete_meta_store[meta_id]
             document_path = matched_document_store_item.scan_location
-            
+            logger.debug("T3 {} {}".format(key, self.tracker.print_diff()))
             self.extract_images(
                 matched_document_items,
                 meta,
@@ -141,7 +142,7 @@ class ExtractionService:
                 fail_dir,
                 run_timestamp,
             )
-
+            logger.debug("T4 {} {}".format(key, self.tracker.print_diff()))
             # If the key contains "continuation_", add it to the list of continuation keys to use
             if "continuation_" in key:
                 continuation_keys_to_use.append(key)
@@ -242,6 +243,7 @@ class ExtractionService:
         matches = []
         # Attempt to match based on barcodes
         for scan_location in scan_locations.scans:
+            logger.debug("T5 {} {}".format(scan_location, self.tracker.print_diff()))
             if not self.is_pdf_file(scan_location.location):
                 continue
 
@@ -266,6 +268,7 @@ class ExtractionService:
             logger.debug(
                 f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
             )
+            logger.debug("T6 {} {}".format(scan_location, self.tracker.print_diff()))
             if len(matched_items.image_page_map) > 0:
                 matching_item = MatchingItem(matched_items, scan_location.location)
                 matched_lpa_scans_store = MatchingItemsStore()
@@ -274,6 +277,7 @@ class ExtractionService:
                 matches.append(matched_lpa_scans_store_deep)
                 break
 
+        logger.debug("T7 {}".format(self.tracker.print_diff()))
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
         if len(matches) > 1:
@@ -300,7 +304,7 @@ class ExtractionService:
                 filtered_metastore,
                 scan_location.location,
             )
-
+            logger.debug("T8 {}".format(self.tracker.print_diff()))
             logger.debug('processed_images (OCR) size before deletion: {} bytes'.format(sys.getsizeof(processed_images)))
             processed_images = None
             logger.debug('processed_images (OCR) size after deletion: {} bytes'.format(sys.getsizeof(processed_images)))
@@ -479,6 +483,8 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
         _, imgs = ImageReader.read(form_path)
+
+        logger.debug('imgs size: {} bytes'.format(sys.getsizeof(imgs)))
 
         logger.debug("Auto-rotating images based on text direction...")
         rotated_images = form_operator.auto_rotate_form_images(imgs)
