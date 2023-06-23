@@ -2,7 +2,6 @@ import datetime
 import copy
 import os
 import sys
-import mock
 
 import cv2
 import re
@@ -21,28 +20,6 @@ from app.utility.bucket_manager import ScanLocationStore
 from typing import List
 
 logger = custom_logger("extraction_service")
-
-def monkey_patch_read_pdf(
-    cls,
-    file_path: str,
-    **bytes_kwargs,
-) -> List[np.ndarray]:
-    
-    conversion_parameters = {"output_folder": "/tmp/"}
-    raw_img = cls._read_bytes(file_path, **bytes_kwargs)
-    if conversion_parameters is None:
-        conversion_parameters = {}
-
-    converted_imgs = convert_from_bytes(raw_img, **conversion_parameters)
-
-    if isinstance(converted_imgs, list):
-        cv2_images = [cls._convert_PIL_to_cv2(img) for img in converted_imgs]
-        multipage = True if len(cv2_images) > 1 else False
-    else:
-        cv2_images = [cls._convert_PIL_to_cv2(converted_imgs)]
-        multipage = False
-
-    return multipage, cv2_images
 
 class FilteredMetastore:
     def __init__(self, filtered_metastore: dict, filtered_continuation_metastore: dict):
@@ -477,8 +454,7 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
 
-        with mock.patch('form_tools.utils.image_reader.ImageReader._read_pdf', monkey_patch_read_pdf):
-            _, imgs = ImageReader.read(form_path)
+        _, imgs = ImageReader.read(form_path, conversion_parameters={"output_folder": "/tmp/"})
 
         logger.debug('imgs size: {} bytes'.format(sys.getsizeof(imgs)))
 
