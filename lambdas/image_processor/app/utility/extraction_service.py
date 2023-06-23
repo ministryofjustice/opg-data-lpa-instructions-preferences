@@ -1,6 +1,8 @@
 import datetime
 import copy
 import os
+import sys
+import mock
 
 import cv2
 import re
@@ -20,6 +22,27 @@ from typing import List
 
 logger = custom_logger("extraction_service")
 
+def monkey_patch_read_pdf(
+    cls,
+    file_path: str,
+    **bytes_kwargs,
+) -> List[np.ndarray]:
+    
+    conversion_parameters = {"output_folder": "/tmp/"}
+    raw_img = cls._read_bytes(file_path, **bytes_kwargs)
+    if conversion_parameters is None:
+        conversion_parameters = {}
+
+    converted_imgs = convert_from_bytes(raw_img, **conversion_parameters)
+
+    if isinstance(converted_imgs, list):
+        cv2_images = [cls._convert_PIL_to_cv2(img) for img in converted_imgs]
+        multipage = True if len(cv2_images) > 1 else False
+    else:
+        cv2_images = [cls._convert_PIL_to_cv2(converted_imgs)]
+        multipage = False
+
+    return multipage, cv2_images
 
 class FilteredMetastore:
     def __init__(self, filtered_metastore: dict, filtered_continuation_metastore: dict):
@@ -108,7 +131,7 @@ class ExtractionService:
         complete_matching_store = self.combine_meta_stores(
             scan_sheet_store, combined_continuation_sheet_store
         )
-
+        
         for (
             key,
             matched_document_store_item,
@@ -119,7 +142,7 @@ class ExtractionService:
             meta_id = matched_document_items.meta_id
             meta = complete_meta_store[meta_id]
             document_path = matched_document_store_item.scan_location
-
+            logger.debug("T3 {} {}".format(key, self.tracker.print_diff()))
             self.extract_images(
                 matched_document_items,
                 meta,
@@ -130,7 +153,7 @@ class ExtractionService:
                 fail_dir,
                 run_timestamp,
             )
-
+            logger.debug("T4 {} {}".format(key, self.tracker.print_diff()))
             # If the key contains "continuation_", add it to the list of continuation keys to use
             if "continuation_" in key:
                 continuation_keys_to_use.append(key)
@@ -231,6 +254,7 @@ class ExtractionService:
         matches = []
         # Attempt to match based on barcodes
         for scan_location in scan_locations.scans:
+            logger.debug("T5 {} {}".format(scan_location, self.tracker.print_diff()))
             if not self.is_pdf_file(scan_location.location):
                 continue
 
@@ -251,6 +275,7 @@ class ExtractionService:
             logger.debug(
                 f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
             )
+            logger.debug("T6 {} {}".format(scan_location, self.tracker.print_diff()))
             if len(matched_items.image_page_map) > 0:
                 matching_item = MatchingItem(matched_items, scan_location.location)
                 matched_lpa_scans_store = MatchingItemsStore()
@@ -259,6 +284,7 @@ class ExtractionService:
                 matches.append(matched_lpa_scans_store_deep)
                 break
 
+        logger.debug("T7 {}".format(self.tracker.print_diff()))
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
         if len(matches) > 1:
@@ -285,6 +311,7 @@ class ExtractionService:
                 filtered_metastore,
                 scan_location.location,
             )
+
             if len(matched_items.image_page_map) > 0:
                 matching_item = MatchingItem(matched_items, scan_location.location)
                 matched_lpa_scans_store = MatchingItemsStore()
@@ -454,7 +481,11 @@ class ExtractionService:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
         """
         logger.debug(f"Reading form from path: {form_path}")
-        _, imgs = ImageReader.read(form_path)
+
+        with mock.patch('form_tools.utils.image_reader.ImageReader._read_pdf', monkey_patch_read_pdf):
+            _, imgs = ImageReader.read(form_path)
+
+        logger.debug('imgs size: {} bytes'.format(sys.getsizeof(imgs)))
 
         logger.debug("Auto-rotating images based on text direction...")
         rotated_images = form_operator.auto_rotate_form_images(imgs)
