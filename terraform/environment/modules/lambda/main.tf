@@ -22,6 +22,10 @@ resource "aws_lambda_function" "lambda_function" {
     mode = "Active"
   }
 
+  ephemeral_storage {
+    size = var.ephemeral_storage
+  }
+
   dynamic "environment" {
     for_each = length(keys(var.environment_variables)) == 0 ? [] : [true]
     content {
