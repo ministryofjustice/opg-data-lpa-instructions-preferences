@@ -454,9 +454,7 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
 
-        _, imgs = ImageReader.read(form_path, conversion_parameters={"output_folder": "/tmp/"})
-
-        logger.debug('imgs size: {} bytes'.format(sys.getsizeof(imgs)))
+        _, imgs = ImageReader.read(form_path, conversion_parameters={"fmt": "jpeg"})
 
         logger.debug("Auto-rotating images based on text direction...")
         rotated_images = form_operator.auto_rotate_form_images(imgs)
