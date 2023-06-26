@@ -241,6 +241,10 @@ class ExtractionService:
             processed_images = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
+
+            if processed_images == None:
+                continue
+
             logger.debug(
                 f"Attempting to match {scan_location.template} - {scan_location.location} based on barcodes..."
             )
@@ -279,6 +283,8 @@ class ExtractionService:
             processed_images = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
+            if processed_images == None:
+                continue
             matched_items = self.get_ocr_matches(
                 processed_images,
                 form_operator,
@@ -330,7 +336,8 @@ class ExtractionService:
             processed_images = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
-
+            if processed_images == None:
+                continue
             logger.debug(
                 f"Attempting to match {scan_location.location} based on barcodes..."
             )
