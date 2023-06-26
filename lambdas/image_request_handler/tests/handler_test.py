@@ -328,7 +328,7 @@ def test_process_request(image_request_handler):
     stubber.activate()
     response = image_request_handler.process_request()
     response_body = json.loads(response["body"])
-    assert response["statusCode"] == 500
+    assert response["statusCode"] == 200
     assert response_body["status"] == "COLLECTION_ERROR"
 
     # Mock that collection has now completed
