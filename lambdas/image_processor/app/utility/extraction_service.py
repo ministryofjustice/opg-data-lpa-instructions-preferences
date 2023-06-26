@@ -251,9 +251,7 @@ class ExtractionService:
             )
 
             if processed_images == None:
-                logger.debug(
-                    f"No processed images in {scan_location.location}."
-                )
+                logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
             logger.debug(
@@ -296,9 +294,7 @@ class ExtractionService:
             )
 
             if processed_images == None:
-                logger.debug(
-                    f"No processed images in {scan_location.location}."
-                )
+                logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
             matched_items = self.get_ocr_matches(
@@ -354,9 +350,7 @@ class ExtractionService:
             )
 
             if processed_images == None:
-                logger.debug(
-                    f"No processed images in {scan_location.location}."
-                )
+                logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
             logger.debug(
@@ -486,9 +480,10 @@ class ExtractionService:
 
         try:
             with tempfile.TemporaryDirectory() as path:
-                _, imgs = ImageReader.read(
-                    form_path, conversion_parameters={"output_folder": path}
-                )
+                # _, imgs = ImageReader.read(
+                #     form_path, conversion_parameters={"output_folder": path}
+                # )
+                _, imgs = ImageReader.read(form_path)
 
                 logger.debug("Auto-rotating images based on text direction...")
                 rotated_images = form_operator.auto_rotate_form_images(imgs)
