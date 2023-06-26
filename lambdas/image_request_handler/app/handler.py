@@ -89,7 +89,7 @@ class ImageRequestHandler:
                 "body": json.dumps(message),
             }
         except Exception as e:
-            status_code = 500
+            status_code = 200
             logger.error(
                 e, extra=get_event_details_for_logs(self.event, status=status_code)
             )
