@@ -100,3 +100,9 @@ variable "logs_kms_key" {
 variable "retention_in_days" {
   description = "Log retention in days"
 }
+
+variable "ephemeral_storage" {
+  description = "The amount of Ephemeral storage (/tmp) to allocate for the Lambda Function in MB"
+  type        = number
+  default     = 512
+}
