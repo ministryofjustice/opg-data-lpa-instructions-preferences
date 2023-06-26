@@ -19,6 +19,7 @@ from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
 from PIL import UnidentifiedImageError
+import tempfile
 
 logger = custom_logger("extraction_service")
 
@@ -455,19 +456,19 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
         try:
-            _, imgs = ImageReader.read(form_path, conversion_parameters={"output_folder": "/tmp/"})
+            with tempfile.TemporaryDirectory() as path:
+                _, imgs = ImageReader.read(form_path, conversion_parameters={"output_folder": path})
+
+                logger.debug("Auto-rotating images based on text direction...")
+                rotated_images = form_operator.auto_rotate_form_images(imgs)
+
         except UnidentifiedImageError:
-            logger.debug(f"Error on {form_path}")
+            logger.debug(f"Unable to match {form_path}")
             pass
-
-
-
-        logger.debug("Auto-rotating images based on text direction...")
-        rotated_images = form_operator.auto_rotate_form_images(imgs)
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
-        return rotated_images
+        return None
 
     @staticmethod
     def smart_threshold_images(image_list):
