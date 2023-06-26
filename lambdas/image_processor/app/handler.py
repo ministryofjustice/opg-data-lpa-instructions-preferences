@@ -11,6 +11,7 @@ from app.utility.bucket_manager import BucketManager, ScanLocationStore
 from app.utility.sirius_service import SiriusService
 from app.utility.extraction_service import ExtractionService
 from app.utility.path_selection_service import PathSelectionService
+from pympler.tracker import SummaryTracker
 
 logger = custom_logger("processor")
 
@@ -241,5 +242,8 @@ class ImageProcessor:
 
 
 def lambda_handler(event, context):
+    tracker = SummaryTracker()
+    logger.info(tracker.print_diff())
     image_processor = ImageProcessor(event, context)
     image_processor.process_request()
+    logger.info(tracker.print_diff())

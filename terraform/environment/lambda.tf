@@ -53,6 +53,7 @@ module "processor_lamdba" {
   security_group_ids = [data.aws_security_group.lambda_api_ingress.id]
   logs_kms_key       = data.aws_kms_key.lpa_iap_logs
   retention_in_days  = 365
+  ephemeral_storage  = 10240
 }
 
 # Needed for next lambda
