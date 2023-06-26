@@ -17,3 +17,5 @@ pydantic==1.10.5
 tesserocr==2.5.2
 pyzbar==0.1.9
 fuzzywuzzy[speedup]==0.18.0
+Pympler==1.0.1
+mock==5.0.2
