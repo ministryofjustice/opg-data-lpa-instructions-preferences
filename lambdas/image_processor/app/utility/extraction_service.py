@@ -1,6 +1,7 @@
 import datetime
 import copy
 import os
+import sys
 
 import cv2
 import re
@@ -17,9 +18,10 @@ from form_tools.utils.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
+from PIL import UnidentifiedImageError
+import tempfile
 
 logger = custom_logger("extraction_service")
-
 
 class FilteredMetastore:
     def __init__(self, filtered_metastore: dict, filtered_continuation_metastore: dict):
@@ -108,7 +110,7 @@ class ExtractionService:
         complete_matching_store = self.combine_meta_stores(
             scan_sheet_store, combined_continuation_sheet_store
         )
-
+        
         for (
             key,
             matched_document_store_item,
@@ -119,7 +121,6 @@ class ExtractionService:
             meta_id = matched_document_items.meta_id
             meta = complete_meta_store[meta_id]
             document_path = matched_document_store_item.scan_location
-
             self.extract_images(
                 matched_document_items,
                 meta,
@@ -130,7 +131,6 @@ class ExtractionService:
                 fail_dir,
                 run_timestamp,
             )
-
             # If the key contains "continuation_", add it to the list of continuation keys to use
             if "continuation_" in key:
                 continuation_keys_to_use.append(key)
@@ -241,6 +241,10 @@ class ExtractionService:
             processed_images = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
+
+            if processed_images == None:
+                continue
+
             logger.debug(
                 f"Attempting to match {scan_location.template} - {scan_location.location} based on barcodes..."
             )
@@ -279,12 +283,15 @@ class ExtractionService:
             processed_images = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
+            if processed_images == None:
+                continue
             matched_items = self.get_ocr_matches(
                 processed_images,
                 form_operator,
                 filtered_metastore,
                 scan_location.location,
             )
+
             if len(matched_items.image_page_map) > 0:
                 matching_item = MatchingItem(matched_items, scan_location.location)
                 matched_lpa_scans_store = MatchingItemsStore()
@@ -329,7 +336,8 @@ class ExtractionService:
             processed_images = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
-
+            if processed_images == None:
+                continue
             logger.debug(
                 f"Attempting to match {scan_location.location} based on barcodes..."
             )
@@ -454,14 +462,20 @@ class ExtractionService:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
         """
         logger.debug(f"Reading form from path: {form_path}")
-        _, imgs = ImageReader.read(form_path)
+        try:
+            with tempfile.TemporaryDirectory() as path:
+                _, imgs = ImageReader.read(form_path, conversion_parameters={"output_folder": path})
 
-        logger.debug("Auto-rotating images based on text direction...")
-        rotated_images = form_operator.auto_rotate_form_images(imgs)
+                logger.debug("Auto-rotating images based on text direction...")
+                rotated_images = form_operator.auto_rotate_form_images(imgs)
+
+        except UnidentifiedImageError:
+            logger.debug(f"Unable to match {form_path}")
+            pass
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
-        return rotated_images
+        return None
 
     @staticmethod
     def smart_threshold_images(image_list):
