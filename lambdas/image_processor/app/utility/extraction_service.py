@@ -468,7 +468,8 @@ class ExtractionService:
 
                 logger.debug("Auto-rotating images based on text direction...")
                 rotated_images = form_operator.auto_rotate_form_images(imgs)
-
+                
+                return rotated_images
         except UnidentifiedImageError:
             logger.debug(f"Unable to match {form_path}")
             pass
