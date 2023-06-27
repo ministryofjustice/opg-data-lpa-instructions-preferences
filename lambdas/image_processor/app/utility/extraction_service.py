@@ -211,6 +211,8 @@ class ExtractionService:
 
     @staticmethod
     def is_pdf_file(file_path):
+        if not file_path.lower().endswith(".pdf"):
+            return False
         try:
             with open(file_path, "rb") as file:
                 pdf = pypdf.PdfReader(file)
