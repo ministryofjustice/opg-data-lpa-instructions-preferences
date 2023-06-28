@@ -1,6 +1,9 @@
+#!/usr/bin/env python3
+
 import boto3
 import requests
 from requests_aws4auth import AWS4Auth
+import argparse
 
 
 def get_role_session(environment, role):
@@ -45,7 +48,35 @@ def handle_request(method, url, auth):
 
 
 def main():
-    workspace = "production"
+    arg_parser = argparse.ArgumentParser(
+        description="Check specified LPA ID(s) against the Instructions and Preferences Gateway"
+    )
+
+    arg_parser.add_argument(
+        "-u", "--uid", help="UID of LPA to be checked", required=True, type=int
+    )
+
+    arg_parser.add_argument(
+        "-a",
+        "--api",
+        help="Version of the API to run against",
+        default="v1",
+    )
+
+    arg_parser.add_argument(
+        "-w",
+        "--workspace",
+        help="Environment to run against",
+        choices=["development", "preproduction", "production"],
+        default="development",
+    )
+
+    args = arg_parser.parse_args()
+
+    uid = args.uid
+    ver = args.api
+    workspace = args.workspace
+
     workspace_mapping = {
         "development": "dev.",
         "preproduction": "pre.",
@@ -60,10 +91,6 @@ def main():
         branch_prefix = workspace_mapping[workspace]
     except KeyError:
         branch_prefix = f"{workspace}.dev."
-
-    uid = "700000000000"
-
-    ver = "v1"
 
     session = get_role_session(role_session[workspace], "operator")
     credentials = session.get_credentials()
