@@ -7,7 +7,7 @@ resource "aws_cloudwatch_log_metric_filter" "pdf_sizes_bytes" {
     name      = "PDFSize"
     namespace = "IaPPDFStatistics"
     value     = "$.pdf_size"
-    unit      = "bytes"
+    unit      = "Bytes"
   }
 }
 
