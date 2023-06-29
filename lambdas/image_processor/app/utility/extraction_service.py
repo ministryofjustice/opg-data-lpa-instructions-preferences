@@ -479,8 +479,8 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
         file_metrics = {
-            'pdf_size': os.stat(form_path).st_size,
-            'pdf_length': self.get_pdf_length(form_path),
+            'pdfSize': os.stat(form_path).st_size,
+            'pdfLength': self.get_pdf_length(form_path),
         }
         logger.info(json.dumps(file_metrics))
         try:
