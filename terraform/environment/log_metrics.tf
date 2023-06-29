@@ -5,11 +5,11 @@ resource "aws_cloudwatch_log_metric_filter" "pdf_sizes_bytes" {
 
   metric_transformation {
     name      = "PDFSize"
-    namespace = "IaPPDFStatistics"
+    namespace = "IaP/PDFStatistics"
     value     = "$.pdfSize"
     unit      = "Bytes"
     dimensions = {
-      pdf_size = "$.pdfSize"
+      pdfSize = "$.pdfSize"
     }
   }
 }
@@ -22,10 +22,10 @@ resource "aws_cloudwatch_log_metric_filter" "pdf_length_pages" {
 
   metric_transformation {
     name      = "PDFLength"
-    namespace = "IaPPDFStatistics"
-    value     = "$.pddLength"
+    namespace = "IaP/PDFStatistics"
+    value     = "$.pdfLength"
     dimensions = {
-      pdf_length = "$.pdfLength"
+      pdfLength = "$.pdfLength"
     }
 
   }
