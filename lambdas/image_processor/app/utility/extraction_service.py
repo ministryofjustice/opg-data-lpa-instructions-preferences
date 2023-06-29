@@ -2,6 +2,7 @@ import datetime
 import copy
 import os
 import tempfile
+import json
 
 import cv2
 import re
@@ -208,6 +209,12 @@ class ExtractionService:
                 filtered_metastore=complete_meta_store,
                 filtered_continuation_metastore={},
             )
+
+    @staticmethod
+    def get_pdf_length(file_path):
+        with open(file_path, "rb") as file:
+            pdf = pypdf.PdfReader(file)
+            return len(pdf.pages)
 
     @staticmethod
     def is_pdf_file(file_path):
@@ -471,7 +478,11 @@ class ExtractionService:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
         """
         logger.debug(f"Reading form from path: {form_path}")
-
+        file_metrics = {
+            'pdfSize': os.stat(form_path).st_size,
+            'pdfLength': self.get_pdf_length(form_path),
+        }
+        logger.info(json.dumps(file_metrics))
         try:
             with tempfile.TemporaryDirectory() as path:
                 _, imgs = ImageReader.read(
