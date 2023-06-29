@@ -8,6 +8,9 @@ resource "aws_cloudwatch_log_metric_filter" "pdf_sizes_bytes" {
     namespace = "IaPPDFStatistics"
     value     = "$.pdf_size"
     unit      = "Bytes"
+    dimensions = {
+      pdf_size = "$.pdf_size"
+    }
   }
 }
 
@@ -21,5 +24,9 @@ resource "aws_cloudwatch_log_metric_filter" "pdf_length_pages" {
     name      = "PDFLength"
     namespace = "IaPPDFStatistics"
     value     = "$.pdf_length"
+    dimensions = {
+      pdf_length = "$.pdf_length"
+    }
+
   }
 }
