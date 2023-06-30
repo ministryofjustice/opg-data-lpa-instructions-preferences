@@ -6,6 +6,7 @@ import json
 
 import cv2
 import re
+import uuid
 
 import numpy as np
 import pypdf
@@ -15,7 +16,7 @@ from fuzzywuzzy import fuzz
 
 from form_tools.form_operators import FormOperator
 from form_tools.form_meta.form_meta import FormPage
-from form_tools.utils.image_reader import ImageReader
+from app.utility.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
@@ -81,6 +82,7 @@ class ExtractionService:
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
         self.matched_continuations_from_scans = MatchingItemsStore()
+        self.processed_images = {}
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
@@ -247,20 +249,27 @@ class ExtractionService:
                 complete_meta_store, scan_location.template
             )
 
-            processed_images = self.get_preprocessed_images(
-                scan_location.location, form_operator
-            )
+            processed_images = []
 
-            if processed_images == None:
+            try:
+                processed_images = self.processed_images[scan_location.location]
+            except KeyError:
+                processed_images = self.get_preprocessed_images(
+                    scan_location.location, form_operator
+                )
+
+            if not processed_images:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
-            logger.debug(
-                f"Attempting to match {scan_location.template} - {scan_location.location} based on barcodes..."
-            )
-            matched_items = self.find_matches_from_barcodes(
-                processed_images, filtered_metastore, scan_location.location
-            )
+            for image_file in processed_images:
+                image = np.load(image_file)
+                logger.debug(
+                    f"Attempting to match {scan_location.template} - {image_file} (extracted from {scan_location.location}) based on barcodes..."
+                )
+                matched_items = self.find_matches_from_barcodes(
+                    [image], filtered_metastore, scan_location.location
+                )
 
             logger.debug(
                 f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
@@ -290,27 +299,40 @@ class ExtractionService:
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
-            processed_images = self.get_preprocessed_images(
-                scan_location.location, form_operator
-            )
 
-            if processed_images == None:
+            processed_images = []
+
+            try:
+                processed_images = self.processed_images[scan_location.location]
+            except KeyError:
+                processed_images = self.get_preprocessed_images(
+                    scan_location.location, form_operator
+                )
+
+            if not processed_images:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
-            matched_items = self.get_ocr_matches(
-                processed_images,
-                form_operator,
-                filtered_metastore,
-                scan_location.location,
-            )
+            for image_file in processed_images:
+                image = np.load(image_file)
+                matched_items = self.get_ocr_matches(
+                    [image],
+                    form_operator,
+                    filtered_metastore,
+                    scan_location.location,
+                )
+
+                if len(matched_items.image_page_map) > 0:
+                    matching_item = MatchingItem(matched_items, scan_location.location)
+                    matched_lpa_scans_store = MatchingItemsStore()
+                    matched_lpa_scans_store.add_item("scan", matching_item)
+                    matched_lpa_scans_store_deep = copy.deepcopy(
+                        matched_lpa_scans_store
+                    )
+                    matches.append(matched_lpa_scans_store_deep)
+                    break
 
             if len(matched_items.image_page_map) > 0:
-                matching_item = MatchingItem(matched_items, scan_location.location)
-                matched_lpa_scans_store = MatchingItemsStore()
-                matched_lpa_scans_store.add_item("scan", matching_item)
-                matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
-                matches.append(matched_lpa_scans_store_deep)
                 break
 
         # Check if there is exactly one match
@@ -346,43 +368,54 @@ class ExtractionService:
                 complete_meta_store, scan_location.template
             )
             # Get preprocessed images for current scan location
-            processed_images = self.get_preprocessed_images(
-                scan_location.location, form_operator
-            )
+            processed_images = []
 
-            if processed_images == None:
+            try:
+                processed_images = self.processed_images[scan_location.location]
+            except KeyError:
+                processed_images = self.get_preprocessed_images(
+                    scan_location.location, form_operator
+                )
+
+            if not processed_images:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
             logger.debug(
                 f"Attempting to match {scan_location.location} based on barcodes..."
             )
-            # Attempt to match based on barcodes
-            matched_items = self.find_matches_from_barcodes(
-                processed_images, filtered_metastore, scan_location.location
-            )
 
-            logger.debug(
-                f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
-            )
+            for image_file in processed_images:
+                image = np.load(image_file)
 
-            # If no matches found using barcodes, attempt to match using OCR
-            if len(matched_items.image_page_map) == 0:
+                # Attempt to match based on barcodes
+                matched_items = self.find_matches_from_barcodes(
+                    [image], filtered_metastore, scan_location.location
+                )
+
                 logger.debug(
-                    f"Attempting to match {scan_location.location} based on OCR..."
-                )
-                matched_items = self.get_ocr_matches(
-                    processed_images,
-                    form_operator,
-                    filtered_metastore,
-                    scan_location.location,
+                    f"Barcode matches for {image_file} (extracted from {scan_location.location}): {len(matched_items.image_page_map)}"
                 )
 
-            # If matches found, store them in the matched LPA scans store
-            if len(matched_items.image_page_map) > 0:
-                if "continuation_" in key:
-                    matching_item = MatchingItem(matched_items, scan_location.location)
-                    matched_lpa_scans_store.add_item(key, matching_item)
+                # If no matches found using barcodes, attempt to match using OCR
+                if len(matched_items.image_page_map) == 0:
+                    logger.debug(
+                        f"Attempting to match {scan_location.location} based on OCR..."
+                    )
+                    matched_items = self.get_ocr_matches(
+                        [image],
+                        form_operator,
+                        filtered_metastore,
+                        scan_location.location,
+                    )
+
+                # If matches found, store them in the matched LPA scans store
+                if len(matched_items.image_page_map) > 0:
+                    if "continuation_" in key:
+                        matching_item = MatchingItem(
+                            matched_items, scan_location.location
+                        )
+                        matched_lpa_scans_store.add_item(key, matching_item)
 
         logger.debug(
             f"Matched continuation documents: {matched_lpa_scans_store.size()}"
@@ -479,8 +512,8 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
         file_metrics = {
-            'pdfSize': os.stat(form_path).st_size,
-            'pdfLength': self.get_pdf_length(form_path),
+            "pdfSize": os.stat(form_path).st_size,
+            "pdfLength": self.get_pdf_length(form_path),
         }
         logger.info(json.dumps(file_metrics))
         try:
@@ -490,14 +523,32 @@ class ExtractionService:
                 )
 
                 logger.debug("Auto-rotating images based on text direction...")
-                rotated_images = form_operator.auto_rotate_form_images(imgs)
 
-                return rotated_images
+                rotated_images = []
+
+                for img in imgs:
+                    file_name = f"/tmp/rotated-{str(uuid.uuid4())}.npy"
+                    logger.debug(f"Rotating {img} and saving as {file_name}")
+                    unrotated_image = np.load(img)
+                    np.save(
+                        file_name,
+                        form_operator.auto_rotate_form_images(unrotated_image),
+                    )
+                    rotated_images.append(file_name)
+                    try:
+                        os.remove(img)
+                    except:
+                        logger.warn(f"Unable to remove unrotated file: {img}")
+
+                logger.debug(f"Total images rotated: {len(rotated_images)}")
+                logger.debug(f"Rotated images: {rotated_images}")
+
+                self.processed_images[form_path] = rotated_images
+                return self.processed_images[form_path]
+
         except UnidentifiedImageError:
             logger.debug(f"Unable to match {form_path}")
             pass
-
-        logger.debug(f"Total images found: {len(rotated_images)}")
 
         return None
 
