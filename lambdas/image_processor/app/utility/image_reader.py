@@ -85,11 +85,18 @@ class ImageReader:
 
         converted_imgs = convert_from_bytes(raw_img, **conversion_parameters)
 
+        img_locations = []
+
         if isinstance(converted_imgs, list):
-            cv2_images = [cls._convert_PIL_to_cv2(img) for img in converted_imgs]
-            multipage = True if len(cv2_images) > 1 else False
+            for image in converted_imgs:
+                file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
+                image.save(f"{file_name}", "JPEG")
+                img_locations.append(file_name)
+            multipage = True if len(converted_imgs) > 1 else False
         else:
-            cv2_images = [cls._convert_PIL_to_cv2(converted_imgs)]
+            file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
+            converted_imgs.save(f"{file_name}", "JPEG")
+            img_locations.append(file_name)
             multipage = False
 
-        return multipage, cv2_images
+        return multipage, img_locations

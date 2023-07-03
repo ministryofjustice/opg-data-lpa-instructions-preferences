@@ -3,6 +3,7 @@ import copy
 import os
 import tempfile
 import json
+import psutil
 
 import cv2
 import re
@@ -22,7 +23,6 @@ from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
 from PIL import UnidentifiedImageError
-
 
 logger = custom_logger("extraction_service")
 
@@ -83,6 +83,7 @@ class ExtractionService:
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
         self.matched_continuations_from_scans = MatchingItemsStore()
+        self.processed_image_locations = {}
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
@@ -249,9 +250,13 @@ class ExtractionService:
                 complete_meta_store, scan_location.template
             )
 
-            processed_image_locations = self.get_preprocessed_images(
-                scan_location.location, form_operator
-            )
+            try:
+                processed_image_locations = self.processed_image_locations[scan_location.location]
+            except KeyError:
+                self.processed_image_locations[scan_location.location] = self.get_preprocessed_images(
+                    scan_location.location, form_operator
+                )
+                processed_image_locations = self.processed_image_locations[scan_location.location]
 
             if len(processed_image_locations) == 0:
                 logger.debug(f"No processed images in {scan_location.location}.")
@@ -292,9 +297,14 @@ class ExtractionService:
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
-            processed_image_locations = self.get_preprocessed_images(
-                scan_location.location, form_operator
-            )
+
+            try:
+                processed_image_locations = self.processed_image_locations[scan_location.location]
+            except KeyError:
+                self.processed_image_locations[scan_location.location] = self.get_preprocessed_images(
+                    scan_location.location, form_operator
+                )
+                processed_image_locations = self.processed_image_locations[scan_location.location]
 
             if len(processed_image_locations) == 0:
                 logger.debug(f"No processed images in {scan_location.location}.")
@@ -348,9 +358,13 @@ class ExtractionService:
                 complete_meta_store, scan_location.template
             )
             # Get preprocessed images for current scan location
-            processed_image_locations = self.get_preprocessed_images(
-                scan_location.location, form_operator
-            )
+            try:
+                processed_image_locations = self.processed_image_locations[scan_location.location]
+            except KeyError:
+                self.processed_image_locations[scan_location.location] = self.get_preprocessed_images(
+                    scan_location.location, form_operator
+                )
+                processed_image_locations = self.processed_image_locations[scan_location.location]
 
             if len(processed_image_locations) == 0:
                 logger.debug(f"No processed images in {scan_location.location}.")
@@ -425,6 +439,7 @@ class ExtractionService:
         try:
             # Align the images to the metadata template
             logger.debug("Aligning images...")
+
             aligned_images = form_operator.align_images_to_template(
                 matched_items.image_page_map, form_meta=meta, debug=False
             )
@@ -487,25 +502,26 @@ class ExtractionService:
         logger.info(json.dumps(file_metrics))
         try:
             with tempfile.TemporaryDirectory() as path:
-                _, imgs = ImageReader.read(
-                    form_path, conversion_parameters={"output_folder": path}
+                _, img_locations = ImageReader.read(
+                    form_path, conversion_parameters={"output_folder": path, "fmt": "jpeg"}
                 )
 
                 rotated_images = []
 
-                for img in imgs:
-                    file_name = f"/tmp/rotated-{str(uuid.uuid4())}.npy"
-                    logger.debug(f"Rotating {img} and saving as {file_name}")
-                    unrotated_image = np.load(img)
-                    np.save(
+                for img_location in img_locations:
+                    file_name = f"/tmp/rotated-{str(uuid.uuid4())}.jpg"
+                    logger.debug(f"Rotating {img_location} and saving as {file_name}")
+                    unrotated_image = cv2.imread(img_location)
+                    rotated_image = form_operator.auto_rotate_form_images([unrotated_image])
+                    cv2.imwrite(
                         file_name,
-                        form_operator.auto_rotate_form_images(unrotated_image),
+                        rotated_image[0],
                     )
                     rotated_images.append(file_name)
                     try:
-                        os.remove(img)
+                        os.remove(img_location)
                     except:
-                        logger.warn(f"Unable to remove unrotated file: {img}")
+                        logger.warn(f"Unable to remove unrotated file: {img_location}")
 
                 logger.debug(f"Total images rotated: {len(rotated_images)}")
                 logger.debug(f"Rotated images: {rotated_images}")
@@ -530,7 +546,7 @@ class ExtractionService:
         # Loop through each image in the input list
         for image_location in image_locations:
 
-            image = np.load(image_location)
+            image = cv2.imread(image_location)
             # Get the current size of the image
             # Convert the image to grayscale
             grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -540,8 +556,8 @@ class ExtractionService:
                 grayscale, average_intensity - 50, 255, cv2.THRESH_BINARY
             )
             
-            file_name = f"/tmp/thresholded-{str(uuid.uuid4())}.npy"
-            np.save(file_name, thresholded)
+            file_name = f"/tmp/thresholded-{str(uuid.uuid4())}.jpg"
+            cv2.imwrite(file_name, thresholded)
             thresholded_image_locations.append(file_name)
 
         # Return the list of doubled-size images
@@ -551,8 +567,8 @@ class ExtractionService:
     def mask_images(metastore, image_locations):
         updated_images_locations = []
         for image_location in image_locations:
-            image = np.load(image_location)
-            file_name = f"/tmp/masked-{str(uuid.uuid4())}.npy"
+            image = cv2.imread(image_location)
+            file_name = f"/tmp/masked-{str(uuid.uuid4())}.jpg"
             for _, meta in metastore.items():
                 form_meta_loc = meta.form_template
                 template_files = os.listdir(form_meta_loc)
@@ -579,7 +595,7 @@ class ExtractionService:
                         thickness=cv2.FILLED,
                     )
 
-            np.save(file_name, resized_image)
+            cv2.imwrite(file_name, resized_image)
             updated_images_locations.append(file_name)
 
         return updated_images_locations
@@ -727,7 +743,7 @@ class ExtractionService:
         image_barcode_dict = {}
         # Iterate over each image and find its barcode
         for image_count, image_location in enumerate(image_locations):
-            image = np.load(image_location)
+            image = cv2.imread(image_location)
             height, width = image.shape[:2]
             roi = image[0 : height // 3, 2 * width // 3 : width]
             barcodes = decode(roi)
@@ -795,7 +811,7 @@ class ExtractionService:
                                 f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}"
                             )
                             matching_image_page[form_page.page_number] = [
-                                np.load(image_locations[img_count])
+                                cv2.imread(image_locations[img_count])
                             ]
                             images_used.append(img_count)
                             form_pages_used.append(form_page.page_number)
@@ -835,7 +851,7 @@ class ExtractionService:
                                 f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}"
                             )
                             matching_image_page[form_page.page_number] = [
-                                np.load(image_locations[img_count])
+                                cv2.imread(image_locations[img_count])
                             ]
                             images_used.append(img_count)
 
@@ -1106,7 +1122,7 @@ class ExtractionService:
             template_page_no = template_to_keep["template_page_no"]
             scan_page_no = template_to_keep["scan_page_no"]
             matching_meta_images.image_page_map.setdefault(template_page_no, []).append(
-                np.load(form_image_locations[scan_page_no - 1])
+                cv2.imread(form_image_locations[scan_page_no - 1])
             )
             msg = (
                 f"Match on {meta_id_to_use} with OCR match for scan page number {scan_page_no} "
@@ -1153,7 +1169,7 @@ class ExtractionService:
             matching_meta_images = MatchingMetaToImages()
             matching_meta_images.meta_id = meta_id_to_use
             matching_meta_images.image_page_map.setdefault(template_page_no, []).append(
-                np.load(form_image_locations[scan_page_no - 1])
+                cv2.imread(form_image_locations[scan_page_no - 1])
             )
             matching_meta_images_deep = copy.deepcopy(matching_meta_images)
             matching_meta_images_list.append(matching_meta_images_deep)

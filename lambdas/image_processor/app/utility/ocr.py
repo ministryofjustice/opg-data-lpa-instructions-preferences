@@ -1,5 +1,5 @@
 import numpy as np
-
+import cv2
 from tesserocr import PyTessBaseAPI, PSM
 
 
@@ -17,7 +17,7 @@ def get_text_from_image_file(image_locations: list[str]) -> list:
 
     list_of_text = []
     for image_location in image_locations:
-        image = np.load(image_location)
+        image = cv2.imread(image_location)
         image_bytes = _convert_cv2_to_bytes(image)
         api.SetImageBytes(*image_bytes)
         api.Recognize()
