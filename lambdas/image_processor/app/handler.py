@@ -98,6 +98,7 @@ class ImageProcessor:
             # Cleanup all the folders
             self.cleanup(downloaded_scan_locations)
             logger.debug("Cleaned down paths")
+            self.print_files('/tmp')
 
             self.info_msg.status = "Completed"
             logger.info(json.dumps(self.info_msg.get_info_message()))
@@ -108,6 +109,16 @@ class ImageProcessor:
             error_message = f"{self.request_id} {e} --- {stack_trace}"
             logger.error(error_message)
             bucket_manager.put_error_image_to_bucket(self.uid)
+
+    @staticmethod
+    def print_files(startpath):
+        for root, dirs, files in os.walk(startpath):
+            level = root.replace(startpath, '').count(os.sep)
+            indent = ' ' * 4 * (level)
+            print('{}{}/'.format(indent, os.path.basename(root)))
+            subindent = ' ' * 4 * (level + 1)
+            for f in files:
+                print('{}{}'.format(subindent, f))
 
     @staticmethod
     def get_timestamp_as_str() -> str:
@@ -149,7 +160,7 @@ class ImageProcessor:
         - A list of file paths (str) that match the specified file type.
         """
         paths = []
-        for root, dirs, files in os.walk(filepath):
+        for root, _, files in os.walk(filepath):
             for file in files:
                 if file.lower().endswith(filetype.lower()):
                     paths.append(os.path.join(root, file))
@@ -169,7 +180,7 @@ class ImageProcessor:
             downloaded_document_paths.append(path.location)
 
         # Extract the paths from the 'continuations' keys and add them to the list
-        for key, path in downloaded_document_locations.continuations.items():
+        for _, path in downloaded_document_locations.continuations.items():
             downloaded_document_paths.append(path.location)
 
         # Remove downloaded images
