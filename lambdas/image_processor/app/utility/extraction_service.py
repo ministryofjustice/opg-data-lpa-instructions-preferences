@@ -6,6 +6,7 @@ import json
 
 import cv2
 import re
+import uuid
 
 import numpy as np
 import pypdf
@@ -15,7 +16,8 @@ from fuzzywuzzy import fuzz
 
 from form_tools.form_operators import FormOperator
 from form_tools.form_meta.form_meta import FormPage
-from form_tools.utils.image_reader import ImageReader
+from app.utility.ocr import get_text_from_image_file
+from app.utility.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
@@ -247,11 +249,11 @@ class ExtractionService:
                 complete_meta_store, scan_location.template
             )
 
-            processed_images = self.get_preprocessed_images(
+            processed_image_locations = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
 
-            if processed_images == None:
+            if len(processed_image_locations) == 0:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
@@ -259,7 +261,7 @@ class ExtractionService:
                 f"Attempting to match {scan_location.template} - {scan_location.location} based on barcodes..."
             )
             matched_items = self.find_matches_from_barcodes(
-                processed_images, filtered_metastore, scan_location.location
+                processed_image_locations, filtered_metastore, scan_location.location
             )
 
             logger.debug(
@@ -290,16 +292,16 @@ class ExtractionService:
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
-            processed_images = self.get_preprocessed_images(
+            processed_image_locations = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
 
-            if processed_images == None:
+            if len(processed_image_locations) == 0:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
             matched_items = self.get_ocr_matches(
-                processed_images,
+                processed_image_locations,
                 form_operator,
                 filtered_metastore,
                 scan_location.location,
@@ -346,11 +348,11 @@ class ExtractionService:
                 complete_meta_store, scan_location.template
             )
             # Get preprocessed images for current scan location
-            processed_images = self.get_preprocessed_images(
+            processed_image_locations = self.get_preprocessed_images(
                 scan_location.location, form_operator
             )
 
-            if processed_images == None:
+            if len(processed_image_locations) == 0:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
@@ -359,7 +361,7 @@ class ExtractionService:
             )
             # Attempt to match based on barcodes
             matched_items = self.find_matches_from_barcodes(
-                processed_images, filtered_metastore, scan_location.location
+                processed_image_locations, filtered_metastore, scan_location.location
             )
 
             logger.debug(
@@ -372,7 +374,7 @@ class ExtractionService:
                     f"Attempting to match {scan_location.location} based on OCR..."
                 )
                 matched_items = self.get_ocr_matches(
-                    processed_images,
+                    processed_image_locations,
                     form_operator,
                     filtered_metastore,
                     scan_location.location,
@@ -489,8 +491,27 @@ class ExtractionService:
                     form_path, conversion_parameters={"output_folder": path}
                 )
 
+                rotated_images = []
+
+                for img in imgs:
+                    file_name = f"/tmp/rotated-{str(uuid.uuid4())}.npy"
+                    logger.debug(f"Rotating {img} and saving as {file_name}")
+                    unrotated_image = np.load(img)
+                    np.save(
+                        file_name,
+                        form_operator.auto_rotate_form_images(unrotated_image),
+                    )
+                    rotated_images.append(file_name)
+                    try:
+                        os.remove(img)
+                    except:
+                        logger.warn(f"Unable to remove unrotated file: {img}")
+
+                logger.debug(f"Total images rotated: {len(rotated_images)}")
+                logger.debug(f"Rotated images: {rotated_images}")
+
+
                 logger.debug("Auto-rotating images based on text direction...")
-                rotated_images = form_operator.auto_rotate_form_images(imgs)
 
                 return rotated_images
         except UnidentifiedImageError:
@@ -499,15 +520,17 @@ class ExtractionService:
 
         logger.debug(f"Total images found: {len(rotated_images)}")
 
-        return None
+        return []
 
     @staticmethod
-    def smart_threshold_images(image_list):
+    def smart_threshold_images(image_locations):
         # Create an empty list to store the new images
-        thresholded_images = []
+        thresholded_image_locations = []
 
         # Loop through each image in the input list
-        for image in image_list:
+        for image_location in image_locations:
+
+            image = np.load(image_location)
             # Get the current size of the image
             # Convert the image to grayscale
             grayscale = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -516,17 +539,21 @@ class ExtractionService:
             _, thresholded = cv2.threshold(
                 grayscale, average_intensity - 50, 255, cv2.THRESH_BINARY
             )
-
-            thresholded_images.append(thresholded)
+            
+            file_name = f"/tmp/thresholded-{str(uuid.uuid4())}.npy"
+            np.save(file_name, thresholded)
+            thresholded_image_locations.append(file_name)
 
         # Return the list of doubled-size images
-        return thresholded_images
+        return thresholded_image_locations
 
     @staticmethod
-    def mask_images(metastore, images):
-        updated_images = []
-        for image in images:
-            for meta_id, meta in metastore.items():
+    def mask_images(metastore, image_locations):
+        updated_images_locations = []
+        for image_location in image_locations:
+            image = np.load(image_location)
+            file_name = f"/tmp/masked-{str(uuid.uuid4())}.npy"
+            for _, meta in metastore.items():
                 form_meta_loc = meta.form_template
                 template_files = os.listdir(form_meta_loc)
                 template = cv2.imread(os.path.join(form_meta_loc, template_files[0]))
@@ -552,13 +579,14 @@ class ExtractionService:
                         thickness=cv2.FILLED,
                     )
 
-            updated_images.append(resized_image)
+            np.save(file_name, resized_image)
+            updated_images_locations.append(file_name)
 
-        return updated_images
+        return updated_images_locations
 
     def get_ocr_matches(
         self,
-        processed_images: list,
+        processed_image_locations: list,
         form_operator: FormOperator,
         metastore: FilteredMetastore,
         scan_location: str,
@@ -568,7 +596,7 @@ class ExtractionService:
         and attempts to identify matches based on text identification.
 
         Args:
-            - processed_images (List[Any]): A list of processed images to extract text from.
+            - processed_image_locations (List[Any]): A list of files containing ndarrays.
             - form_operator (Any): A form operator object with `form_images_to_text` method.
             - metastore (dict): A directory containing form metadata documents.
 
@@ -585,21 +613,21 @@ class ExtractionService:
         # ====== Process scan documents ======
         if len(metastore.filtered_metastore) == 1:
             logger.debug("Further image processing based on scan template...")
-            masked_images = self.mask_images(
-                metastore.filtered_metastore, processed_images
+            masked_image_locations = self.mask_images(
+                metastore.filtered_metastore, processed_image_locations
             )
-            ocr_refined_images = self.smart_threshold_images(masked_images)
+            ocr_refined_image_locations = self.smart_threshold_images(masked_image_locations)
         else:
-            ocr_refined_images = processed_images
+            ocr_refined_image_locations = processed_image_locations
 
         logger.debug("Applying OCR to extract text from images...")
-        form_images_text = form_operator.form_images_to_text(ocr_refined_images)
+        form_images_text = get_text_from_image_file(ocr_refined_image_locations)
 
         logger.debug("Attempting to identify matches based on text identification")
         matched_items = self.mixed_mode_page_identifier(
             form_images_as_strings=form_images_text,
             form_metastore=metastore.filtered_metastore,
-            form_images=processed_images,
+            form_image_locations=processed_image_locations,
             inline_continuation=False,
         )
         # We are only interested in first element for this one
@@ -621,23 +649,23 @@ class ExtractionService:
         # ====== Process continuation sheets ======
         if len(metastore.filtered_continuation_metastore) == 1:
             logger.debug("Further image processing based on continuation template...")
-            masked_images = self.mask_images(
-                metastore.filtered_continuation_metastore, processed_images
+            masked_image_locations = self.mask_images(
+                metastore.filtered_continuation_metastore, processed_image_locations
             )
-            ocr_refined_images = self.smart_threshold_images(masked_images)
+            ocr_refined_images_locations = self.smart_threshold_images(masked_image_locations)
         else:
-            ocr_refined_images = processed_images
+            ocr_refined_images_locations = processed_image_locations
 
         logger.debug(
             "Applying OCR to extract continuation text from images where it exists..."
         )
-        form_images_text = form_operator.form_images_to_text(ocr_refined_images)
+        form_images_text = get_text_from_image_file(ocr_refined_images_locations)
 
         logger.debug("Attempting to identify matches based on text identification")
         matched_items = self.mixed_mode_page_identifier(
             form_images_as_strings=form_images_text,
             form_metastore=metastore.filtered_continuation_metastore,
-            form_images=processed_images,
+            form_image_locations=processed_image_locations,
             inline_continuation=True,
         )
         logger.debug(f"Total continuation matched based on OCR: {len(matched_items)}")
@@ -691,14 +719,15 @@ class ExtractionService:
         return matched_scan
 
     @staticmethod
-    def get_barcodes_scan_number_mapping(images):
+    def get_barcodes_scan_number_mapping(image_locations):
         """
         Attempt to find barcodes in top right of each image
         and add them to a dict containing scan number and the decoded barcode in utf8.
         """
         image_barcode_dict = {}
         # Iterate over each image and find its barcode
-        for image_count, image in enumerate(images):
+        for image_count, image_location in enumerate(image_locations):
+            image = np.load(image_location)
             height, width = image.shape[:2]
             roi = image[0 : height // 3, 2 * width // 3 : width]
             barcodes = decode(roi)
@@ -722,7 +751,7 @@ class ExtractionService:
         return matched_meta_ids
 
     def find_matches_from_barcodes(
-        self, images: list, form_metastore: FilteredMetastore, scan_location: str
+        self, image_locations: list, form_metastore: FilteredMetastore, scan_location: str
     ) -> MatchingMetaToImages:
         """
         Finds and matches barcodes in the input images to the corresponding template pages in the
@@ -742,7 +771,7 @@ class ExtractionService:
             returned.
         """
         matching_meta_images = MatchingMetaToImages()
-        image_barcode_dict = self.get_barcodes_scan_number_mapping(images)
+        image_barcode_dict = self.get_barcodes_scan_number_mapping(image_locations)
 
         # Iterate over each form in the form_metastore and try to match it to an image by its barcode
         # ======= Pull out the scan matches  ======
@@ -766,7 +795,7 @@ class ExtractionService:
                                 f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}"
                             )
                             matching_image_page[form_page.page_number] = [
-                                images[img_count]
+                                np.load(image_locations[img_count])
                             ]
                             images_used.append(img_count)
                             form_pages_used.append(form_page.page_number)
@@ -806,7 +835,7 @@ class ExtractionService:
                                 f"Barcode match on {template_barcode} for image {img_count} from page: {form_page.page_number}"
                             )
                             matching_image_page[form_page.page_number] = [
-                                images[img_count]
+                                np.load(image_locations[img_count])
                             ]
                             images_used.append(img_count)
 
@@ -942,7 +971,7 @@ class ExtractionService:
         self,
         form_images_as_strings: list,
         form_metastore: dict,
-        form_images: list,
+        form_image_locations: list,
         inline_continuation: bool = False,
     ) -> List[MatchingMetaToImages]:
         scan_to_template_distances = self.create_scan_to_template_distances(
@@ -961,7 +990,7 @@ class ExtractionService:
                 meta_id_to_use,
                 similarity_score,
                 sorted_scan_template_entities,
-                form_images,
+                form_image_locations,
             )
             matching_image_results_list.append(matching_image_results)
         else:
@@ -969,7 +998,7 @@ class ExtractionService:
                 meta_id_to_use,
                 similarity_score,
                 sorted_scan_template_entities,
-                form_images,
+                form_image_locations,
             )
 
         return matching_image_results_list
@@ -1051,7 +1080,7 @@ class ExtractionService:
         meta_id_to_use,
         similarity_score,
         sorted_scan_template_entities,
-        form_images,
+        form_image_locations,
     ) -> MatchingMetaToImages:
         matching_meta_images = MatchingMetaToImages()
         matching_meta_images.meta_id = meta_id_to_use
@@ -1077,7 +1106,7 @@ class ExtractionService:
             template_page_no = template_to_keep["template_page_no"]
             scan_page_no = template_to_keep["scan_page_no"]
             matching_meta_images.image_page_map.setdefault(template_page_no, []).append(
-                form_images[scan_page_no - 1]
+                np.load(form_image_locations[scan_page_no - 1])
             )
             msg = (
                 f"Match on {meta_id_to_use} with OCR match for scan page number {scan_page_no} "
@@ -1092,7 +1121,7 @@ class ExtractionService:
         meta_id_to_use,
         similarity_score,
         sorted_scan_template_entities,
-        form_images,
+        form_image_locations,
     ) -> List[MatchingMetaToImages]:
         matching_meta_images = MatchingMetaToImages()
         matching_meta_images.meta_id = meta_id_to_use
@@ -1124,7 +1153,7 @@ class ExtractionService:
             matching_meta_images = MatchingMetaToImages()
             matching_meta_images.meta_id = meta_id_to_use
             matching_meta_images.image_page_map.setdefault(template_page_no, []).append(
-                form_images[scan_page_no - 1]
+                np.load(form_image_locations[scan_page_no - 1])
             )
             matching_meta_images_deep = copy.deepcopy(matching_meta_images)
             matching_meta_images_list.append(matching_meta_images_deep)
