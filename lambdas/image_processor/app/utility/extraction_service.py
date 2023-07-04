@@ -3,7 +3,6 @@ import copy
 import os
 import tempfile
 import json
-import psutil
 
 import cv2
 import re
