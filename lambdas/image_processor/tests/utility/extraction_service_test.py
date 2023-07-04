@@ -316,14 +316,21 @@ def test_get_preprocessed_images(monkeypatch, tmp_path, extraction_service):
         "form_tools.form_operators.FormOperator", lambda: mock_form_operator
     )
 
+    monkeypatch.setattr(
+        extraction_service,
+        "get_pdf_length",
+        MagicMock(return_value=0),
+    )
+
     # Call the function under test
     images = extraction_service.get_preprocessed_images(pdf_path, mock_form_operator)
 
     # Assert that the correct number of images were returned
     assert len(images) == 2
 
-    # Assert that ImageReader.read was called with the correct arguments
-    mock_image_reader.read.assert_called_once_with(pdf_path)
+    # Assert that ImageReader.read was called with the correct path argument
+    actual_args = mock_image_reader.read.call_args
+    assert pdf_path == actual_args[0][0]
 
     # Assert that the form operator methods were called with the correct arguments
     mock_form_operator.auto_rotate_form_images.assert_called_once_with([None, None])
