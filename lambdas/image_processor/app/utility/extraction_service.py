@@ -83,6 +83,7 @@ class ExtractionService:
         self.info_msg = info_msg
         self.matched_continuations_from_scans = MatchingItemsStore()
         self.complete_meta_store = {}
+        self.processed_image_locations = {}
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
