@@ -48,12 +48,12 @@ module "processor_lamdba" {
   account            = local.account
   environment        = local.environment
   timeout            = 600
-  memory             = 8192
+  memory             = 1024
   aws_subnet_ids     = data.aws_subnets.private.ids
   security_group_ids = [data.aws_security_group.lambda_api_ingress.id]
   logs_kms_key       = data.aws_kms_key.lpa_iap_logs
   retention_in_days  = 365
-  ephemeral_storage  = 10240
+  ephemeral_storage  = 2048
 }
 
 # Needed for next lambda
