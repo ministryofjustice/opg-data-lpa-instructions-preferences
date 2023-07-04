@@ -10,6 +10,11 @@ test_bucket = "test-bucket"
 event = {"Records": [{"body": '{"uid": "700000000005"}'}]}
 
 
+class FakeContext:
+    def __init__(self, aws_request_id: str = "999999999999"):
+        self.aws_request_id = aws_request_id
+
+
 @pytest.fixture(autouse=True)
 def setup_environment_variables():
     os.environ["ENVIRONMENT"] = "testing"
@@ -18,7 +23,8 @@ def setup_environment_variables():
 
 @pytest.fixture
 def image_processor():
-    return ImageProcessor(event)
+    context = FakeContext()
+    return ImageProcessor(event, context)
 
 
 def test_init_function(image_processor, monkeypatch):
