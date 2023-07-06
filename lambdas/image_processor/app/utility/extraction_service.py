@@ -324,6 +324,8 @@ class ExtractionService:
         matches = []
         logger.debug("Attempting to match scans based on OCR...")
         for scan_location in scan_locations.scans:
+            if not self.is_pdf_file(scan_location.location):
+                continue
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
