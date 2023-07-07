@@ -749,7 +749,19 @@ class ExtractionService:
         for image_count, image in enumerate(images):
             height, width = image.shape[:2]
             roi = image[0 : height // 3, 2 * width // 3 : width]
-            barcodes = decode(roi)
+            roi_resized = cv2.resize(roi, (height, 4 * width))
+            barcodes = decode(roi_resized)
+
+            # If we don't have a barcode, try flipping the image on its axis.
+            # auto_rotate_form_images can cause the image to be upside down, etc.
+            if not barcodes:
+                for i in range(-1, 1):
+                    img_flipped = cv2.flip(image, i)
+                    roi_flipped = img_flipped[0 : height // 3, 2 * width // 3 : width]
+                    roi_flipped_resized = cv2.resize(roi_flipped, (height, 4 * width))
+                    barcodes = decode(roi_flipped_resized)
+                    if barcodes:
+                        break
 
             barcodes_decoded = []
             for barcode in barcodes:
