@@ -1,6 +1,5 @@
 resource "aws_cloudwatch_query_definition" "iap_count_by_status" {
-  name = "Instructions-and-Preferences/Count-By-Status"
-
+  name         = "Instructions-and-Preferences/Count-By-Status"
   query_string = <<EOF
 # Used to report on the success failure rate of document processing
 fields status, @timestamp, @message
@@ -12,8 +11,7 @@ EOF
 
 
 resource "aws_cloudwatch_query_definition" "iap_error_messages" {
-  name = "Instructions-and-Preferences/Failed-Cases"
-  
+  name         = "Instructions-and-Preferences/Failed-Cases"
   query_string = <<EOF
 # Used to report on which case numbers have failed and the reasons for that failure
 # which is then followed up manually
