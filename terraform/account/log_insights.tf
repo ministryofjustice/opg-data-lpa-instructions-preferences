@@ -18,11 +18,11 @@ resource "aws_cloudwatch_query_definition" "iap_error_messages" {
 # This can be exported as a xlsx doc directly for eases 
 fields @timestamp, coalesce(@requestId, request_id) as RequestID
 | filter @message like 'ERROR'
-| parse @message 'document_templates": [*]' as DocumentTemplates
-| parse @message 'matched_templates": [*]' as MatchedTemplates
-| parse @message 'ERROR - * *' as pre, ReasonFailed
+| parse @message 'document_templates": [*]' as docs
+| parse @message 'matched_templates": [*]' as matched
+| parse @message 'ERROR - * *' as pre, error
 | sort @timestamp asc, RequestID asc
-| stats latest(uid) as CaseNumber, latest(ReasonFailed) as Rf, latest(DocumentTemplates) as DocumentTemp, latest(MatchedTemplates) as MatchedTemp by RequestID
-| display @timestamp, CaseNumber, Rf, DocumentTemp, MatchedTemp, RequestID
+| stats latest(@timestamp) as Time, latest(uid) as CaseNumber, latest(error) as ReasonFailed, latest(docs) as DocumentTemplates, latest(matched) as MatchedTemplates by RequestID
+| display fromMillis(Time) as TimeStamp, CaseNumber, ReasonFailed, DocumentTemplates, MatchedTemplates, RequestID
 EOF
 }
