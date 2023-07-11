@@ -299,16 +299,21 @@ class ExtractionService:
                 processed_images, filtered_metastore, scan_location.location
             )
 
-            logger.debug(
-                f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
-            )
-            if len(matched_items.image_page_map) > 0:
-                matching_item = MatchingItem(matched_items, scan_location.location)
-                matched_lpa_scans_store = MatchingItemsStore()
-                matched_lpa_scans_store.add_item("scan", matching_item)
-                matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
-                matches.append(matched_lpa_scans_store_deep)
-                break
+            # It's possible for continuation sheets to be matched on barcode whilst the main page isn't.
+            # matched_items will be None in that case.
+            if matched_items:
+                logger.debug(
+                    f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
+                )
+                if len(matched_items.image_page_map) > 0:
+                    matching_item = MatchingItem(matched_items, scan_location.location)
+                    matched_lpa_scans_store = MatchingItemsStore()
+                    matched_lpa_scans_store.add_item("scan", matching_item)
+                    matched_lpa_scans_store_deep = copy.deepcopy(
+                        matched_lpa_scans_store
+                    )
+                    matches.append(matched_lpa_scans_store_deep)
+                    break
 
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
