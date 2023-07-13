@@ -756,14 +756,16 @@ class ExtractionService:
             roi = image[0 : height // 3, 2 * width // 3 : width]
             roi_resized = cv2.resize(roi, (height, 4 * width))
             barcodes = decode(roi_resized)
-
             # If we don't have a barcode, try flipping the image on its axis.
             # auto_rotate_form_images can cause the image to be upside down, etc.
             if not barcodes:
-                for i in range(-1, 1):
+                for i in range(-1, 2):
                     img_flipped = cv2.flip(image, i)
                     roi_flipped = img_flipped[0 : height // 3, 2 * width // 3 : width]
                     roi_flipped_resized = cv2.resize(roi_flipped, (height, 4 * width))
+                    logger.debug(
+                        f"Flipped page {image_count+1} with flip parameter {i}"
+                    )
                     barcodes = decode(roi_flipped_resized)
                     if barcodes:
                         break
@@ -773,6 +775,7 @@ class ExtractionService:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
+                logger.debug(f"Found and decoded barcode on page {image_count+1}")
                 image_barcode_dict[image_count] = barcodes_decoded[0]
 
         return image_barcode_dict
