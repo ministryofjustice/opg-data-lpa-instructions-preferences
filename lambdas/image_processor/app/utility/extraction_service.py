@@ -305,16 +305,21 @@ class ExtractionService:
                 processed_image_locations, filtered_metastore, scan_location.location
             )
 
-            logger.debug(
-                f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
-            )
-            if len(matched_items.image_page_map) > 0:
-                matching_item = MatchingItem(matched_items, scan_location.location)
-                matched_lpa_scans_store = MatchingItemsStore()
-                matched_lpa_scans_store.add_item("scan", matching_item)
-                matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
-                matches.append(matched_lpa_scans_store_deep)
-                break
+            # It's possible for continuation sheets to be matched on barcode whilst the main page isn't.
+            # matched_items will be None in that case.
+            if matched_items:
+                logger.debug(
+                    f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
+                )
+                if len(matched_items.image_page_map) > 0:
+                    matching_item = MatchingItem(matched_items, scan_location.location)
+                    matched_lpa_scans_store = MatchingItemsStore()
+                    matched_lpa_scans_store.add_item("scan", matching_item)
+                    matched_lpa_scans_store_deep = copy.deepcopy(
+                        matched_lpa_scans_store
+                    )
+                    matches.append(matched_lpa_scans_store_deep)
+                    break
 
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
@@ -330,6 +335,8 @@ class ExtractionService:
         matches = []
         logger.debug("Attempting to match scans based on OCR...")
         for scan_location in scan_locations.scans:
+            if not self.is_pdf_file(scan_location.location):
+                continue
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
@@ -791,13 +798,28 @@ class ExtractionService:
             image = cv2.imread(image_location)
             height, width = image.shape[:2]
             roi = image[0 : height // 3, 2 * width // 3 : width]
-            barcodes = decode(roi)
+            roi_resized = cv2.resize(roi, (height, 4 * width))
+            barcodes = decode(roi_resized)
+            # If we don't have a barcode, try flipping the image on its axis.
+            # auto_rotate_form_images can cause the image to be upside down, etc.
+            if not barcodes:
+                for i in range(-1, 2):
+                    img_flipped = cv2.flip(image, i)
+                    roi_flipped = img_flipped[0 : height // 3, 2 * width // 3 : width]
+                    roi_flipped_resized = cv2.resize(roi_flipped, (height, 4 * width))
+                    logger.debug(
+                        f"Flipped page {image_count+1} with flip parameter {i}"
+                    )
+                    barcodes = decode(roi_flipped_resized)
+                    if barcodes:
+                        break
 
             barcodes_decoded = []
             for barcode in barcodes:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
+                logger.debug(f"Found and decoded barcode on page {image_count+1}")
                 image_barcode_dict[image_count] = barcodes_decoded[0]
 
         return image_barcode_dict
