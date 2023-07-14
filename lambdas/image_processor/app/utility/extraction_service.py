@@ -287,12 +287,16 @@ class ExtractionService:
             )
 
             try:
-                processed_image_locations = self.processed_image_locations[scan_location.location]
+                processed_image_locations = self.processed_image_locations[
+                    scan_location.location
+                ]
             except KeyError:
-                self.processed_image_locations[scan_location.location] = self.get_preprocessed_images(
-                    scan_location.location, form_operator
-                )
-                processed_image_locations = self.processed_image_locations[scan_location.location]
+                self.processed_image_locations[
+                    scan_location.location
+                ] = self.get_preprocessed_images(scan_location.location, form_operator)
+                processed_image_locations = self.processed_image_locations[
+                    scan_location.location
+                ]
 
             if not processed_image_locations:
                 logger.debug(f"No processed images in {scan_location.location}.")
@@ -342,12 +346,16 @@ class ExtractionService:
             )
 
             try:
-                processed_image_locations = self.processed_image_locations[scan_location.location]
+                processed_image_locations = self.processed_image_locations[
+                    scan_location.location
+                ]
             except KeyError:
-                self.processed_image_locations[scan_location.location] = self.get_preprocessed_images(
-                    scan_location.location, form_operator
-                )
-                processed_image_locations = self.processed_image_locations[scan_location.location]
+                self.processed_image_locations[
+                    scan_location.location
+                ] = self.get_preprocessed_images(scan_location.location, form_operator)
+                processed_image_locations = self.processed_image_locations[
+                    scan_location.location
+                ]
 
             if not processed_image_locations:
                 logger.debug(f"No processed images in {scan_location.location}.")
@@ -402,12 +410,16 @@ class ExtractionService:
             )
             # Get preprocessed images for current scan location
             try:
-                processed_image_locations = self.processed_image_locations[scan_location.location]
+                processed_image_locations = self.processed_image_locations[
+                    scan_location.location
+                ]
             except KeyError:
-                self.processed_image_locations[scan_location.location] = self.get_preprocessed_images(
-                    scan_location.location, form_operator
-                )
-                processed_image_locations = self.processed_image_locations[scan_location.location]
+                self.processed_image_locations[
+                    scan_location.location
+                ] = self.get_preprocessed_images(scan_location.location, form_operator)
+                processed_image_locations = self.processed_image_locations[
+                    scan_location.location
+                ]
 
             if not processed_image_locations:
                 logger.debug(f"No processed images in {scan_location.location}.")
@@ -546,7 +558,8 @@ class ExtractionService:
         try:
             with tempfile.TemporaryDirectory() as path:
                 _, img_locations = ImageReader.read(
-                    form_path, conversion_parameters={"output_folder": path, "fmt": "jpeg"}
+                    form_path,
+                    conversion_parameters={"output_folder": path, "fmt": "jpeg"},
                 )
 
                 rotated_images = []
@@ -555,7 +568,9 @@ class ExtractionService:
                     file_name = f"/tmp/rotated-{str(uuid.uuid4())}.jpg"
                     logger.debug(f"Rotating {img_location} and saving as {file_name}")
                     unrotated_image = cv2.imread(img_location)
-                    rotated_image = form_operator.auto_rotate_form_images([unrotated_image])
+                    rotated_image = form_operator.auto_rotate_form_images(
+                        [unrotated_image]
+                    )
                     cv2.imwrite(
                         file_name,
                         rotated_image[0],
@@ -563,12 +578,11 @@ class ExtractionService:
                     rotated_images.append(file_name)
                     try:
                         os.remove(img_location)
-                    except:
+                    except OSError:
                         logger.warn(f"Unable to remove unrotated file: {img_location}")
 
                 logger.debug(f"Total images rotated: {len(rotated_images)}")
                 logger.debug(f"Rotated images: {rotated_images}")
-
 
                 logger.debug("Auto-rotating images based on text direction...")
 
@@ -588,7 +602,6 @@ class ExtractionService:
 
         # Loop through each image in the input list
         for image_location in image_locations:
-
             image = cv2.imread(image_location)
             # Get the current size of the image
             # Convert the image to grayscale
@@ -598,7 +611,7 @@ class ExtractionService:
             _, thresholded = cv2.threshold(
                 grayscale, average_intensity - 50, 255, cv2.THRESH_BINARY
             )
-            
+
             file_name = f"/tmp/thresholded-{str(uuid.uuid4())}.jpg"
             cv2.imwrite(file_name, thresholded)
             thresholded_image_locations.append(file_name)
@@ -675,7 +688,9 @@ class ExtractionService:
             masked_image_locations = self.mask_images(
                 metastore.filtered_metastore, processed_image_locations
             )
-            ocr_refined_image_locations = self.smart_threshold_images(masked_image_locations)
+            ocr_refined_image_locations = self.smart_threshold_images(
+                masked_image_locations
+            )
         else:
             ocr_refined_image_locations = processed_image_locations
 
@@ -720,7 +735,9 @@ class ExtractionService:
             masked_image_locations = self.mask_images(
                 metastore.filtered_continuation_metastore, processed_image_locations
             )
-            ocr_refined_images_locations = self.smart_threshold_images(masked_image_locations)
+            ocr_refined_images_locations = self.smart_threshold_images(
+                masked_image_locations
+            )
         else:
             ocr_refined_images_locations = processed_image_locations
 
@@ -834,7 +851,10 @@ class ExtractionService:
         return matched_meta_ids
 
     def find_matches_from_barcodes(
-        self, image_locations: list, form_metastore: FilteredMetastore, scan_location: str
+        self,
+        image_locations: list,
+        form_metastore: FilteredMetastore,
+        scan_location: str,
     ) -> MatchingMetaToImages:
         """
         Finds and matches barcodes in the input images to the corresponding template pages in the
