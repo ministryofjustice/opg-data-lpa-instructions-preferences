@@ -83,6 +83,7 @@ class ExtractionService:
         self.output_folder_path = output_folder_path
         self.info_msg = info_msg
         self.matched_continuations_from_scans = MatchingItemsStore()
+        self.complete_meta_store = {}
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
@@ -91,16 +92,16 @@ class ExtractionService:
         continuation_keys_to_use = []
         run_timestamp = int(datetime.datetime.utcnow().timestamp())
         form_meta_directory = f"{self.extraction_folder_path}/metadata"
-        complete_meta_store = form_operator.form_meta_store(form_meta_directory)
+        self.complete_meta_store = form_operator.form_meta_store(form_meta_directory)
 
         # Find matches based on Scans (only one should match)
         scan_sheet_store = self.get_matching_scan_item(
-            scan_locations, complete_meta_store, form_operator
+            scan_locations, self.complete_meta_store, form_operator
         )
 
         # Find matches based on Continuation sheets (multiple matches possible)
         continuation_sheet_store = self.get_matching_continuation_items(
-            scan_locations, complete_meta_store, form_operator
+            scan_locations, self.complete_meta_store, form_operator
         )
 
         combined_continuation_sheet_store = self.combine_continuation_meta_stores(
@@ -123,7 +124,7 @@ class ExtractionService:
             fail_dir = f"{self.output_folder_path}/fail/{self.folder_name}/{key}"
             matched_document_items = matched_document_store_item.match
             meta_id = matched_document_items.meta_id
-            meta = complete_meta_store[meta_id]
+            meta = self.complete_meta_store[meta_id]
             document_path = matched_document_store_item.scan_location
             self.extract_images(
                 matched_document_items,
@@ -213,6 +214,42 @@ class ExtractionService:
             )
 
     @staticmethod
+    def filter_metastore_based_on_meta_id(
+        complete_meta_store: dict, template: str
+    ) -> FilteredMetastore:
+        metastore_mapping = {
+            "pfa117": {"templates": ["pfa117"], "continuation_templates": ["pfa_c"]},
+            "hw114": {"templates": ["hw114"], "continuation_templates": ["pfa_c"]},
+            "lp1h": {
+                "templates": ["lp1h"],
+                "continuation_templates": ["lpc_as_part_of_scan"],
+            },
+            "lp1f": {
+                "templates": ["lp1f"],
+                "continuation_templates": ["lpc_as_part_of_scan"],
+            },
+        }
+        filtered_metastore = {}
+        filtered_continuation_metastore = {}
+        try:
+            matched_metas = metastore_mapping[template]
+            for matched_meta in matched_metas["templates"]:
+                filtered_metastore[matched_meta] = complete_meta_store[matched_meta]
+            for matched_continuation_meta in matched_metas["continuation_templates"]:
+                filtered_continuation_metastore[
+                    matched_continuation_meta
+                ] = complete_meta_store[matched_continuation_meta]
+            return FilteredMetastore(
+                filtered_metastore=filtered_metastore,
+                filtered_continuation_metastore=filtered_continuation_metastore,
+            )
+        except KeyError:
+            return FilteredMetastore(
+                filtered_metastore=complete_meta_store,
+                filtered_continuation_metastore={},
+            )
+
+    @staticmethod
     def get_pdf_length(file_path):
         with open(file_path, "rb") as file:
             pdf = pypdf.PdfReader(file)
@@ -253,7 +290,7 @@ class ExtractionService:
                 scan_location.location, form_operator
             )
 
-            if len(processed_image_locations) == 0:
+            if not processed_image_locations:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
@@ -264,16 +301,21 @@ class ExtractionService:
                 processed_image_locations, filtered_metastore, scan_location.location
             )
 
-            logger.debug(
-                f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
-            )
-            if len(matched_items.image_page_map) > 0:
-                matching_item = MatchingItem(matched_items, scan_location.location)
-                matched_lpa_scans_store = MatchingItemsStore()
-                matched_lpa_scans_store.add_item("scan", matching_item)
-                matched_lpa_scans_store_deep = copy.deepcopy(matched_lpa_scans_store)
-                matches.append(matched_lpa_scans_store_deep)
-                break
+            # It's possible for continuation sheets to be matched on barcode whilst the main page isn't.
+            # matched_items will be None in that case.
+            if matched_items:
+                logger.debug(
+                    f"Barcode matches for {scan_location.location}: {len(matched_items.image_page_map)}"
+                )
+                if len(matched_items.image_page_map) > 0:
+                    matching_item = MatchingItem(matched_items, scan_location.location)
+                    matched_lpa_scans_store = MatchingItemsStore()
+                    matched_lpa_scans_store.add_item("scan", matching_item)
+                    matched_lpa_scans_store_deep = copy.deepcopy(
+                        matched_lpa_scans_store
+                    )
+                    matches.append(matched_lpa_scans_store_deep)
+                    break
 
         # Check if there is exactly one match
         logger.debug(f"Matched LPA scan documents based on barcodes: {len(matches)}")
@@ -289,6 +331,8 @@ class ExtractionService:
         matches = []
         logger.debug("Attempting to match scans based on OCR...")
         for scan_location in scan_locations.scans:
+            if not self.is_pdf_file(scan_location.location):
+                continue
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
             )
@@ -296,7 +340,7 @@ class ExtractionService:
                 scan_location.location, form_operator
             )
 
-            if len(processed_image_locations) == 0:
+            if not processed_image_locations:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
@@ -352,7 +396,7 @@ class ExtractionService:
                 scan_location.location, form_operator
             )
 
-            if len(processed_image_locations) == 0:
+            if not processed_image_locations:
                 logger.debug(f"No processed images in {scan_location.location}.")
                 continue
 
@@ -481,8 +525,8 @@ class ExtractionService:
         """
         logger.debug(f"Reading form from path: {form_path}")
         file_metrics = {
-            'pdfSize': os.stat(form_path).st_size,
-            'pdfLength': self.get_pdf_length(form_path),
+            "pdfSize": os.stat(form_path).st_size,
+            "pdfLength": self.get_pdf_length(form_path),
         }
         logger.info(json.dumps(file_metrics))
         try:
@@ -504,12 +548,11 @@ class ExtractionService:
                     rotated_images.append(file_name)
                     try:
                         os.remove(img)
-                    except:
+                    except OSError:
                         logger.warn(f"Unable to remove unrotated file: {img}")
 
                 logger.debug(f"Total images rotated: {len(rotated_images)}")
                 logger.debug(f"Rotated images: {rotated_images}")
-
 
                 logger.debug("Auto-rotating images based on text direction...")
 
@@ -529,7 +572,6 @@ class ExtractionService:
 
         # Loop through each image in the input list
         for image_location in image_locations:
-
             image = np.load(image_location)
             # Get the current size of the image
             # Convert the image to grayscale
@@ -539,7 +581,7 @@ class ExtractionService:
             _, thresholded = cv2.threshold(
                 grayscale, average_intensity - 50, 255, cv2.THRESH_BINARY
             )
-            
+
             file_name = f"/tmp/thresholded-{str(uuid.uuid4())}.npy"
             np.save(file_name, thresholded)
             thresholded_image_locations.append(file_name)
@@ -616,7 +658,9 @@ class ExtractionService:
             masked_image_locations = self.mask_images(
                 metastore.filtered_metastore, processed_image_locations
             )
-            ocr_refined_image_locations = self.smart_threshold_images(masked_image_locations)
+            ocr_refined_image_locations = self.smart_threshold_images(
+                masked_image_locations
+            )
         else:
             ocr_refined_image_locations = processed_image_locations
 
@@ -643,16 +687,27 @@ class ExtractionService:
         if len(scan_and_continuation_matches) == 0:
             return MatchingMetaToImages()
 
+        # ====== Process continuation sheets ======
+        if len(scan_and_continuation_matches) > 0:
+            matched_meta_id = scan_and_continuation_matches[0].meta_id
+            metastore = self.filter_metastore_based_on_meta_id(
+                self.complete_meta_store, matched_meta_id
+            )
+
+            for meta_id, _ in metastore.filtered_continuation_metastore.items():
+                logger.debug(f"OCR continuation metastore: {meta_id}")
+
         if len(metastore.filtered_continuation_metastore) == 0:
             return scan_and_continuation_matches[0]
 
-        # ====== Process continuation sheets ======
         if len(metastore.filtered_continuation_metastore) == 1:
             logger.debug("Further image processing based on continuation template...")
             masked_image_locations = self.mask_images(
                 metastore.filtered_continuation_metastore, processed_image_locations
             )
-            ocr_refined_images_locations = self.smart_threshold_images(masked_image_locations)
+            ocr_refined_images_locations = self.smart_threshold_images(
+                masked_image_locations
+            )
         else:
             ocr_refined_images_locations = processed_image_locations
 
@@ -730,13 +785,28 @@ class ExtractionService:
             image = np.load(image_location)
             height, width = image.shape[:2]
             roi = image[0 : height // 3, 2 * width // 3 : width]
-            barcodes = decode(roi)
+            roi_resized = cv2.resize(roi, (height, 4 * width))
+            barcodes = decode(roi_resized)
+            # If we don't have a barcode, try flipping the image on its axis.
+            # auto_rotate_form_images can cause the image to be upside down, etc.
+            if not barcodes:
+                for i in range(-1, 2):
+                    img_flipped = cv2.flip(image, i)
+                    roi_flipped = img_flipped[0 : height // 3, 2 * width // 3 : width]
+                    roi_flipped_resized = cv2.resize(roi_flipped, (height, 4 * width))
+                    logger.debug(
+                        f"Flipped page {image_count+1} with flip parameter {i}"
+                    )
+                    barcodes = decode(roi_flipped_resized)
+                    if barcodes:
+                        break
 
             barcodes_decoded = []
             for barcode in barcodes:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
+                logger.debug(f"Found and decoded barcode on page {image_count+1}")
                 image_barcode_dict[image_count] = barcodes_decoded[0]
 
         return image_barcode_dict
@@ -751,7 +821,10 @@ class ExtractionService:
         return matched_meta_ids
 
     def find_matches_from_barcodes(
-        self, image_locations: list, form_metastore: FilteredMetastore, scan_location: str
+        self,
+        image_locations: list,
+        form_metastore: FilteredMetastore,
+        scan_location: str,
     ) -> MatchingMetaToImages:
         """
         Finds and matches barcodes in the input images to the corresponding template pages in the
@@ -816,6 +889,15 @@ class ExtractionService:
                 return matching_images[0]
 
         # ======= Pull out the continuation matches for in-scan continuations ======
+        if len(matching_images) > 0:
+            matched_meta_id = matching_images[0].meta_id
+            form_metastore = self.filter_metastore_based_on_meta_id(
+                self.complete_meta_store, matched_meta_id
+            )
+
+            for meta_id, _ in form_metastore.filtered_continuation_metastore.items():
+                logger.debug(f"Barcode continuation metastore: {meta_id}")
+
         for (
             continuation_meta_id,
             continuation_meta,
