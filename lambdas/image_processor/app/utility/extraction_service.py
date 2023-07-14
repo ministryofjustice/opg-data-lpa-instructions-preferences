@@ -531,25 +531,25 @@ class ExtractionService:
         logger.info(json.dumps(file_metrics))
         try:
             with tempfile.TemporaryDirectory() as path:
-                _, imgs = ImageReader.read(
+                _, img_locations = ImageReader.read(
                     form_path, conversion_parameters={"output_folder": path}
                 )
 
                 rotated_images = []
 
-                for img in imgs:
+                for img_location in img_locations:
                     file_name = f"/tmp/rotated-{str(uuid.uuid4())}.npy"
-                    logger.debug(f"Rotating {img} and saving as {file_name}")
-                    unrotated_image = np.load(img)
+                    logger.debug(f"Rotating {img_location} and saving as {file_name}")
+                    unrotated_image = np.load(img_location)
                     np.save(
                         file_name,
                         form_operator.auto_rotate_form_images(unrotated_image),
                     )
                     rotated_images.append(file_name)
                     try:
-                        os.remove(img)
+                        os.remove(img_location)
                     except OSError:
-                        logger.warn(f"Unable to remove unrotated file: {img}")
+                        logger.warn(f"Unable to remove unrotated file: {img_location}")
 
                 logger.debug(f"Total images rotated: {len(rotated_images)}")
                 logger.debug(f"Rotated images: {rotated_images}")
