@@ -48,7 +48,7 @@ module "processor_lamdba" {
   account            = local.account
   environment        = local.environment
   timeout            = 600
-  memory             = 4096
+  memory             = 8192
   aws_subnet_ids     = data.aws_subnets.private.ids
   security_group_ids = [data.aws_security_group.lambda_api_ingress.id]
   logs_kms_key       = data.aws_kms_key.lpa_iap_logs
