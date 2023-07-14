@@ -4,7 +4,7 @@ The purpose of this repository is to provide integrations that allow us to take 
 from our case management system, crop out the correct portions for 'instructions and preferences'
 and to display them on the Use an LPA frontend website.
 
-### Working with the openapi spec
+### Working with the OpenAPI spec
 
 The openapi spec defines what the API gateway will accept and what sort of responses it will expect to return.
 
