@@ -668,7 +668,7 @@ class ExtractionService:
         and attempts to identify matches based on text identification.
 
         Args:
-            - processed_image_locations (List[Any]): A list of files containing ndarrays.
+            - processed_image_locations (List[Any]): A list of files containing images.
             - form_operator (Any): A form operator object with `form_images_to_text` method.
             - metastore (dict): A directory containing form metadata documents.
 
@@ -861,7 +861,7 @@ class ExtractionService:
         form metastore.
 
         Args:
-            images (List[np.ndarray]): A list of images to be matched with templates.
+            images (List[str]): A list of image file locations to be matched with templates.
             form_metastore (Dict[str, Any]): A dictionary containing form template metadata.
             scan_location (str): used for updating the location of continuation sheets that are part of the main scan
 
