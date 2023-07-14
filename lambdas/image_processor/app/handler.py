@@ -98,7 +98,6 @@ class ImageProcessor:
             # Cleanup all the folders
             self.cleanup(downloaded_scan_locations)
             logger.debug("Cleaned down paths")
-            self.print_files('/tmp')
 
             self.info_msg.status = "Completed"
             logger.info(json.dumps(self.info_msg.get_info_message()))
@@ -109,16 +108,6 @@ class ImageProcessor:
             error_message = f"{self.request_id} {e} --- {stack_trace}"
             logger.error(error_message)
             bucket_manager.put_error_image_to_bucket(self.uid)
-
-    @staticmethod
-    def print_files(startpath):
-        for root, dirs, files in os.walk(startpath):
-            level = root.replace(startpath, '').count(os.sep)
-            indent = ' ' * 4 * (level)
-            print('{}{}/'.format(indent, os.path.basename(root)))
-            subindent = ' ' * 4 * (level + 1)
-            for f in files:
-                print('{}{}'.format(subindent, f))
 
     @staticmethod
     def get_timestamp_as_str() -> str:
