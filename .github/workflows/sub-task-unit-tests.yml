@@ -35,3 +35,4 @@ jobs:
         id: unit_tests_processor
         run: |
           docker compose run unit-tests-processor --rm --abort-on-container-exit --exit-code-from unit-tests-processor || exit 1
+          echo $?
