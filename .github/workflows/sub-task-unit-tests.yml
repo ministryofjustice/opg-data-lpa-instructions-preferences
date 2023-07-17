@@ -24,30 +24,14 @@ jobs:
 
       - name: Build Unit Tests
         id: build_container
-        run: docker-compose build unit-tests-request-handler unit-tests-processor
+        run: docker compose build unit-tests-request-handler unit-tests-processor
 
       - name: Run Unit Tests Request Handler
         id: unit_tests_request_handler
         run: |
-          docker-compose up unit-tests-request-handler
-          export DOCKER_EXIT_CODE=$(docker inspect $(docker ps -a | head -2 | tail -1 | awk '{print $1}') --format='{{.State.ExitCode}}')
-          if [ "$DOCKER_EXIT_CODE" = "0" ]
-          then
-            echo "Tests passed"
-          else
-            echo "Tests failed"
-            exit 1
-          fi
+          docker compose run unit-tests-request-handler --rm --abort-on-container-exit --exit-code-from unit-tests-request-handler || exit 1
 
       - name: Run Unit Tests Processor
         id: unit_tests_processor
         run: |
-          docker-compose up unit-tests-processor
-          export DOCKER_EXIT_CODE=$(docker inspect $(docker ps -a | head -2 | tail -1 | awk '{print $1}') --format='{{.State.ExitCode}}')
-          if [ "$DOCKER_EXIT_CODE" = "0" ]
-          then
-            echo "Tests passed"
-          else
-            echo "Tests failed"
-            exit 1
-          fi
+          docker compose run unit-tests-processor --rm --abort-on-container-exit --exit-code-from unit-tests-processor || exit 1

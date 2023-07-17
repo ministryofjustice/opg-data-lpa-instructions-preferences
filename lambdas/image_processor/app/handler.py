@@ -149,7 +149,7 @@ class ImageProcessor:
         - A list of file paths (str) that match the specified file type.
         """
         paths = []
-        for root, dirs, files in os.walk(filepath):
+        for root, _, files in os.walk(filepath):
             for file in files:
                 if file.lower().endswith(filetype.lower()):
                     paths.append(os.path.join(root, file))
@@ -169,7 +169,7 @@ class ImageProcessor:
             downloaded_document_paths.append(path.location)
 
         # Extract the paths from the 'continuations' keys and add them to the list
-        for key, path in downloaded_document_locations.continuations.items():
+        for _, path in downloaded_document_locations.continuations.items():
             downloaded_document_paths.append(path.location)
 
         # Remove downloaded images
