@@ -77,7 +77,6 @@ class ImageReader:
                 is a multipage image, and the second the
                 list of file paths containing the ndarrays of the images
         """
-        # tracemalloc.start()
 
         raw_img = cls._read_bytes(file_path, **bytes_kwargs)
         if conversion_parameters is None:
