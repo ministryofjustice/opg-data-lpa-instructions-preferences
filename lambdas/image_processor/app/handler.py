@@ -93,6 +93,11 @@ class ImageProcessor:
                 continuation_unknown_count=self.continuation_unknown_count,
             )
             self.info_msg.images_uploaded = uploaded_images
+
+            for img in paths_to_extracted_images:
+                if not os.stat(img).st_size:
+                    raise Exception("Extracted image is zero bytes (possibly blank)")
+
             logger.debug("Finished pushing images to bucket")
 
             # Cleanup all the folders
