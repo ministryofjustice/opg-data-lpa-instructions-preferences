@@ -98,7 +98,8 @@ Bear in mind you will need boto3 installed. You should do this in a virtual env 
 They can be run in docker to save you having to set anything up. Simply run:
 
 ```commandline
-docker-compose up -d unit-tests
+docker-compose up unit-tests-request-handler
+docker-compose up unit-tests-processor
 ```
 
 ### Setting up UAT against real sirius

@@ -93,6 +93,17 @@ class ImageProcessor:
                 continuation_unknown_count=self.continuation_unknown_count,
             )
             self.info_msg.images_uploaded = uploaded_images
+
+            # Check that at least one of the images pushed to S3 was more than zero bytes
+            non_zero_file_found = False
+            for img in paths_to_extracted_images.values():
+                if os.stat(img).st_size:
+                    non_zero_file_found = True
+                    break
+
+            if not non_zero_file_found:
+                raise Exception("All extracted images are zero bytes (possibly blank)")
+
             logger.debug("Finished pushing images to bucket")
 
             # Cleanup all the folders
