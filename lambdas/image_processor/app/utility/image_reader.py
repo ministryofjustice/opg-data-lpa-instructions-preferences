@@ -3,7 +3,7 @@ import numpy as np
 
 from PIL import Image
 from pdf2image import convert_from_bytes
-from typing import List, Optional, ByteString, Dict, Any
+from typing import List, Optional, ByteString, Dict, Any, Tuple
 import uuid
 
 
@@ -13,6 +13,13 @@ class ImageReader:
     General purpose class for reading PDF files from a local
     path.
     """
+
+    @classmethod
+    def read(cls, file_name, conversion_parameters):
+        if file_name.endswith(".pdf"):
+            return cls._read_pdf(file_name, conversion_parameters)
+        elif file_name.endswith(("tiff", "tif")):
+            return cls._read_tif(file_name)
 
     @staticmethod
     def _convert_PIL_to_cv2(image: Image) -> np.ndarray:
@@ -52,8 +59,38 @@ class ImageReader:
 
         return raw_img
 
+    @staticmethod
+    def _read_tif(file_path: str, **multiread_kwargs) -> Tuple[bool, List[np.ndarray]]:
+        """tif image reader method
+
+        The reader method for tif image files.
+
+        Params:
+            file_path (str): Local  to image
+            **bytes_kwargs: Optional keyword arguments to pass onto
+                `_read_bytes` method.
+
+        Returns:
+            Tuple[bool, List[ndarray]]: Tuple where
+                first entry specifies whether the result
+                is a multipage image, and the second the
+                list of images returned
+        """
+
+        _, imgs = cv2.imreadmulti(file_path, **multiread_kwargs)
+
+        multipage = True
+        if isinstance(imgs, tuple):
+            if len(imgs) == 1:
+                imgs = [imgs[0]]
+                multipage = False
+        else:
+            raise TypeError("Expecting tuple to be returned by\n" "imreadmulti.")
+
+        return multipage, list(imgs)
+
     @classmethod
-    def read(
+    def _read_pdf(
         cls,
         file_path: str,
         conversion_parameters: Optional[Dict[str, Any]] = None,
