@@ -80,10 +80,19 @@ class ImageReader:
         _, imgs = cv2.imreadmulti(file_path, **multiread_kwargs)
 
         multipage = True
+        img_locations = []
         if isinstance(imgs, tuple):
             if len(imgs) == 1:
-                imgs = [imgs[0]]
+                img = imgs[0]
+                file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
+                img.save(f"{file_name}", "JPEG")
+                img_locations.append(file_name)
                 multipage = False
+            else:
+                for img in imgs:
+                    file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
+                    img.save(f"{file_name}", "JPEG")
+                    img_locations.append(file_name)
         else:
             raise TypeError("Expecting tuple to be returned by\n" "imreadmulti.")
 
