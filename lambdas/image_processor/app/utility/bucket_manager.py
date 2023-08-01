@@ -116,6 +116,7 @@ class BucketManager:
         """
         # Extract the S3 URLs for the possible LPA sheet scans
         lpa_scans = s3_urls_dict.get("lpaScans", [])
+        logger.info(lpa_scans)  # TODO: Remove - just for testing
         lpa_locations = []
         for lpa_scan in lpa_scans:
             scan_location = ScanLocation(
