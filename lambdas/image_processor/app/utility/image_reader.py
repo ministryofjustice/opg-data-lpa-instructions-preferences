@@ -60,7 +60,7 @@ class ImageReader:
         return raw_img
 
     @staticmethod
-    def _read_tif(file_path: str, **multiread_kwargs) -> Tuple[bool, List[np.ndarray]]:
+    def _read_tif(file_path: str) -> Tuple[bool, List[np.ndarray]]:
         """tif image reader method
 
         The reader method for tif image files.
@@ -76,8 +76,8 @@ class ImageReader:
                 is a multipage image, and the second the
                 list of images returned
         """
-
-        _, imgs = cv2.imreadmulti(file_path, **multiread_kwargs)
+        imgs = []
+        _, imgs = cv2.imreadmulti(file_path, mats=imgs)
 
         multipage = True
         img_locations = []
@@ -96,7 +96,7 @@ class ImageReader:
         else:
             raise TypeError("Expecting tuple to be returned by\n" "imreadmulti.")
 
-        return multipage, list(imgs)
+        return multipage, img_locations
 
     @classmethod
     def _read_pdf(
