@@ -5,6 +5,9 @@ from PIL import Image
 from pdf2image import convert_from_bytes
 from typing import List, Optional, ByteString, Dict, Any, Tuple
 import uuid
+from app.utility.custom_logging import custom_logger
+
+logger = custom_logger("image_reader")
 
 
 class ImageReader:
@@ -83,18 +86,16 @@ class ImageReader:
         img_locations = []
         if isinstance(imgs, tuple):
             if len(imgs) == 1:
-                img = imgs[0]
+                multipage = False
+            for img in imgs:
+                logger.info("one image")
                 file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
                 img.save(f"{file_name}", "JPEG")
                 img_locations.append(file_name)
-                multipage = False
-            else:
-                for img in imgs:
-                    file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
-                    img.save(f"{file_name}", "JPEG")
-                    img_locations.append(file_name)
         else:
             raise TypeError("Expecting tuple to be returned by\n" "imreadmulti.")
+
+        logger.info(img_locations)
 
         return multipage, img_locations
 
