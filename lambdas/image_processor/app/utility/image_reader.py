@@ -99,6 +99,8 @@ class ImageReader:
         else:
             raise TypeError("Expecting tuple to be returned by\n" "imreadmulti.")
 
+        logger.info(len(imgs))
+        logger.info(len(img_locations))
         logger.info(img_locations)
 
         return multipage, img_locations
