@@ -19,10 +19,12 @@ class ImageReader:
 
     @classmethod
     def read(cls, file_name, conversion_parameters):
-        if file_name.endswith(".pdf"):
+        if file_name.lower().endswith(".pdf"):
             return cls._read_pdf(file_name, conversion_parameters)
-        elif file_name.endswith(("tiff", "tif")):
+        elif file_name.lower().endswith((".tiff", ".tif")):
             return cls._read_tif(file_name)
+        else:
+            raise Exception("Unable to read file type")
 
     @staticmethod
     def _convert_PIL_to_cv2(image: Image) -> np.ndarray:
