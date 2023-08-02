@@ -2,14 +2,12 @@ import datetime
 import copy
 import os
 import tempfile
-import json
 
 import cv2
 import re
 import uuid
 
 import numpy as np
-import pypdf
 from pyzbar.pyzbar import decode
 from collections import Counter
 from fuzzywuzzy import fuzz
@@ -250,21 +248,12 @@ class ExtractionService:
             )
 
     @staticmethod
-    def get_pdf_length(file_path):
-        with open(file_path, "rb") as file:
-            pdf = pypdf.PdfReader(file)
-            return len(pdf.pages)
-
-    @staticmethod
-    def is_pdf_file(file_path):
-        if not file_path.lower().endswith(".pdf"):
+    def is_accepted_filetype(file_path):
+        accepted_extensions = (".pdf", ".tiff", ".tif")
+        if not file_path.lower().endswith(accepted_extensions):
             return False
-        try:
-            with open(file_path, "rb") as file:
-                pdf = pypdf.PdfReader(file)
-                return len(pdf.pages) > 0
-        except pypdf.errors.PdfReadError:
-            return False
+        else:
+            return True
 
     def get_matching_scan_item(
         self,
@@ -279,7 +268,7 @@ class ExtractionService:
         matches = []
         # Attempt to match based on barcodes
         for scan_location in scan_locations.scans:
-            if not self.is_pdf_file(scan_location.location):
+            if not self.is_accepted_filetype(scan_location.location):
                 continue
 
             filtered_metastore = self.filter_metastore_based_on_template(
@@ -339,7 +328,7 @@ class ExtractionService:
         matches = []
         logger.debug("Attempting to match scans based on OCR...")
         for scan_location in scan_locations.scans:
-            if not self.is_pdf_file(scan_location.location):
+            if not self.is_accepted_filetype(scan_location.location):
                 continue
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
@@ -403,7 +392,7 @@ class ExtractionService:
         matched_lpa_scans_store = MatchingItemsStore()
         # Loop through scan locations and attempt to match them
         for key, scan_location in scan_locations.continuations.items():
-            if not self.is_pdf_file(scan_location.location):
+            if not self.is_accepted_filetype(scan_location.location):
                 continue
             filtered_metastore = self.filter_metastore_based_on_template(
                 complete_meta_store, scan_location.template
@@ -550,11 +539,6 @@ class ExtractionService:
             list: A list of preprocessed form images after being auto-rotated based on text direction.
         """
         logger.debug(f"Reading form from path: {form_path}")
-        file_metrics = {
-            "pdfSize": os.stat(form_path).st_size,
-            "pdfLength": self.get_pdf_length(form_path),
-        }
-        logger.info(json.dumps(file_metrics))
         try:
             with tempfile.TemporaryDirectory() as path:
                 _, img_locations = ImageReader.read(
