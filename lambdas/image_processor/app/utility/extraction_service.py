@@ -8,6 +8,10 @@ import cv2
 import re
 import uuid
 
+from pytesseract import Output
+import pytesseract
+import imutils
+
 import numpy as np
 import pypdf
 from pyzbar.pyzbar import decode
@@ -21,7 +25,7 @@ from app.utility.image_reader import ImageReader
 from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
-from PIL import UnidentifiedImageError
+from PIL import UnidentifiedImageError, Image
 
 logger = custom_logger("extraction_service")
 
@@ -562,38 +566,32 @@ class ExtractionService:
                     conversion_parameters={"output_folder": path, "fmt": "jpeg"},
                 )
 
-                rotated_images = []
-
-                for img_location in img_locations:
-                    file_name = f"/tmp/rotated-{str(uuid.uuid4())}.jpg"
-                    logger.debug(f"Rotating {img_location} and saving as {file_name}")
-                    unrotated_image = cv2.imread(img_location)
-                    rotated_image = form_operator.auto_rotate_form_images(
-                        [unrotated_image]
-                    )
-                    cv2.imwrite(
-                        file_name,
-                        rotated_image[0],
-                    )
-                    rotated_images.append(file_name)
+                # Go through each image and rotate them if necessary and we are relatively certain they need rotating.
+                for img_file in img_locations:
+                    image = cv2.imread(img_file)
+                    rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     try:
-                        os.remove(img_location)
-                    except OSError:
-                        logger.warn(f"Unable to remove unrotated file: {img_location}")
+                        results = pytesseract.image_to_osd(rgb, output_type=Output.DICT)
+                        if (
+                            results["orientation"]
+                            and results["script"] == "Latin"
+                            and results["orientation_conf"] > 10
+                        ):
+                            logger.debug(
+                                f"Rotated image. Pytesseract results: {results}"
+                            )
+                            rotated_image = imutils.rotate_bound(
+                                image, angle=results["rotate"]
+                            )
+                            Image.fromarray(rotated_image).save(img_file, "JPEG")
+                    except pytesseract.pytesseract.TesseractError:
+                        pass
 
-                logger.debug(f"Total images rotated: {len(rotated_images)}")
-                logger.debug(f"Rotated images: {rotated_images}")
-
-                logger.debug("Auto-rotating images based on text direction...")
-
-                return rotated_images
+                logger.debug(f"Total images found: {len(img_locations)}")
+                return img_locations
         except UnidentifiedImageError:
             logger.debug(f"Unable to match {form_path}")
             pass
-
-        logger.debug(f"Total images found: {len(rotated_images)}")
-
-        return []
 
     @staticmethod
     def smart_threshold_images(image_locations):
@@ -817,20 +815,6 @@ class ExtractionService:
             roi = image[0 : height // 3, 2 * width // 3 : width]
             roi_resized = cv2.resize(roi, (height, 4 * width))
             barcodes = decode(roi_resized)
-            # If we don't have a barcode, try flipping the image on its axis.
-            # auto_rotate_form_images can cause the image to be upside down, etc.
-            if not barcodes:
-                for i in range(-1, 2):
-                    img_flipped = cv2.flip(image, i)
-                    roi_flipped = img_flipped[0 : height // 3, 2 * width // 3 : width]
-                    roi_flipped_resized = cv2.resize(roi_flipped, (height, 4 * width))
-                    logger.debug(
-                        f"Flipped page {image_count+1} with flip parameter {i}"
-                    )
-                    barcodes = decode(roi_flipped_resized)
-                    if barcodes:
-                        break
-
             barcodes_decoded = []
             for barcode in barcodes:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
