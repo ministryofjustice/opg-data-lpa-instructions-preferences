@@ -97,6 +97,7 @@ jobs:
           docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:${{ inputs.tag }}
           if [ $BRANCH_NAME == "main" ]; then
             docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
+            docker tag ${{ matrix.name }}:latest $ECR_REGISTRY/$ECR_REPOSITORY:main-${{ inputs.tag }}
           fi
             echo "skipping push for now..."
             docker push --all-tags $ECR_REGISTRY/$ECR_REPOSITORY
