@@ -4,19 +4,10 @@ awslocal s3 mb s3://lpa-iap-local
 
 awslocal s3 mb s3://opg-backoffice-datastore-local
 
-awslocal s3 cp /tmp/LP1H-Scan.pdf s3://opg-backoffice-datastore-local/LP1H-Scan.pdf
-awslocal s3 cp /tmp/LP1F-Scan.pdf s3://opg-backoffice-datastore-local/LP1F-Scan.pdf
-awslocal s3 cp /tmp/LPC-Scan.pdf s3://opg-backoffice-datastore-local/LPC-Scan.pdf
-awslocal s3 cp /tmp/LPC2-Scan.pdf s3://opg-backoffice-datastore-local/LPC2-Scan.pdf
-awslocal s3 cp /tmp/PFA117-Scan.pdf s3://opg-backoffice-datastore-local/PFA117-Scan.pdf
-awslocal s3 cp /tmp/HW114-Scan.pdf s3://opg-backoffice-datastore-local/HW114-Scan.pdf
-awslocal s3 cp /tmp/LPA-PW-Scan.pdf s3://opg-backoffice-datastore-local/LPA-PW-Scan.pdf
-awslocal s3 cp /tmp/PFA-C-Scan.pdf s3://opg-backoffice-datastore-local/PFA-C-Scan.pdf
-awslocal s3 cp /tmp/LP1F-LP-Scan.pdf s3://opg-backoffice-datastore-local/LP1F-LP-Scan.pdf
-awslocal s3 cp /tmp/LPC-LP-Scan.pdf s3://opg-backoffice-datastore-local/LPC-LP-Scan.pdf
-# Nothing matches these templates. Negative tests
-awslocal s3 cp /tmp/LPA120.pdf s3://opg-backoffice-datastore-local/LPA120.pdf
-awslocal s3 cp /tmp/Correspondence-Bad-Continuation-Scan.pdf s3://opg-backoffice-datastore-local/Correspondence-Bad-Continuation-Scan.pdf
+for pdffile in /tmp/*.pdf
+do
+  awslocal s3 cp $pdffile s3://opg-backoffice-datastore-local/$pdffile
+done
 
 awslocal s3api put-bucket-policy \
     --policy '{ "Statement": [ { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::lpa-iap-bucket/*", "Condition":  { "StringNotEquals": { "s3:x-amz-server-side-encryption": "AES256" } } }, { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::lpa-iap-bucket/*", "Condition":  { "Bool": { "aws:SecureTransport": false } } } ] }' \
