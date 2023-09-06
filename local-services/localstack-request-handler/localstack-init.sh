@@ -6,7 +6,7 @@ awslocal s3 mb s3://opg-backoffice-datastore-local
 
 for pdffile in /tmp/*.pdf
 do
-  awslocal s3 cp $pdffile s3://opg-backoffice-datastore-local/$pdffile
+    awslocal s3 cp $pdffile s3://opg-backoffice-datastore-local/$(basename $pdffile)
 done
 
 awslocal s3api put-bucket-policy \
