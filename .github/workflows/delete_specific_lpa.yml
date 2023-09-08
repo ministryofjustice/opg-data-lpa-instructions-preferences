@@ -43,4 +43,5 @@ jobs:
             exit 1
           else
             aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}-*"
+            echo "Deleted $DELETE_COUNT files associated with LPA ID ${{ github.event.inputs.lpaId }} from S3 bucket" >> $GITHUB_STEP_SUMMARY
           fi
