@@ -38,6 +38,9 @@ jobs:
           if $DELETE_COUNT -gt 10; then
             echo "WARNING: More than 10 files will be deleted from S3 bucket, exiting to prevent accidental deletion of data. Please delete the files manually."
             exit 1
+          elif $DELETE_COUNT -eq 0; then
+            echo "No files to delete from S3 bucket"
+            exit 1
           else
             aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}-*"
           fi
