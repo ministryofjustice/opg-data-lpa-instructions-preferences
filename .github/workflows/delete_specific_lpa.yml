@@ -39,5 +39,5 @@ jobs:
             echo "WARNING: More than 10 files will be deleted from S3 bucket, exiting to prevent accidental deletion of data. Please delete the files manually."
             exit 1
           else
-            aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}*"
+            aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}-*"
           fi
