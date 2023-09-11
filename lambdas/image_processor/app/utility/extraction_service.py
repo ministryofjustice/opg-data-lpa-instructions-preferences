@@ -886,6 +886,11 @@ class ExtractionService:
             if matching_image.meta_id in ["lpc", "lpc_lp", "pfa_c"]:
                 return matching_images[0]
 
+        # Return matching meta images if we have no matches
+        if len(matching_images) == 0:
+            logger.debug("No matches on barcodes")
+            return matching_meta_images
+
         # ======= Pull out the continuation matches for in-scan continuations ======
         if len(matching_images) > 0:
             matched_meta_id = matching_images[0].meta_id
