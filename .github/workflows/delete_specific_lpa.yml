@@ -29,16 +29,16 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
           aws-region: eu-west-1
-          role-to-assume: arn:aws:iam::631181914621:role/integrations-ci
+          role-to-assume: arn:aws:iam::649098267436:role/integrations-ci
           role-duration-seconds: 900
           role-session-name: "${{ github.actor }}DeleteInstructionsAndPreferences${{ github.event.inputs.lpaId }}"
       - name: Delete Instructions and Preferences from S3 bucket
         run: |
           DELETE_COUNT=$(aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}-*" --dryrun | wc -l)
-          if $DELETE_COUNT -gt 10; then
+          if [[ $DELETE_COUNT -gt 10 ]]; then
             echo "WARNING: More than 10 files will be deleted from S3 bucket, exiting to prevent accidental deletion of data. Please delete the files manually."
             exit 1
-          elif $DELETE_COUNT -eq 0; then
+          elif [[ $DELETE_COUNT -eq 0 ]]; then
             echo "No files to delete from S3 bucket"
             exit 1
           else
