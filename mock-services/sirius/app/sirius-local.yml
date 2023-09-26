@@ -47,6 +47,26 @@ paths:
                 lpa0092:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-local/PFA117-Scan.pdf', 'template': 'LPA117'}, {'location': 's3://opg-backoffice-datastore-local/Correspondence-Bad-Continuation-Scan.pdf', 'template': 'Correspondence'}]
+                lpa0093:
+                  value:
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.tiff', 'template': ''}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.tiff', 'template': 'LP1F'}]
+                lpa0094:
+                  value:
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-ContinuationSheets-broken-barcode-LP1F.pdf', 'template': ''}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPA-ContinuationSheets-broken-barcode-LP1F.pdf', 'template': 'LP1F'}]
+                lpa0095:
+                  value:
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-ContinuationSheets-working-barcode-LP1F.pdf', 'template': ''}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPA-ContinuationSheets-working-barcode-LP1F.pdf', 'template': 'LP1F'}]
+                lpa0096:
+                  value:
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-prefs-only-plus-continuation-broken-LP1F.pdf', 'template': ''}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPA-prefs-only-plus-continuation-broken-LP1F.pdf', 'template': 'LP1F'}]
+                lpa0097:
+                  value:
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-prefs-only-plus-continuation-working-LP1F.pdf', 'template': ''}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPA-prefs-only-plus-continuation-working-LP1F.pdf', 'template': 'LP1F'}]
               schema:
                 type: object
                 properties:
