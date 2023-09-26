@@ -146,4 +146,98 @@ templates = {
             },
         },
     },
+    "LP1F-continuation-broken-barcode": {
+        "lpa_uid": "700000000094",
+        "expected_collection_started_response": {
+            "uId": "700000000094",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000094",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000094",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000094-instructions": "",
+                "iap-700000000094-preferences": "",
+                "iap-700000000094-continuation_instructions_1": "",
+                "iap-700000000094-continuation_preferences_1": "",
+            },
+        },
+    },
+    "LP1F-continuation-working-barcode": {
+        "lpa_uid": "700000000095",
+        "expected_collection_started_response": {
+            "uId": "700000000095",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000095",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000095",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000095-instructions": "",
+                "iap-700000000095-preferences": "",
+                "iap-700000000095-continuation_instructions_1": "",
+                "iap-700000000095-continuation_preferences_1": "",
+            },
+        },
+    },
+    "LP1F-prefsonly-continuation-broken-barcode": {
+        "lpa_uid": "700000000096",
+        "expected_collection_started_response": {
+            "uId": "700000000096",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000096",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000096",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000096-preferences": "",
+                "iap-700000000096-continuation_instructions_1": "",
+                "iap-700000000096-continuation_preferences_1": "",
+                "iap-700000000096-continuation_preferences_2": "",
+                "iap-700000000096-continuation_preferences_3": "",
+            },
+        },
+    },
+    "LP1F-prefsonly-continuation-working-barcode": {
+        "lpa_uid": "700000000097",
+        "expected_collection_started_response": {
+            "uId": "700000000097",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000097",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000097",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000097-preferences": "",
+                "iap-700000000097-continuation_instructions_1": "",
+                "iap-700000000097-continuation_preferences_1": "",
+                "iap-700000000097-continuation_preferences_2": "",
+                "iap-700000000097-continuation_preferences_3": "",
+            },
+        },
+    }
 }
