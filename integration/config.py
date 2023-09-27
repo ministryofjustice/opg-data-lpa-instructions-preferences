@@ -209,6 +209,7 @@ templates = {
             "status": "COLLECTION_COMPLETE",
             "signedUrls": {
                 "iap-700000000096-preferences": "",
+                "iap-700000000096-instructions": "",
                 "iap-700000000096-continuation_instructions_1": "",
                 "iap-700000000096-continuation_preferences_1": "",
                 "iap-700000000096-continuation_preferences_2": "",
@@ -233,11 +234,35 @@ templates = {
             "status": "COLLECTION_COMPLETE",
             "signedUrls": {
                 "iap-700000000097-preferences": "",
+                "iap-700000000097-instructions": "",
                 "iap-700000000097-continuation_instructions_1": "",
                 "iap-700000000097-continuation_preferences_1": "",
                 "iap-700000000097-continuation_preferences_2": "",
                 "iap-700000000097-continuation_preferences_3": "",
             },
         },
-    }
+    },
+    "LP1F-tiff-file": {
+        "lpa_uid": "700000000093",
+        "expected_collection_started_response": {
+            "uId": "700000000093",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000093",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000093",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000093-preferences": "",
+                "iap-700000000093-instructions": "",
+                "iap-700000000093-continuation_instructions_1": "",
+                "iap-700000000093-continuation_preferences_1": "",
+            },
+        },
+    },
 }
