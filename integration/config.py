@@ -210,7 +210,6 @@ templates = {
             "signedUrls": {
                 "iap-700000000096-preferences": "",
                 "iap-700000000096-instructions": "",
-                "iap-700000000096-continuation_instructions_1": "",
                 "iap-700000000096-continuation_preferences_1": "",
                 "iap-700000000096-continuation_preferences_2": "",
                 "iap-700000000096-continuation_preferences_3": "",
