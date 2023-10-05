@@ -3,8 +3,13 @@ import numpy as np
 
 from PIL import Image
 from pdf2image import convert_from_bytes
-from typing import List, Optional, ByteString, Dict, Any
+from typing import List, Optional, ByteString, Dict, Any, Tuple
 import uuid
+from app.utility.custom_logging import custom_logger
+from PIL import Image as im
+
+
+logger = custom_logger("image_reader")
 
 
 class ImageReader:
@@ -13,6 +18,15 @@ class ImageReader:
     General purpose class for reading PDF files from a local
     path.
     """
+
+    @classmethod
+    def read(cls, file_name, conversion_parameters):
+        if file_name.lower().endswith(".pdf"):
+            return cls._read_pdf(file_name, conversion_parameters)
+        elif file_name.lower().endswith((".tiff", ".tif")):
+            return cls._read_tif(file_name)
+        else:
+            raise Exception("Unable to read file type")
 
     @staticmethod
     def _convert_PIL_to_cv2(image: Image) -> np.ndarray:
@@ -52,8 +66,47 @@ class ImageReader:
 
         return raw_img
 
+    @staticmethod
+    def _read_tif(file_path: str) -> Tuple[bool, List[np.ndarray]]:
+        """tif image reader method
+
+        The reader method for tif image files.
+
+        Params:
+            file_path (str): Local  to image
+            **bytes_kwargs: Optional keyword arguments to pass onto
+                `_read_bytes` method.
+
+        Returns:
+            Tuple[bool, List[ndarray]]: Tuple where
+                first entry specifies whether the result
+                is a multipage image, and the second the
+                list of images returned
+        """
+        imgs = []
+        _, imgs = cv2.imreadmulti(file_path, mats=imgs)
+
+        multipage = True
+        img_locations = []
+        if isinstance(imgs, tuple):
+            if len(imgs) == 1:
+                multipage = False
+            for img in imgs:
+                new_img = im.fromarray(img)
+                file_name = f"/tmp/{str(uuid.uuid4())}.jpg"
+                new_img.save(f"{file_name}", "JPEG")
+                img_locations.append(file_name)
+        else:
+            raise TypeError("Expecting tuple to be returned by\n" "imreadmulti.")
+
+        logger.info(len(imgs))
+        logger.info(len(img_locations))
+        logger.info(img_locations)
+
+        return multipage, img_locations
+
     @classmethod
-    def read(
+    def _read_pdf(
         cls,
         file_path: str,
         conversion_parameters: Optional[Dict[str, Any]] = None,
