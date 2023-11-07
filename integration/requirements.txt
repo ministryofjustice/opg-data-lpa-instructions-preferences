@@ -1,5 +1,5 @@
-boto3==1.26.42
+boto3==1.28.78
 requests==2.31.0
 pytest==6.2.5
-requests-aws4auth==1.2.2
+requests-aws4auth==1.2.3
 pytest-order==1.1.0
