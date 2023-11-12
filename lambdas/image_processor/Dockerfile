@@ -1,7 +1,7 @@
 ARG FUNCTION_DIR="/function"
 
 # === BUILD IMAGE ===
-FROM python:3.10-slim AS builder
+FROM python:3.12-slim AS builder
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
@@ -22,7 +22,7 @@ COPY extraction ${FUNCTION_DIR}/extraction
 
 
 # === FINAL IMAGE ===
-FROM python:3.10-slim
+FROM python:3.12-slim
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Create python user
