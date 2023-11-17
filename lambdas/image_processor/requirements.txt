@@ -14,7 +14,7 @@ pdfminer==20191125
 opencv-python==4.8.1.78
 mojap_metadata==1.14.1
 pydantic==1.10.13
-tesserocr==2.6.2
+tesserocr==2.5.2
 pyzbar==0.1.9
 fuzzywuzzy[speedup]==0.18.0
 imutils==0.5.4
