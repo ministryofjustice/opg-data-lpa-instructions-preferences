@@ -35,7 +35,7 @@
       "description": "Docker file updates",
       "automerge": false,
       "groupName": "minor and patch updates (Docker)",
-      "groupSlug": "all-minor-patch-updates-python",
+      "groupSlug": "all-minor-patch-updates-docker",
       "labels": ["Dependencies", "Renovate"],
       "matchManagers": ["dockerfile"],
       "matchUpdateTypes": ["minor", "patch"],
