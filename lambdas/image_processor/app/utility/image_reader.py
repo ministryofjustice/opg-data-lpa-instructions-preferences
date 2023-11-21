@@ -105,7 +105,7 @@ class ImageReader:
 
         return multipage, img_locations
 
-    @classmethod
+    @staticmethod
     def _read_pdf(
         cls,
         file_path: str,
