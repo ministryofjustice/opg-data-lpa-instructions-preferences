@@ -1,9 +1,10 @@
 # Define function directory
 ARG FUNCTION_DIR="/function"
-FROM python:3.10.9-alpine3.16 AS python-alpine
+FROM python:3.12-alpine3.18 AS python-alpine
 RUN apk add libstdc++
-# Upgrade insecure packages (can't use alpine 3.17 as no libexecinfo-dev)
+
 RUN apk upgrade libcrypto1.1 libssl1.1 libcom_err ncurses-terminfo-base ncurses-libs
+
 RUN pip install setuptools --upgrade
 
 # Build image
@@ -14,7 +15,7 @@ RUN apk add  --no-cache \
     libtool \
     autoconf \
     automake \
-    libexecinfo-dev \
+    elfutils-dev \
     make \
     cmake \
     libcurl
@@ -35,6 +36,8 @@ RUN python -m pip install \
 
 # Multi-stage build: grab a fresh copy of the base image
 FROM python-alpine
+# Add libzstd  library - needed for awslambdaric's runtime_client module
+RUN apk add zstd-libs
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set working directory to function root directory
