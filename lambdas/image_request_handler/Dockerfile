@@ -1,6 +1,6 @@
 # Define function directory
 ARG FUNCTION_DIR="/function"
-FROM python:3.10.9-alpine3.16 AS python-alpine
+FROM python:3.11.3-alpine3.16 AS python-alpine
 RUN apk add libstdc++
 # Upgrade insecure packages (can't use alpine 3.17 as no libexecinfo-dev)
 RUN apk upgrade libcrypto1.1 libssl1.1 libcom_err
