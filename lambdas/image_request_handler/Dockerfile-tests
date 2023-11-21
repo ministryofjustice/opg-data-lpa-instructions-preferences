@@ -1,4 +1,4 @@
-FROM python:3.10.9-slim
+FROM python:3.11.5-slim
 ARG FUNCTION_DIR="/lambdas/image_request_handler"
 
 # Create function directory
