@@ -3,7 +3,8 @@ ARG FUNCTION_DIR="/function"
 FROM python:3.12-alpine3.18 AS python-alpine
 RUN apk add libstdc++
 
-RUN apk upgrade libcrypto1.1 libssl1.1 libcom_err
+RUN apk upgrade libcrypto1.1 libssl1.1 libcom_err ncurses-terminfo-base ncurses-libs
+
 RUN pip install setuptools --upgrade
 
 # Build image
