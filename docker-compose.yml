@@ -56,7 +56,6 @@ services:
     build:
       context: lambdas/image_request_handler
       dockerfile: Dockerfile-tests
-    platform: linux/x86_64
     volumes:
       - ./lambdas/image_request_handler/app:/lambdas/image_request_handler/app
       - ./lambdas/image_request_handler/tests:/lambdas/image_request_handler/tests
@@ -70,7 +69,6 @@ services:
     build:
       context: lambdas/image_processor
       dockerfile: Dockerfile-tests
-    platform: linux/x86_64
     volumes:
       - ./lambdas/image_processor/app:/function/app
       - ./lambdas/image_processor/tests:/function/tests
