@@ -29,9 +29,9 @@ jobs:
       - name: Run Unit Tests Request Handler
         id: unit_tests_request_handler
         run: |
-          docker compose run unit-tests-request-handler --rm --abort-on-container-exit --exit-code-from unit-tests-request-handler || exit 1
+          docker compose run unit-tests-request-handler --rm --abort-on-container-exit --exit-code-from unit-tests-request-handler 
 
       - name: Run Unit Tests Processor
         id: unit_tests_processor
         run: |
-          docker compose run unit-tests-processor --rm --abort-on-container-exit --exit-code-from unit-tests-processor || exit 1
+          docker compose run unit-tests-processor --rm --abort-on-container-exit --exit-code-from unit-tests-processor 
