@@ -10,6 +10,16 @@
     "Dependencies",
     "Renovate"
   ],
+  "customManagers": [
+      {
+        "customType": "regex",
+        "fileMatch": ["^Dockerfile$"],
+        "matchStrings": [
+          "FROM (?<depName>.*):alpine(?<currentValue>.*)-slim"
+        ],
+        "datasourceTemplate": "docker"
+      }
+  ],
   "packageRules": [
     {
       "groupName": "Patch & Minor Updates",
