@@ -107,10 +107,8 @@ class ImageReader:
 
     @staticmethod
     def _read_pdf(
-        cls,
         file_path: str,
         conversion_parameters: Optional[Dict[str, Any]] = None,
-        **bytes_kwargs,
     ) -> List[np.ndarray]:
         """reader method
 
@@ -132,7 +130,7 @@ class ImageReader:
                 list of file paths containing the ndarrays of the images
         """
 
-        raw_img = cls._read_bytes(file_path, **bytes_kwargs)
+        raw_img = ImageReader._read_bytes(file_path)
         if conversion_parameters is None:
             conversion_parameters = {}
 
