@@ -50,7 +50,7 @@ paths:
                 lpa0093:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.tiff', 'template': ''}]
-                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.tiff', 'template': 'LP1F'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-Scan.tiff', 'template': 'LP1F'}]
                 lpa0094:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LPA-ContinuationSheets-broken-barcode-LP1F.pdf', 'template': ''}]
