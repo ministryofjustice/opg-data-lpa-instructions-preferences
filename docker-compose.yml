@@ -10,9 +10,12 @@ services:
     ports:
       - 9010:8080
     depends_on:
-      - localstack-request-handler
-      - image-processor
-      - mock-sirius-web
+      localstack-request-handler:
+        condition: service_healthy
+      image-processor:
+        condition: service_started
+      mock-sirius-web:
+        condition: service_started
     volumes:
       - ./lambdas/.aws-lambda-rie:/aws-lambda
       - ./lambdas/image_request_handler/app:/function/app
@@ -32,11 +35,13 @@ services:
     ports:
       - 9011:8080
     depends_on:
-      - localstack-processor
+      localstack-processor:
+        condition: service_healthy
     volumes:
       - ./lambdas/.aws-lambda-rie:/aws-lambda
       - ./lambdas/image_processor/app:/function/app
       - ./lambdas/image_processor/extraction:/function/extraction
+      - ./tmp_images:/tmp
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
@@ -96,6 +101,8 @@ services:
       - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
     ports:
       - 4566:4566
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:4566/_localstack/health?reload"]
 
   localstack-processor:
     image: localstack-processor:latest
@@ -114,6 +121,8 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
     ports:
       - 4567:4566
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:4566/_localstack/health?reload"]
 
 #Mock Sirius LB
   mock-sirius-web:
