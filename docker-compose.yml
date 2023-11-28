@@ -102,7 +102,7 @@ services:
     ports:
       - 4566:4566
     healthcheck:
-      test: ["CMD", "curl", "http://localhost:4566/health?reload"]
+      test: ["CMD", "curl", "http://localhost:4566/_localstack/health?reload"]
 
   localstack-processor:
     image: localstack-processor:latest
@@ -122,7 +122,7 @@ services:
     ports:
       - 4567:4566
     healthcheck:
-      test: ["CMD", "curl", "http://localhost:4566/health?reload"]
+      test: ["CMD", "curl", "http://localhost:4566/_localstack/health?reload"]
 
 #Mock Sirius LB
   mock-sirius-web:
