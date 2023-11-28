@@ -4,9 +4,9 @@ awslocal s3 mb s3://lpa-iap-local
 
 awslocal s3 mb s3://opg-backoffice-datastore-local
 
-for pdffile in /tmp/*.pdf
+for lpafile in /tmp/*.{pdf,tiff}
 do
-    awslocal s3 cp $pdffile s3://opg-backoffice-datastore-local/$(basename $pdffile)
+    awslocal s3 cp $lpafile s3://opg-backoffice-datastore-local/$(basename $lpafile)
 done
 
 awslocal s3api put-bucket-policy \
