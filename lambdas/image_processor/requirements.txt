@@ -1,6 +1,6 @@
 boto3==1.29.3
 awslambdaric==2.0.8
-setuptools==65.7.0
+setuptools==69.0.2
 requests==2.31.0
 pyjwt==2.8.0
 pyopengl==3.1.7
@@ -19,3 +19,4 @@ tesserocr==2.6.0
 pyzbar==0.1.9
 fuzzywuzzy[speedup]==0.18.0
 imutils==0.5.4
+moto==4.2.9

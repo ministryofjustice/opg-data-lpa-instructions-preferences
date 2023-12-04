@@ -49,8 +49,8 @@ paths:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/PFA117-Scan.pdf', 'template': 'LPA117'}, {'location': 's3://opg-backoffice-datastore-integration/Correspondence-Bad-Continuation-Scan.pdf', 'template': 'Correspondence'}]
                 lpa0093:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LP1F-Scan.tiff', 'template': ''}]
-                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/LP1F-Scan.tiff', 'template': 'LP1F'}]
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LPA-ContinuationSheets-working-barcode-LP1F.tiff', 'template': ''}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/LPA-ContinuationSheets-working-barcode-LP1F.tiff', 'template': 'LP1F'}]
                 lpa0094:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LPA-ContinuationSheets-broken-barcode-LP1F.pdf', 'template': ''}]
