@@ -102,6 +102,15 @@ docker-compose up unit-tests-request-handler
 docker-compose up unit-tests-processor
 ```
 
+### Run the integration tests locally
+
+You can start up the full stack, then run integration tests
+```commandline
+docker-compose up 
+cd integration
+python3 -m pytest .
+```
+
 ### Setting up UAT against real sirius
 
 Sirius integration environment does not get wiped between deploys. Our development environment automatically hooks
