@@ -32,6 +32,8 @@ templates = {
             "signedUrls": {
                 "iap-700000000047-instructions": "",
                 "iap-700000000047-preferences": "",
+                "iap-700000000047-continuation_instructions_1": "",
+                "iap-700000000047-continuation_preferences_1": "",
             },
         },
     },
@@ -261,6 +263,24 @@ templates = {
                 "iap-700000000093-continuation_instructions_1": "",
                 "iap-700000000093-continuation_preferences_1": "",
             },
+        },
+    },
+    "LP1F-tiff-file-continuation-wont-scan": {
+        "lpa_uid": "700000000098",
+        "expected_collection_started_response": {
+            "uId": "700000000098",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000098",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000098",
+            "status": "COLLECTION_ERROR",
+            "signedUrls": {},
         },
     },
 }
