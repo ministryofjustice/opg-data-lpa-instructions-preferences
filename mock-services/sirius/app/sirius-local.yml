@@ -25,7 +25,7 @@ paths:
                 lpa0047:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1H-Scan.pdf', 'template': 'LP1H'}, {'location': 's3://opg-backoffice-datastore-local/LPA120.pdf', 'template': 'LPA'}]
-                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-LP-Scan.pdf', 'template': 'LPC'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-Scan.pdf', 'template': 'LPC'}]
                 lpa0138:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.pdf', 'template': 'LP1F'}]
