@@ -265,7 +265,7 @@ templates = {
             },
         },
     },
-    "LP1F-tiff-file-continuation-wont-scan": {
+    "LP1H-continuation-checked-but-no-continuation-images": {
         "lpa_uid": "700000000098",
         "expected_collection_started_response": {
             "uId": "700000000098",
@@ -277,7 +277,7 @@ templates = {
             "status": "COLLECTION_IN_PROGRESS",
             "signedUrls": {},
         },
-        "expected_collection_in_progress_response": {
+        "expected_collection_error_response": {
             "uId": "700000000098",
             "status": "COLLECTION_ERROR",
             "signedUrls": {},
