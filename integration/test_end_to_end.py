@@ -38,6 +38,7 @@ def cleanup_iap_buckets() -> list:
             "expected_collection_started_response",
             "expected_collection_in_progress_response",
             "expected_collection_completed_response",
+            "expected_collection_error_response",
         ]:
             collection = template_data[collection_type]
             signed_urls = collection["signedUrls"]
@@ -212,4 +213,16 @@ def test_collection_completed(setup_rest_url_part):
         time_remaining -= 30
     make_calls_and_assertions(
         "expected_collection_completed_response", setup_rest_url_part
+    )
+
+@pytest.mark.order(4)
+def test_collection_error(setup_rest_url_part):
+    time_remaining = 15 * 60  # countdown from 15 mins, tests should complete in this time
+
+    while time_remaining > 0:
+        print(f"Time remaining: {time_remaining} seconds")
+        time.sleep(30)  # sleep for 30 seconds
+        time_remaining -= 30
+    make_calls_and_assertions(
+        "expected_collection_error_response", setup_rest_url_part
     )
