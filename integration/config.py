@@ -277,7 +277,7 @@ templates = {
             "status": "COLLECTION_IN_PROGRESS",
             "signedUrls": {},
         },
-        "expected_collection_error_response": {
+        "expected_collection_completed_response": {
             "uId": "700000000098",
             "status": "COLLECTION_ERROR",
             "signedUrls": {},
