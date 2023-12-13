@@ -62,6 +62,12 @@ class PathSelectionService:
                 paths, continuation_sheet_type, path_filter
             )
         logger.debug(f"List of Continuation sheets found: {continuation_sheets}")
+        logger.debug(f"Continuation sheet type: {continuation_sheet_type}")
+
+        if not self.check_continuation_sheets_match_expected(continuation_sheets, continuation_sheet_type):
+            logger.warning("Images extracted from Continuation Sheets do not match what is expected based on the checkbox")
+           # The following line can be uncommented once UML-3201 and UML-3202 are done. For now we only log not error
+           #raise Exception("Images extracted from Continuation Sheets do not match what is expected based on the checkbox")
 
         # Created the final combined object of instructions, preferences and continuation sheets
         path_selection = self.merge_continuation_images_into_path_selection(
@@ -69,6 +75,32 @@ class PathSelectionService:
         )
 
         return path_selection
+
+    @staticmethod
+    def check_continuation_sheets_match_expected(continuation_sheets, continuation_sheet_type):
+        logger.debug("check_continuation_sheets_match_expected called")
+        preferences_present = False
+        instructions_present = False
+        for continuation_sheet_key, continuation_sheet_values in continuation_sheets.items():
+            for continuation_page_key, continuation_page_value in continuation_sheet_values.items():
+                try:
+                    continuation_page_type = continuation_page_value['type']
+                    logger.debug(f"continuation page type is {continuation_page_type}")
+                    if continuation_page_type == "preferences":
+                        preferences_present = True
+                    if continuation_page_type == "instructions":
+                        instructions_present = True
+                except:
+                    continue
+
+        logger.debug("checking what we found against what we EXPECTED")
+        if continuation_sheet_type in ["PREFERENCES", "BOTH"] and not preferences_present:
+            return False
+
+        if continuation_sheet_type in ["INSTRUCTIONS", "BOTH"] and not instructions_present:
+            return False
+
+        return True
 
     def find_instruction_and_preference_paths(
         self, path_selection: dict, paths: list
