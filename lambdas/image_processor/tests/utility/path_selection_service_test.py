@@ -348,3 +348,112 @@ def test_detect_marked_checkbox(path_selection_service):
     assert (
         path_selection_service.detect_marked_checkbox(unmarked_checkbox_path) is False
     )
+
+
+def test_check_continuation_sheets_match_expected(path_selection_service):
+    continuation_sheets = {
+        "continuation_1": {
+            "p1": {
+                "path": "/tmp/output/pass/1702460388/continuation_1/run=1702460390/meta=lpc/field_name=continuation_sheet_p1/00_LPC-Scan.jpg",
+                "type": "instructions",
+            },
+            "p2": {
+                "path": "/tmp/output/pass/1702460388/continuation_1/run=1702460390/meta=lpc/field_name=continuation_sheet_p2/00_LPC-Scan.jpg",
+                "type": "preferences",
+            },
+        }
+    }
+
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "BOTH"
+        )
+        == True
+    )
+    # we allow there to be more than expected, that counts as a match too
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "PREFERENCES"
+        )
+        == True
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "INSTRUCTIONS"
+        )
+        == True
+    )
+
+    continuation_sheets = {
+        "continuation_1": {
+            "p1": {
+                "path": "/tmp/output/pass/1702460388/continuation_1/run=1702460390/meta=lpc/field_name=continuation_sheet_p1/00_LPC-Scan.jpg",
+                "type": "instructions",
+            }
+        }
+    }
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "BOTH"
+        )
+        == False
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "PREFERENCES"
+        )
+        == False
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "INSTRUCTIONS"
+        )
+        == True
+    )
+
+    continuation_sheets = {
+        "continuation_1": {
+            "p1": {
+                "path": "/tmp/output/pass/1702460388/continuation_1/run=1702460390/meta=lpc/field_name=continuation_sheet_p2/00_LPC-Scan.jpg",
+                "type": "preferences",
+            }
+        }
+    }
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "BOTH"
+        )
+        == False
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "PREFERENCES"
+        )
+        == True
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "INSTRUCTIONS"
+        )
+        == False
+    )
+
+    continuation_sheets = {}
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "BOTH"
+        )
+        == False
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "PREFERENCES"
+        )
+        == False
+    )
+    assert (
+        path_selection_service.check_continuation_sheets_match_expected(
+            continuation_sheets, "INSTRUCTIONS"
+        )
+        == False
+    )
