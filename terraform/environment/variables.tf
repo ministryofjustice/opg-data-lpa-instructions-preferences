@@ -56,6 +56,12 @@ variable "accounts" {
       target_environment   = string
       secret_prefix        = string
       s3_vpc_endpoint_ids  = set(string)
+      pagerduty_service_id = string
     })
   )
+}
+
+variable "pagerduty_token" {
+  type        = string
+  description = "Pagerduty token for alerting"
 }
