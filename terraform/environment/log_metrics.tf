@@ -40,8 +40,5 @@ resource "aws_cloudwatch_log_metric_filter" "image_processor_error_count" {
     name      = "ErrorCount"
     namespace = "IaP/Stats"
     value     = "1"
-    dimensions = {
-      Application = "ImageProcessor"
-    }
   }
 }
