@@ -23,6 +23,8 @@ on:
         required: true
       aws_secret_access_key_actions:
         required: true
+      pagerduty_token:
+        required: false
 
 jobs:
   terraform_workflow:
@@ -58,6 +60,7 @@ jobs:
           TF_WORKSPACE: ${{ inputs.workspace }}
           TF_VAR_image_tag: ${{ inputs.image_tag }}
           TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
+          TF_VAR_pagerduty_token: ${{ secrets.pagerduty_token }}
         run: |
           terraform workspace show
           terraform plan -input=false -parallelism=30
@@ -68,5 +71,6 @@ jobs:
           TF_WORKSPACE: ${{ inputs.workspace }}
           TF_VAR_image_tag: ${{ inputs.image_tag }}
           TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
+          TF_VAR_pagerduty_token: ${{ secrets.pagerduty_token }}
         run: terraform apply -lock-timeout=300s -input=false -auto-approve -parallelism=30
         working-directory: ./${{ inputs.terraform_path }}
