@@ -30,3 +30,15 @@ resource "aws_cloudwatch_log_metric_filter" "pdf_length_pages" {
 
   }
 }
+
+resource "aws_cloudwatch_log_metric_filter" "image_processor_error_count" {
+  name           = "ImageProcessorErrorCount"
+  pattern        = "{ $.status = \"Error\" }"
+  log_group_name = module.processor_lamdba.lambda_log.name
+
+  metric_transformation {
+    name      = "ErrorCount"
+    namespace = "IaP/Stats"
+    value     = "1"
+  }
+}

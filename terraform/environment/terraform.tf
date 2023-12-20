@@ -43,3 +43,7 @@ provider "aws" {
     tags = local.tags
   }
 }
+
+provider "pagerduty" {
+  token = var.pagerduty_token
+}
