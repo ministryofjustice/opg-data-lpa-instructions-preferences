@@ -36,3 +36,7 @@ provider "aws" {
     session_name = "terraform-session"
   }
 }
+
+provider "pagerduty" {
+  token = var.pagerduty_token
+}
