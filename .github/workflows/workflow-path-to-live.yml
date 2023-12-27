@@ -90,7 +90,6 @@ jobs:
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
-      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   development_integration_tests:
     name: Development Run integration tests
@@ -119,7 +118,6 @@ jobs:
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
-      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   preproduction_account_plan_apply:
     name: Preproduction Account Terraform Plan and Apply
@@ -150,7 +148,6 @@ jobs:
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
-      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   production_account_plan_apply:
     name: Production Account Terraform Plan and Apply
@@ -166,6 +163,7 @@ jobs:
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   production_environment_plan_apply:
     name: Production Environment Terraform Plan and Apply
@@ -181,7 +179,6 @@ jobs:
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
-      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   workflow_complete:
     name: Workflow Complete

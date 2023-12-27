@@ -14,9 +14,14 @@ data "aws_region" "current" {}
 variable "accounts" {
   type = map(
     object({
-      name          = string
-      account_id    = string
-      is_production = bool
+      name                 = string
+      account_id           = string
+      is_production        = bool
+      pagerduty_service_id = string
     })
   )
+}
+
+provider "pagerduty" {
+  token = var.pagerduty_token
 }
