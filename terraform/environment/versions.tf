@@ -4,9 +4,5 @@ terraform {
     aws = {
       source = "hashicorp/aws"
     }
-    pagerduty = {
-      source  = "PagerDuty/pagerduty"
-      version = "~> 3.3.0"
-    }
   }
 }
