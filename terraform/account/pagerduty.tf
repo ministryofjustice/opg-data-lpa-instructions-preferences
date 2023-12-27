@@ -11,7 +11,7 @@ resource "aws_sns_topic_subscription" "cloudwatch_sns_subscription" {
 
 resource "aws_sns_topic" "cloudwatch_to_pagerduty" {
   name              = "CloudWatch-to-PagerDuty-${terraform.workspace}-InstructionsAndPreferences"
-  kms_master_key_id = data.aws_kms_key.lpa_iap_sns.key_id
+  kms_master_key_id = aws_kms_key.sns.key_id
 }
 
 resource "pagerduty_service_integration" "cloudwatch_integration" {
