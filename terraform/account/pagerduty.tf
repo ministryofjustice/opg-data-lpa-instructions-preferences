@@ -19,3 +19,26 @@ resource "pagerduty_service_integration" "cloudwatch_integration" {
   service = local.account.pagerduty_service_id
   vendor  = data.pagerduty_vendor.cloudwatch.id
 }
+
+resource "aws_sns_topic_policy" "cloudwatch_to_pagerduty" {
+  arn    = aws_sns_topic.cloudwatch_to_pagerduty.arn
+  policy = data.aws_iam_policy_document.cloudwatch_to_pagerduty.json
+}
+
+data "aws_iam_policy_document" "cloudwatch_to_pagerduty" {
+  statement {
+    sid = "AllowCloudWatchToPublishToSNS"
+    actions = [
+      "sns:Publish",
+    ]
+
+    principals {
+      type        = "Service"
+      identifiers = ["cloudwatch.amazonaws.com"]
+    }
+
+    resources = [
+      aws_sns_topic.cloudwatch_to_pagerduty.arn,
+    ]
+  }
+}

@@ -142,6 +142,23 @@ data "aws_iam_policy_document" "sns_kms" {
   }
 
   statement {
+    sid       = "Allow Key to be used for Encryption by CloudWatch"
+    effect    = "Allow"
+    resources = ["*"]
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey*",
+    ]
+
+    principals {
+      type = "Service"
+      identifiers = [
+        "cloudwatch.amazonaws.com",
+      ]
+    }
+  }
+
+  statement {
     sid       = "Key Administrator"
     effect    = "Allow"
     resources = ["*"]
