@@ -146,7 +146,7 @@ data "aws_iam_policy_document" "sns_kms" {
     effect    = "Allow"
     resources = ["*"]
     actions = [
-      "kms:Encrypt",
+      "kms:Decrypt",
       "kms:GenerateDataKey*",
     ]
 
