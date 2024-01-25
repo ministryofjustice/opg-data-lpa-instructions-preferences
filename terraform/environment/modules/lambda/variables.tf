@@ -21,11 +21,11 @@ variable "security_group_ids" {
 }
 
 variable "rest_api" {
-  default = ""
-}
-
-variable "account" {
-  description = "A map that defines account variables."
+  default     = null
+  description = "Object containing the REST API"
+  type = object({
+    execution_arn = string
+  })
 }
 
 variable "memory" {
@@ -42,18 +42,6 @@ variable "image_uri" {
 
 variable "ecr_arn" {
   description = "The ECR arn for lambda image."
-  type        = string
-  default     = null
-}
-
-variable "description" {
-  description = "Description of your Lambda Function (or Layer)"
-  type        = string
-  default     = null
-}
-
-variable "lambda_role_policy_document" {
-  description = "The policy JSON for the lambda IAM role. This policy JSON is merged with Logging and ECR access included in the module."
   type        = string
   default     = null
 }
@@ -81,12 +69,6 @@ variable "timeout" {
   default     = 30
 }
 
-variable "working_directory" {
-  description = "The working directory for the docker image."
-  type        = string
-  default     = null
-}
-
 variable "api_version" {
   description = "The version deployed."
   type        = string
@@ -94,11 +76,15 @@ variable "api_version" {
 }
 
 variable "logs_kms_key" {
-  description = "KMS key for encrypting the logs"
+  description = "Object containing the KMS key for encrypting the logs"
+  type = object({
+    arn = string
+  })
 }
 
 variable "retention_in_days" {
   description = "Log retention in days"
+  type        = number
 }
 
 variable "ephemeral_storage" {

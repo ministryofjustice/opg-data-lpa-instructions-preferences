@@ -23,7 +23,7 @@ resource "aws_ecs_service" "mock_sirius" {
   name                    = aws_ecs_task_definition.lpa_iap_mock_sirius.family
   cluster                 = aws_ecs_cluster.lpa_iap.id
   task_definition         = aws_ecs_task_definition.lpa_iap_mock_sirius.arn
-  desired_count           = var.use_mock_sirius == "1" ? 1 : 0
+  desired_count           = var.use_mock_sirius ? 1 : 0
   launch_type             = "FARGATE"
   platform_version        = "1.4.0"
   enable_ecs_managed_tags = true

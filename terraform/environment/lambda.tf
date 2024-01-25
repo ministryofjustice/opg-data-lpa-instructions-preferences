@@ -5,10 +5,8 @@ data "aws_ecr_repository" "lpa_iap_request_handler" {
 
 //Modify here for new version
 module "request_handler_lamdba" {
-  source            = "./modules/lambda"
-  lambda_name       = "lpa-iap-request-handler-${local.environment}"
-  description       = "Function to return signed urls and kick off iap processing"
-  working_directory = "/var/task"
+  source      = "./modules/lambda"
+  lambda_name = "lpa-iap-request-handler-${local.environment}"
   environment_variables = {
     ENVIRONMENT  = local.environment
     VERSION      = "v1"
@@ -16,7 +14,6 @@ module "request_handler_lamdba" {
   }
   image_uri         = "${data.aws_ecr_repository.lpa_iap_request_handler.repository_url}:${var.image_tag}"
   ecr_arn           = data.aws_ecr_repository.lpa_iap_request_handler.arn
-  account           = local.account
   environment       = local.environment
   rest_api          = aws_api_gateway_rest_api.lpa_iap
   aws_subnet_ids    = []
@@ -30,13 +27,11 @@ data "aws_ecr_repository" "lpa_iap_processor" {
 }
 
 module "processor_lamdba" {
-  source            = "./modules/lambda"
-  lambda_name       = "lpa-iap-processor-${local.environment}"
-  description       = "Function to process scanned documents and extract instructions and preferences"
-  working_directory = "/var/task"
+  source      = "./modules/lambda"
+  lambda_name = "lpa-iap-processor-${local.environment}"
   environment_variables = {
     ENVIRONMENT        = local.environment
-    SIRIUS_URL         = var.use_mock_sirius == "1" ? "http://mock-sirius.lpa-iap-${local.environment}.ecs" : "http://api.${local.account.target_environment}.ecs"
+    SIRIUS_URL         = var.use_mock_sirius ? "http://mock-sirius.lpa-iap-${local.environment}.ecs" : "http://api.${local.account.target_environment}.ecs"
     SESSION_DATA       = local.session_data
     TARGET_ENVIRONMENT = local.account.target_environment
     SECRET_PREFIX      = local.account.secret_prefix
@@ -45,7 +40,6 @@ module "processor_lamdba" {
   }
   image_uri          = "${data.aws_ecr_repository.lpa_iap_processor.repository_url}:${var.image_tag}"
   ecr_arn            = data.aws_ecr_repository.lpa_iap_request_handler.arn
-  account            = local.account
   environment        = local.environment
   timeout            = 600
   memory             = 8192
