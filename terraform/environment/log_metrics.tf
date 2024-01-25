@@ -57,6 +57,6 @@ resource "aws_cloudwatch_metric_alarm" "iap_error_count" {
   statistic           = "Sum"
   threshold           = "3"
   alarm_description   = "This alarm is triggered when there are more than 3 IAP errors in a 5 minute period."
-  alarm_actions       = ["${data.aws_sns_topic.cloudwatch_to_pagerduty.arn}"]
+  alarm_actions       = [data.aws_sns_topic.cloudwatch_to_pagerduty.arn]
   treat_missing_data  = "notBreaching"
 }

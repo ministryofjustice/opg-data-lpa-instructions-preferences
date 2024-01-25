@@ -3,9 +3,7 @@ locals {
   account           = contains(keys(var.accounts), local.environment) ? var.accounts[local.environment] : var.accounts.development
   branch_build_flag = contains(keys(var.accounts), local.environment) ? false : true
   a_record          = local.branch_build_flag ? "${local.environment}.${data.aws_route53_zone.environment_cert.name}" : data.aws_route53_zone.environment_cert.name
-  service           = "LPA Instructions and Preferences Integration"
   api_name          = "image-request-handler"
-  openapi_spec      = file("../../docs/openapi/${local.api_name}.yml")
 
   expiration_days            = 365
   noncurrent_expiration_days = 30
@@ -25,21 +23,27 @@ locals {
 }
 
 variable "default_role" {
-  default = "integrations-ci"
+  default     = "integrations-ci"
+  type        = string
+  description = "The default role to assume when running Terraform"
 }
 
 variable "management_role" {
-  default = "integrations-ci"
+  default     = "integrations-ci"
+  type        = string
+  description = "The role to assume when running Terraform for management resources"
 }
 
 variable "image_tag" {
-  type    = string
-  default = "latest"
+  type        = string
+  default     = "latest"
+  description = "The tag of the image to deploy to Lambda"
 }
 
 variable "use_mock_sirius" {
-  type    = string
-  default = "0"
+  type        = bool
+  default     = false
+  description = "Whether to use the mock Sirius API"
 }
 
 variable "accounts" {
@@ -58,4 +62,5 @@ variable "accounts" {
       s3_vpc_endpoint_ids  = set(string)
     })
   )
+  description = "A map of accounts to deploy to"
 }

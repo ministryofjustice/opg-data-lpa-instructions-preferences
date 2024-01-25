@@ -4,7 +4,9 @@ locals {
 }
 
 variable "default_role" {
-  default = "integrations-ci"
+  default     = "integrations-ci"
+  type        = string
+  description = "Default role to assume when running Terraform"
 }
 
 data "aws_caller_identity" "current" {}
