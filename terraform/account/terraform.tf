@@ -1,7 +1,5 @@
 terraform {
 
-  required_version = "<= 1.6.3"
-
   backend "s3" {
     bucket         = "opg.terraform.state"
     key            = "opg-data-lpa-instructions-preferences-account/terraform.tfstate"
@@ -9,17 +7,6 @@ terraform {
     region         = "eu-west-1"
     role_arn       = "arn:aws:iam::311462405659:role/integrations-ci"
     dynamodb_table = "remote_lock"
-  }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.24.0"
-    }
-    pagerduty = {
-      source  = "PagerDuty/pagerduty"
-      version = "~> 3.1.0"
-    }
   }
 }
 
