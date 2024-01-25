@@ -5,9 +5,7 @@ module "ual_iap_s3" {
   bucket_name                 = "lpa-iap-${local.environment}"
   force_destroy               = local.account.force_destroy_bucket
   kms_key_id                  = data.aws_kms_key.ual_iap_s3.id
-  environment_name            = local.environment
   enable_lifecycle            = true
-  allowed_roles               = [module.request_handler_lamdba.lambda_execution_role.arn]
   expiration_days             = local.expiration_days
   non_current_expiration_days = local.noncurrent_expiration_days
   providers = {

@@ -15,7 +15,7 @@ on:
         type: string
       mock_sirius:
         description: 'Mock sirius'
-        default: '0'
+        default: 'false'
         required: false
         type: string
     secrets:

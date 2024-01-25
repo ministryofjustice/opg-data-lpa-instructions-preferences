@@ -1,5 +1,6 @@
 variable "account_name" {
   description = "Account name to use"
+  type        = string
 }
 
 variable "api_name" {
@@ -7,32 +8,30 @@ variable "api_name" {
   type        = string
 }
 
-variable "aws_subnet_ids" {
-  description = "List of subnets"
-  type        = list(string)
-}
-
-variable "domain_name" {
-  description = "Domain name to use"
-}
-variable "environment" {
-  type = string
-}
-
 variable "lambda" {
-  description = "Lambda to use"
+  description = "Object containing the lambda function to use"
+  type = object({
+    function_name = string
+  })
 }
 
 variable "openapi_version" {
   description = "Openapi version"
+  type        = string
+  default     = "v1"
 }
 
 variable "region_name" {
   description = "Region name"
+  type        = string
 }
 
 variable "rest_api" {
-  description = "The rest API"
+  description = "Object containing the REST API to use"
+  type = object({
+    id   = string
+    name = string
+  })
 }
 
 variable "image_tag" {
@@ -41,5 +40,8 @@ variable "image_tag" {
 }
 
 variable "logs_kms_key" {
-  description = "KMS key for encrypting the logs"
+  description = "Object containing the KMS key for encrypting the logs"
+  type = object({
+    arn = string
+  })
 }
