@@ -29,6 +29,6 @@ variable "target_environment" {
 }
 
 variable "s3_vpc_endpoint_ids" {
-  type        = list(string)
+  type        = set(string)
   description = "List of S3 VPC endpoint IDs"
 }
