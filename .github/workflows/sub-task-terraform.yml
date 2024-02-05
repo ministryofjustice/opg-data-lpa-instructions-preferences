@@ -35,7 +35,7 @@ jobs:
           fetch-depth: '0'
 
       - name: Install AWS Cli
-        uses: unfor19/install-aws-cli-action@35a9630be0168293ad2afccbe06e8e9f47678d2c
+        uses: unfor19/install-aws-cli-action@27d6061dae5d39e89be4d2246824f15e111a7e06
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@2417443146da980df2e6d7e43c755f97fb5ad93e
