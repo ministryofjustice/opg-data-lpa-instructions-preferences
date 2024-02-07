@@ -70,10 +70,10 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
       - name: Install AWS Cli
-        uses: unfor19/install-aws-cli-action@35a9630be0168293ad2afccbe06e8e9f47678d2c
+        uses: unfor19/install-aws-cli-action@27d6061dae5d39e89be4d2246824f15e111a7e06
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@2119c3b07593cce0acbcee3240f1787eebcf4697
+        uses: aws-actions/configure-aws-credentials@2071ebe8a6b933b1341860457c7a33eb206dfb9a
         with:
           aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
@@ -84,7 +84,7 @@ jobs:
 
       - name: Login to ECR
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@f986655ecef85e2a62d24a84b084653c5374a452
+        uses: aws-actions/amazon-ecr-login@822fc4df32eb7c09c94b76111b9946bd7f02478a
         with:
           registries: 311462405659
 

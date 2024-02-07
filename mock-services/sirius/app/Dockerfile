@@ -1,4 +1,4 @@
-FROM stoplight/prism:5.5.1
+FROM stoplight/prism:5.5.3
 COPY sirius.yml run.sh /app/
 RUN apk upgrade libcrypto1.1 libssl1.1 busybox ssl_client zlib
 RUN npm -g install npm@8.19.4
