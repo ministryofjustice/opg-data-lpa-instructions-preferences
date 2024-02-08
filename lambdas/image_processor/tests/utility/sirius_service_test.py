@@ -3,7 +3,7 @@ import os
 import boto3
 import pytest
 from unittest.mock import patch, MagicMock
-from moto import mock_secretsmanager
+from moto import mock_aws
 
 import requests
 from app.utility.sirius_service import SiriusService
@@ -109,7 +109,7 @@ def test_make_request_to_sirius_decode_exception(mock_get, monkeypatch, sirius_s
     )
 
 
-@mock_secretsmanager
+@mock_aws
 def test_setup_secret_manager_connection(sirius_service):
     sm = sirius_service.setup_secret_manager_connection()
 
@@ -123,7 +123,7 @@ def test_setup_secret_manager_connection(sirius_service):
     assert retrieved_secret["SecretString"] == secret_value
 
 
-@mock_secretsmanager
+@mock_aws
 def test_get_secret(sirius_service):
     # Create a mock Secrets Manager secret
     secret_value = "my-secret-key"
