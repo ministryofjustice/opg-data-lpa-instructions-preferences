@@ -104,6 +104,17 @@ class ImageProcessor:
             if not non_zero_file_found:
                 raise Exception("All extracted images are zero bytes (possibly blank)")
 
+            # Check that none of the images are too dark to be useful
+            dark_images_found = 0
+            for img in paths_to_extracted_images.values():
+                if extraction_Service.image_is_dark(img):
+                    dark_images_found += 1
+
+            if dark_images_found > 0:
+                raise Exception(
+                    f"{dark_images_found} extracted images were found to be too dark to be likely to be readable"
+                )
+
             logger.debug("Finished pushing images to bucket")
 
             # Cleanup all the folders
