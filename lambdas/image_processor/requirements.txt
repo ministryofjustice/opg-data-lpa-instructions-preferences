@@ -19,5 +19,5 @@ tesserocr==2.6.0
 pyzbar==0.1.9
 fuzzywuzzy[speedup]==0.18.0
 imutils==0.5.4
-moto==4.2.9
+moto==5.0.1
 imageio==2.33.1
