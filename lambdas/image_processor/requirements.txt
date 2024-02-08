@@ -20,3 +20,4 @@ pyzbar==0.1.9
 fuzzywuzzy[speedup]==0.18.0
 imutils==0.5.4
 moto==4.2.9
+imageio==2.33.1
