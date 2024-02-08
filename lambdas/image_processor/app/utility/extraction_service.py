@@ -1252,8 +1252,8 @@ class ExtractionService:
 
         return matching_meta_images_list
 
-    def image_is_dark(image_path, threshold):
+    def image_is_dark(self, image_path):
         # check whether image is darker than a certain threshold. Used to throw out extracted images that are too dark to be readable
         image_file = imageio.v2.imread(image_path, mode="F")
         threshold = 127
-        return np.mean(image_file) > threshold
+        return np.mean(image_file) <= threshold
