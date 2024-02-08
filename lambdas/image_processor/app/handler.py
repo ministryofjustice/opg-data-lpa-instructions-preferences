@@ -107,7 +107,7 @@ class ImageProcessor:
             # Check that none of the images are too dark to be useful
             dark_images_found = 0
             for img in paths_to_extracted_images.values():
-                if extraction_Service.image_is_dark(img):
+                if extraction_service.image_is_dark(img):
                     dark_images_found += 1
 
             if dark_images_found > 0:
