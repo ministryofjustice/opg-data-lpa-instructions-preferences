@@ -12,6 +12,7 @@ import pytesseract
 import imutils
 
 import numpy as np
+import imageio
 from pyzbar.pyzbar import decode
 from collections import Counter
 from fuzzywuzzy import fuzz
@@ -1250,3 +1251,9 @@ class ExtractionService:
             self.info_msg.matched_templates.append(msg)
 
         return matching_meta_images_list
+
+    def image_is_dark(self, image_path):
+        # check whether image is darker than a certain threshold. Used to throw out extracted images that are too dark to be readable
+        image_file = imageio.v2.imread(image_path, mode="F")
+        threshold = 127
+        return np.mean(image_file) <= threshold
