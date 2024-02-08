@@ -284,4 +284,23 @@ templates = {
     #         "signedUrls": {},
     #     },
     # },
+    # TODO once UML-3201 and UML-3202 are done, we will switch on the throwing of an error, and so need to uncomment this
+     "LP1F-instructions-are-too-black": {
+         "lpa_uid": "700000000099",
+         "expected_collection_started_response": {
+             "uId": "700000000099",
+             "status": "COLLECTION_NOT_STARTED",
+             "signedUrls": {},
+         },
+         "expected_collection_in_progress_response": {
+             "uId": "700000000099",
+             "status": "COLLECTION_IN_PROGRESS",
+             "signedUrls": {},
+         },
+         "expected_collection_completed_response": {
+             "uId": "700000000099",
+             "status": "COLLECTION_ERROR",
+             "signedUrls": {},
+         },
+     },
 }
