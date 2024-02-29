@@ -30,30 +30,29 @@ def cleanup_iap_buckets() -> list:
     Returns:
         List[str]: A list of deleted image keys.
     """
-    images_to_remove = []
-
-    # Iterate over all templates and collections in the config file
-    for _, template_data in config.templates.items():
-        for collection_type in [
-            "expected_collection_started_response",
-            "expected_collection_in_progress_response",
-            "expected_collection_completed_response",
-        ]:
-            collection = template_data[collection_type]
-            signed_urls = collection["signedUrls"]
-
-            # Add all images to be removed to a list
-            for item_to_remove, data in signed_urls.items():
-                images_to_remove.append(item_to_remove)
 
     s3 = get_s3()
     bucket_name = f"{config.environment[env]['iap_bucket']}-{workspace}"
-    images_to_remove_deduped = list(set(images_to_remove))
+    images_to_remove = []
+
+    # Get a list of all objects in the bucket
+    response = s3.list_objects_v2(Bucket=bucket_name)
+    if "Contents" in response:
+        for obj in response["Contents"]:
+            images_to_remove.append(obj["Key"])
+
+        # If there are more than 1000 objects in the bucket, paginate through the list
+        while response["IsTruncated"]:
+            response = s3.list_objects_v2(
+                Bucket=bucket_name, ContinuationToken=response["NextContinuationToken"]
+            )
+            for obj in response["Contents"]:
+                images_to_remove.append(obj["Key"])
 
     deleted_images = []
 
     # Iterate over all images to be removed, and attempt to delete them from S3
-    for image in images_to_remove_deduped:
+    for image in images_to_remove:
         print(f"Trying {image}")
         try:
             s3.delete_object(Bucket=bucket_name, Key=image)
@@ -203,8 +202,9 @@ def test_collection_in_progress(setup_rest_url_part):
 
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
-    
-    time_remaining = 15 * 60  # countdown from 15 mins, tests should complete in this time
+    time_remaining = (
+        15 * 60
+    )  # countdown from 15 mins, tests should complete in this time
 
     while time_remaining > 0:
         print(f"Time remaining: {time_remaining} seconds")
