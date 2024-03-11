@@ -27,7 +27,7 @@ jobs:
           - folder: 'environment'
           - folder: 'account'
     steps:
-      - uses: actions/checkout@b32f140b0c872d58512e0a66172253c302617b90 # pin@v3
+      - uses: actions/checkout@8eb1f6a495037164bea451156472f35fdd6bafc0 # pin@v3
 
       - id: terraform_version
         name: Get terraform version
