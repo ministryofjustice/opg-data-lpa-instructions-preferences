@@ -277,7 +277,7 @@ class ImageRequestHandler:
         """
         signed_urls = {}
         if image_collection_status == "COLLECTION_COMPLETE":
-            for image, status in image_statuses.items():
+            for image, _ in image_statuses.items():
                 try:
                     url = self.s3.generate_presigned_url(
                         "get_object",
@@ -369,11 +369,9 @@ def lambda_handler(event, context):
     ]:
         uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
 
-        subsegment = xray_recorder.begin_subsegment(
-            "image_request_handler_lambda_handler"
-        )
-        subsegment.put_annotation("build_version", version)
-        subsegment.put_annotation("uid", uid)
+        current_segment = xray_recorder.current_segment()
+        current_segment.put_annotation("build_version", version)
+        current_segment.put_annotation("uid", uid)
 
         s3_image_request_handler = ImageRequestHandler(
             uid=uid,
