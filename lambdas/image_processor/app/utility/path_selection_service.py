@@ -64,10 +64,14 @@ class PathSelectionService:
         logger.debug(f"List of Continuation sheets found: {continuation_sheets}")
         logger.debug(f"Continuation sheet type: {continuation_sheet_type}")
 
-        if not self.check_continuation_sheets_match_expected(continuation_sheets, continuation_sheet_type):
-            logger.warning("Images extracted from Continuation Sheets do not match what is expected based on the checkbox")
-           # The following line can be uncommented once UML-3201 and UML-3202 are done. For now we only log not error
-           #raise Exception("Images extracted from Continuation Sheets do not match what is expected based on the checkbox")
+        if not self.check_continuation_sheets_match_expected(
+            continuation_sheets, continuation_sheet_type
+        ):
+            logger.warning(
+                "Images extracted from Continuation Sheets do not match what is expected based on the checkbox"
+            )
+        # The following line can be uncommented once UML-3201 and UML-3202 are done. For now we only log not error
+        # raise Exception("Images extracted from Continuation Sheets do not match what is expected based on the checkbox")
 
         # Created the final combined object of instructions, preferences and continuation sheets
         path_selection = self.merge_continuation_images_into_path_selection(
@@ -77,27 +81,41 @@ class PathSelectionService:
         return path_selection
 
     @staticmethod
-    def check_continuation_sheets_match_expected(continuation_sheets, continuation_sheet_type):
+    def check_continuation_sheets_match_expected(
+        continuation_sheets, continuation_sheet_type
+    ):
         logger.debug("check_continuation_sheets_match_expected called")
         preferences_present = False
         instructions_present = False
-        for continuation_sheet_key, continuation_sheet_values in continuation_sheets.items():
-            for continuation_page_key, continuation_page_value in continuation_sheet_values.items():
+        for (
+            _,
+            continuation_sheet_values,
+        ) in continuation_sheets.items():
+            for (
+                _,
+                continuation_page_value,
+            ) in continuation_sheet_values.items():
                 try:
-                    continuation_page_type = continuation_page_value['type']
+                    continuation_page_type = continuation_page_value["type"]
                     logger.debug(f"continuation page type is {continuation_page_type}")
                     if continuation_page_type == "preferences":
                         preferences_present = True
                     if continuation_page_type == "instructions":
                         instructions_present = True
-                except:
+                except KeyError:
                     continue
 
         logger.debug("checking what we found against what we EXPECTED")
-        if continuation_sheet_type in ["PREFERENCES", "BOTH"] and not preferences_present:
+        if (
+            continuation_sheet_type in ["PREFERENCES", "BOTH"]
+            and not preferences_present
+        ):
             return False
 
-        if continuation_sheet_type in ["INSTRUCTIONS", "BOTH"] and not instructions_present:
+        if (
+            continuation_sheet_type in ["INSTRUCTIONS", "BOTH"]
+            and not instructions_present
+        ):
             return False
 
         return True
@@ -281,7 +299,7 @@ class PathSelectionService:
 
     @staticmethod
     def merge_continuation_images_into_path_selection(
-            path_selection, continuation_sheets
+        path_selection, continuation_sheets
     ) -> dict:
         """
         Merge continuation images into path selection.
@@ -316,7 +334,7 @@ class PathSelectionService:
 
     @staticmethod
     def string_fragments_in_string(
-            target_string, mandatory_fragments, one_of_fragments
+        target_string, mandatory_fragments, one_of_fragments
     ) -> bool:
         """
         Check if all mandatory fragments are present in the target string and at least one of the optional fragments is present.
@@ -368,8 +386,8 @@ class PathSelectionService:
         # Create a mask to ignore the border
         mask = np.zeros((img_height, img_width), np.uint8)
         mask[
-        border_size: img_height - border_size,
-        border_size: img_width - border_size,
+            border_size : img_height - border_size,
+            border_size : img_width - border_size,
         ] = 255
 
         # Apply the mask to the image
