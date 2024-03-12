@@ -5,6 +5,9 @@ import datetime
 import time
 import traceback
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
 from app.utility.custom_logging import custom_logger, LogMessageDetails
 
 from app.utility.bucket_manager import BucketManager, ScanLocationStore
@@ -13,6 +16,7 @@ from app.utility.extraction_service import ExtractionService
 from app.utility.path_selection_service import PathSelectionService
 
 logger = custom_logger("processor")
+patch_all()
 
 
 class ImageProcessor:
@@ -47,6 +51,8 @@ class ImageProcessor:
 
         try:
             self.uid = self.get_uid_from_event()
+            current_segment = xray_recorder.current_segment()
+            current_segment.put_annotation("uid", self.uid)
             self.info_msg.uid = self.uid
 
             logger.info(f"==== Starting processing on {self.uid} ====")
