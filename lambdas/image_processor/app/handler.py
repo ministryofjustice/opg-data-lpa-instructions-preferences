@@ -51,6 +51,8 @@ class ImageProcessor:
 
         try:
             self.uid = self.get_uid_from_event()
+            current_segment = xray_recorder.current_segment()
+            current_segment.put_annotation("uid", self.uid)
             self.info_msg.uid = self.uid
 
             logger.info(f"==== Starting processing on {self.uid} ====")
@@ -267,7 +269,5 @@ class ImageProcessor:
 
 
 def lambda_handler(event, context):
-    xray_recorder.begin_subsegment("image_processor_lambda_handler")
     image_processor = ImageProcessor(event, context)
     image_processor.process_request()
-    xray_recorder.end_subsegment()

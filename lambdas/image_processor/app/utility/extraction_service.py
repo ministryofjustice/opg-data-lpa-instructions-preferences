@@ -25,6 +25,7 @@ from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
 from PIL import UnidentifiedImageError, Image
+from aws_xray_sdk.core import xray_recorder
 
 logger = custom_logger("extraction_service")
 
@@ -89,6 +90,7 @@ class ExtractionService:
         self.processed_image_locations = {}
 
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
+        xray_recorder.begin_subsegment("run_iap_extraction")
         form_operator = FormOperator.create_from_config(
             f"{self.extraction_folder_path}/opg-config.yaml"
         )
@@ -142,6 +144,7 @@ class ExtractionService:
             # If the key contains "continuation_", add it to the list of continuation keys to use
             if "continuation_" in key:
                 continuation_keys_to_use.append(key)
+        xray_recorder.end_subsegment()
         return continuation_keys_to_use
 
     @staticmethod
@@ -805,7 +808,7 @@ class ExtractionService:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
-                logger.debug(f"Found and decoded barcode on page {image_count+1}")
+                logger.debug(f"Found and decoded barcode on page {image_count + 1}")
                 image_barcode_dict[image_count] = barcodes_decoded[0]
 
         return image_barcode_dict
