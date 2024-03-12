@@ -106,7 +106,7 @@ docker-compose up unit-tests-processor
 
 You can start up the full stack, then run integration tests
 ```commandline
-docker-compose up 
+docker-compose up
 cd integration
 python3 -m pytest .
 ```
