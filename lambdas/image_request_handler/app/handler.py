@@ -2,11 +2,16 @@ import json
 import os
 import re
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
 import boto3
 import botocore.exceptions
 from app.utility.custom_logging import custom_logger, get_event_details_for_logs
 
 logger = custom_logger("request_handler")
+
+patch_all()
 
 
 class ImageRequestHandler:
@@ -363,6 +368,13 @@ def lambda_handler(event, context):
         "/" + version + "/image-request/{uid}",
     ]:
         uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
+
+        subsegment = xray_recorder.begin_subsegment(
+            "image_request_handler_lambda_handler"
+        )
+        subsegment.put_annotation("build_version", version)
+        subsegment.put_annotation("uid", uid)
+
         s3_image_request_handler = ImageRequestHandler(
             uid=uid,
             bucket=f"lpa-iap-{environment}",
@@ -370,6 +382,7 @@ def lambda_handler(event, context):
             event=event,
         )
         response = s3_image_request_handler.process_request()
+        xray_recorder.end_subsegment()
     else:
         response = {
             "isBase64Encoded": False,
