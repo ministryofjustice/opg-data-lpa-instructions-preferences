@@ -73,12 +73,20 @@ class JsonFormatter(logging.Formatter):
 
 def get_event_details_for_logs(event, status):
     log_object = {
-        "source_ip": event['requestContext']['identity']['sourceIp'] if keys_exists(event, 'requestContext', 'identity', 'sourceIp') else None,
-        "request_uri": event['path'] if keys_exists(event, 'path') else None,
-        "method": event['httpMethod'] if keys_exists(event, 'httpMethod') else None,
-        "user_agent": event['requestContext']['identity']['userAgent'] if keys_exists(event, 'requestContext', 'identity', 'userAgent') else None,
-        "protocol": event['requestContext']['protocol'] if keys_exists(event, 'requestContext', 'protocol') else None,
-        "request_id": event['requestContext']['requestId'] if keys_exists(event, 'requestContext', 'requestId') else None,
+        "source_ip": event["requestContext"]["identity"]["sourceIp"]
+        if keys_exists(event, "requestContext", "identity", "sourceIp")
+        else None,
+        "request_uri": event["path"] if keys_exists(event, "path") else None,
+        "method": event["httpMethod"] if keys_exists(event, "httpMethod") else None,
+        "user_agent": event["requestContext"]["identity"]["userAgent"]
+        if keys_exists(event, "requestContext", "identity", "userAgent")
+        else None,
+        "protocol": event["requestContext"]["protocol"]
+        if keys_exists(event, "requestContext", "protocol")
+        else None,
+        "request_id": event["requestContext"]["requestId"]
+        if keys_exists(event, "requestContext", "requestId")
+        else None,
         "status": status,
     }
     return log_object
@@ -86,9 +94,9 @@ def get_event_details_for_logs(event, status):
 
 def keys_exists(element, *keys):
     if not isinstance(element, dict):
-        raise AttributeError('keys_exists() expects dict as first argument.')
+        raise AttributeError("keys_exists() expects dict as first argument.")
     if len(keys) == 0:
-        raise AttributeError('keys_exists() expects at least two arguments, one given.')
+        raise AttributeError("keys_exists() expects at least two arguments, one given.")
 
     _element = element
     for key in keys:
