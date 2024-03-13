@@ -353,6 +353,7 @@ def sanitize_path_parameter(value):
     return re.sub(r"[^0-9]", "", value)
 
 
+@xray_recorder.capture()
 def lambda_handler(event, context):
     environment = os.getenv("ENVIRONMENT")
     version = os.getenv("VERSION")
@@ -370,7 +371,6 @@ def lambda_handler(event, context):
         uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
 
         current_segment = xray_recorder.current_segment()
-        current_segment.put_annotation("build_version", version)
         current_segment.put_annotation("uid", uid)
 
         s3_image_request_handler = ImageRequestHandler(
