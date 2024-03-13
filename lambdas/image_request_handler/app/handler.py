@@ -370,8 +370,8 @@ def lambda_handler(event, context):
     ]:
         uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
 
-        current_segment = xray_recorder.current_segment()
-        current_segment.put_annotation("uid", uid)
+        current_subsegment = xray_recorder.current_subsegment()
+        current_subsegment.put_annotation("uid", uid)
 
         s3_image_request_handler = ImageRequestHandler(
             uid=uid,
@@ -380,7 +380,6 @@ def lambda_handler(event, context):
             event=event,
         )
         response = s3_image_request_handler.process_request()
-        xray_recorder.end_subsegment()
     else:
         response = {
             "isBase64Encoded": False,
