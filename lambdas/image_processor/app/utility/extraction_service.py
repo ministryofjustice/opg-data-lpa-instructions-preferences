@@ -89,8 +89,8 @@ class ExtractionService:
         self.complete_meta_store = {}
         self.processed_image_locations = {}
 
+    @xray_recorder.capture()
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
-        xray_recorder.begin_subsegment("run_iap_extraction")
         form_operator = FormOperator.create_from_config(
             f"{self.extraction_folder_path}/opg-config.yaml"
         )
@@ -144,7 +144,6 @@ class ExtractionService:
             # If the key contains "continuation_", add it to the list of continuation keys to use
             if "continuation_" in key:
                 continuation_keys_to_use.append(key)
-        xray_recorder.end_subsegment()
         return continuation_keys_to_use
 
     @staticmethod
