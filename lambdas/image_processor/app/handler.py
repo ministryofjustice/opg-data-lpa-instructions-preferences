@@ -34,6 +34,7 @@ class ImageProcessor:
         self.info_msg = LogMessageDetails()
         self.info_msg.request_id = self.request_id
 
+    @xray_recorder.capture()
     def process_request(self):
         """
         Main Process that receives a request triggered from SQS and extracts the
@@ -268,6 +269,7 @@ class ImageProcessor:
         )
 
 
+@xray_recorder.capture()
 def lambda_handler(event, context):
     image_processor = ImageProcessor(event, context)
     image_processor.process_request()
