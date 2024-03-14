@@ -32,6 +32,22 @@ data "aws_iam_policy_document" "ual_iap_request_handler_lambda" {
       "kms:GenerateDataKey",
     ]
   }
+
+  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
+  statement {
+    sid    = "AllowXRayAccess"
+    effect = "Allow"
+    resources = [
+      "*"
+    ]
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries"
+    ]
+  }
 }
 
 //===============Related to Processor Lambda Task Execution Role===================
@@ -106,4 +122,21 @@ data "aws_iam_policy_document" "ual_iap_processor_lambda" {
       "kms:GenerateDataKey",
     ]
   }
+
+  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
+  statement {
+    sid    = "AllowXRayAccess"
+    effect = "Allow"
+    resources = [
+      "*"
+    ]
+    actions = [
+      "xray:PutTraceSegments",
+      "xray:PutTelemetryRecords",
+      "xray:GetSamplingRules",
+      "xray:GetSamplingTargets",
+      "xray:GetSamplingStatisticSummaries"
+    ]
+  }
+
 }

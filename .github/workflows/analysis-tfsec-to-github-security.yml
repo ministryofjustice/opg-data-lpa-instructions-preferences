@@ -19,4 +19,3 @@ permissions:
 jobs:
   tfsec_to_github_security:
     uses: ministryofjustice/opg-github-workflows/.github/workflows/analysis-infrastructure-tfsec-to-github-security.yml@main
-    
