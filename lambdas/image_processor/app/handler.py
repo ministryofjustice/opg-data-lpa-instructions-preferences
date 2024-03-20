@@ -53,7 +53,8 @@ class ImageProcessor:
         try:
             self.uid = self.get_uid_from_event()
             current_subsegment = xray_recorder.current_subsegment()
-            current_subsegment.put_annotation("uid", self.uid)
+            if current_subsegment:
+                current_subsegment.put_annotation("uid", self.uid)
             self.info_msg.uid = self.uid
 
             logger.info(f"==== Starting processing on {self.uid} ====")
