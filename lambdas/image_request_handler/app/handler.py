@@ -371,7 +371,9 @@ def lambda_handler(event, context):
         uid = sanitize_path_parameter(event["pathParameters"].get("uid"))
 
         current_subsegment = xray_recorder.current_subsegment()
-        current_subsegment.put_annotation("uid", uid)
+
+        if current_subsegment:
+            current_subsegment.put_annotation("uid", uid)
 
         s3_image_request_handler = ImageRequestHandler(
             uid=uid,
