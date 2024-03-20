@@ -1,7 +1,7 @@
 import os
 import boto3
 from unittest.mock import patch, MagicMock
-from moto import mock_s3
+from moto import mock_aws
 import pytest
 from app.utility.bucket_manager import BucketManager, ScanLocation
 from app.utility.custom_logging import LogMessageDetails
@@ -123,7 +123,7 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
     )
 
 
-@mock_s3
+@mock_aws
 def test_put_images_to_bucket(bucket_manager):
     s3 = boto3.client("s3", region_name="us-east-1")
     iap_bucket = "my-test-bucket"
@@ -161,7 +161,7 @@ def test_put_images_to_bucket(bucket_manager):
     }
 
 
-@mock_s3
+@mock_aws
 def test_put_error_image_to_bucket(bucket_manager):
     s3 = boto3.client("s3", region_name="us-east-1")
     iap_bucket = "my-test-bucket"

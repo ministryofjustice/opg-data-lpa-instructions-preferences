@@ -3,7 +3,7 @@ import boto3
 import pytest
 import json
 from unittest.mock import patch
-from moto import mock_s3, mock_sqs
+from moto import mock_aws
 from lambdas.image_request_handler.app.handler import ImageRequestHandler
 from botocore.stub import Stubber
 
@@ -129,7 +129,7 @@ def test_check_image_statuses(mock_image_status_in_bucket):
     }
 
 
-@mock_s3
+@mock_aws
 def test_image_status_in_bucket(image_request_handler):
     s3 = boto3.client("s3", region_name="us-east-1")
     bucket = "test-bucket"
@@ -163,7 +163,7 @@ def test_image_status_in_bucket(image_request_handler):
             _ = image_request_handler.image_status_in_bucket(image)
 
 
-@mock_sqs
+@mock_aws
 def test_add_to_sqs(image_request_handler):
     sqs = boto3.client("sqs", region_name="eu-west-1")
     sqs_queue = sqs.create_queue(QueueName=test_queue)["QueueUrl"]
@@ -183,7 +183,7 @@ def test_add_to_sqs(image_request_handler):
         image_request_handler.add_to_sqs()
 
 
-@mock_s3
+@mock_aws
 def test_add_temp_images_to_bucket():
     image_request_handler = ImageRequestHandler(
         test_uid, test_bucket, test_queue, event
@@ -205,7 +205,7 @@ def test_add_temp_images_to_bucket():
         image_request_handler.add_temp_images_to_bucket()
 
 
-@mock_s3
+@mock_aws
 def test_generate_signed_urls_returns_correct_urls():
     s3 = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=test_bucket)
@@ -297,8 +297,7 @@ def test_get_image_collection_status_returns_collection_error(image_request_hand
     assert actual_status == expected_status
 
 
-@mock_s3
-@mock_sqs
+@mock_aws
 def test_process_request(image_request_handler):
     s3 = boto3.client("s3", region_name="us-east-1")
     s3.create_bucket(Bucket=test_bucket)

@@ -5,6 +5,9 @@ import datetime
 import time
 import traceback
 
+from aws_xray_sdk.core import xray_recorder
+from aws_xray_sdk.core import patch_all
+
 from app.utility.custom_logging import custom_logger, LogMessageDetails
 
 from app.utility.bucket_manager import BucketManager, ScanLocationStore
@@ -13,6 +16,7 @@ from app.utility.extraction_service import ExtractionService
 from app.utility.path_selection_service import PathSelectionService
 
 logger = custom_logger("processor")
+patch_all()
 
 
 class ImageProcessor:
@@ -30,6 +34,7 @@ class ImageProcessor:
         self.info_msg = LogMessageDetails()
         self.info_msg.request_id = self.request_id
 
+    @xray_recorder.capture()
     def process_request(self):
         """
         Main Process that receives a request triggered from SQS and extracts the
@@ -47,6 +52,8 @@ class ImageProcessor:
 
         try:
             self.uid = self.get_uid_from_event()
+            current_subsegment = xray_recorder.current_subsegment()
+            current_subsegment.put_annotation("uid", self.uid)
             self.info_msg.uid = self.uid
 
             logger.info(f"==== Starting processing on {self.uid} ====")
@@ -103,6 +110,17 @@ class ImageProcessor:
 
             if not non_zero_file_found:
                 raise Exception("All extracted images are zero bytes (possibly blank)")
+
+            # Check that none of the images are too dark to be useful
+            dark_images_found = 0
+            for img in paths_to_extracted_images.values():
+                if extraction_service.image_is_dark(img):
+                    dark_images_found += 1
+
+            if dark_images_found > 0:
+                raise Exception(
+                    f"{dark_images_found} extracted images were found to be too dark to be likely to be readable"
+                )
 
             logger.debug("Finished pushing images to bucket")
 
@@ -251,6 +269,7 @@ class ImageProcessor:
         )
 
 
+@xray_recorder.capture()
 def lambda_handler(event, context):
     image_processor = ImageProcessor(event, context)
     image_processor.process_request()

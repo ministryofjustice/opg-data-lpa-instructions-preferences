@@ -12,6 +12,7 @@ import pytesseract
 import imutils
 
 import numpy as np
+import imageio
 from pyzbar.pyzbar import decode
 from collections import Counter
 from fuzzywuzzy import fuzz
@@ -24,6 +25,7 @@ from app.utility.custom_logging import custom_logger
 from app.utility.bucket_manager import ScanLocationStore
 from typing import List
 from PIL import UnidentifiedImageError, Image
+from aws_xray_sdk.core import xray_recorder
 
 logger = custom_logger("extraction_service")
 
@@ -87,6 +89,7 @@ class ExtractionService:
         self.complete_meta_store = {}
         self.processed_image_locations = {}
 
+    @xray_recorder.capture()
     def run_iap_extraction(self, scan_locations: ScanLocationStore) -> list:
         form_operator = FormOperator.create_from_config(
             f"{self.extraction_folder_path}/opg-config.yaml"
@@ -804,7 +807,7 @@ class ExtractionService:
                 barcodes_decoded.append(barcode.data.decode("utf-8"))
 
             if len(barcodes_decoded) > 0:
-                logger.debug(f"Found and decoded barcode on page {image_count+1}")
+                logger.debug(f"Found and decoded barcode on page {image_count + 1}")
                 image_barcode_dict[image_count] = barcodes_decoded[0]
 
         return image_barcode_dict
@@ -1250,3 +1253,9 @@ class ExtractionService:
             self.info_msg.matched_templates.append(msg)
 
         return matching_meta_images_list
+
+    def image_is_dark(self, image_path):
+        # check whether image is darker than a certain threshold. Used to throw out extracted images that are too dark to be readable
+        image_file = imageio.v2.imread(image_path, mode="F")
+        threshold = 127
+        return np.mean(image_file) <= threshold

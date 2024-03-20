@@ -1,4 +1,5 @@
 terraform {
+
   required_version = "<= 1.6.3"
 
   required_providers {
@@ -6,9 +7,9 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.24.0"
     }
-    pagerduty = {
-      source  = "PagerDuty/pagerduty"
-      version = "~> 3.4.0"
+    time = {
+      source  = "hashicorp/time"
+      version = "~> 0.10.0"
     }
   }
 }

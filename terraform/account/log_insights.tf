@@ -15,7 +15,7 @@ resource "aws_cloudwatch_query_definition" "iap_error_messages" {
   query_string = <<EOF
 # Used to report on which case numbers have failed and the reasons for that failure
 # which is then followed up manually
-# This can be exported as a xlsx doc directly for eases 
+# This can be exported as a xlsx doc directly for eases
 fields @timestamp, coalesce(@requestId, request_id) as RequestID
 | filter @message like 'ERROR'
 | parse @message 'document_templates": [*]' as docs

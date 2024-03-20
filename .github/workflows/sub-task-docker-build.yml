@@ -45,7 +45,7 @@ jobs:
     steps:
       - name: Check out code
         id: checkout_code
-        uses: actions/checkout@v3.6.0
+        uses: actions/checkout@v4.1.1
 
       - name: Build Container
         id: build_container
@@ -53,7 +53,7 @@ jobs:
 
       - name: Trivy Image Vulnerability Scanner
         id: trivy_scan
-        uses: aquasecurity/trivy-action@f3d98514b056d8c71a3552e8328c225bc7f6f353
+        uses: aquasecurity/trivy-action@062f2592684a31eb3aa050cc61e7ca1451cecd3d
         with:
           image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
@@ -64,16 +64,16 @@ jobs:
 
       - name: Upload Trivy scan results to GitHub Security tab
         id: trivy_upload_sarif
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
 
       - name: Install AWS Cli
-        uses: unfor19/install-aws-cli-action@35a9630be0168293ad2afccbe06e8e9f47678d2c
+        uses: unfor19/install-aws-cli-action@27d6061dae5d39e89be4d2246824f15e111a7e06
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@50ac8dd1e1b10d09dac7b8727528b91bed831ac0 # pin@v3.0.2
+        uses: aws-actions/configure-aws-credentials@e0fc2428ccc7f7031a468e4a9d673be1a95fb8b9
         with:
           aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
@@ -84,7 +84,7 @@ jobs:
 
       - name: Login to ECR
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@f986655ecef85e2a62d24a84b084653c5374a452
+        uses: aws-actions/amazon-ecr-login@ebdeac79a5f9525e298b368a491c338b8fd60fe9
         with:
           registries: 311462405659
 
