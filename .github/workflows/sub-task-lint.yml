@@ -43,7 +43,7 @@ jobs:
         name: Setup TFLint
 
       - name: configure AWS credentials for terraform
-        uses: aws-actions/configure-aws-credentials@69786f15aefa0b940de5c7d1b7155038b71037a0 # pin@v1.7.0
+        uses: aws-actions/configure-aws-credentials@587276aa2b7ab3e81491bc89886f7805ee29494c # pin@v1.7.0
         with:
           aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
