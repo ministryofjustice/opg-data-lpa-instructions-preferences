@@ -35,7 +35,7 @@ jobs:
         with:
           terraform_directory: "./terraform/${{ matrix.folder }}"
 
-      - uses: hashicorp/setup-terraform@e6e8bf240aacb7cbcffa8e7eec2781b1d8f4375e # pin@v2.0.0
+      - uses: hashicorp/setup-terraform@77b7878004b021bb2cb7f184ef618fa7a0db4ac4 # pin@v2.0.0
         with:
           terraform_version: ${{ steps.terraform_version.outputs.version }}
 
