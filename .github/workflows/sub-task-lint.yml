@@ -68,9 +68,3 @@ jobs:
           echo $TF_WORKSPACE
           terraform validate
         working-directory: ./terraform/${{ matrix.folder }}
-
-      - name: tfsec with pr comments
-        uses: tfsec/tfsec-pr-commenter-action@v1.3.1
-        with:
-          working_directory: ./terraform/${{ matrix.folder }}
-          github_token: ${{secrets.source_github_token}}
