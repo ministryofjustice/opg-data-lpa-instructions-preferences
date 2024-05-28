@@ -14,7 +14,7 @@ awswrangler==3.5.1
 pdfminer==20191125
 opencv-python==4.9.0.80
 mojap_metadata==1.14.2
-pydantic==1.10.14
+pydantic==2.7.2
 tesserocr==2.6.0
 pyzbar==0.1.9
 fuzzywuzzy[speedup]==0.18.0
