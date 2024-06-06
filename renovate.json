@@ -82,5 +82,6 @@
     "branchTopic": "{{{datasource}}}-{{{depName}}}-vulnerability",
     "prCreation": "immediate",
     "prPriority": 5
-  }
+  },
+  "prConcurrentLimit": 1
 }
