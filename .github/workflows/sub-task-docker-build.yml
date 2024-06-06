@@ -84,7 +84,7 @@ jobs:
 
       - name: Login to ECR
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@93b5912ef2f6b34b45b316c9dccf0c68549711fa
+        uses: aws-actions/amazon-ecr-login@45cfbd442aaae781d98e0789e8adaf7386a2d374
         with:
           registries: 311462405659
 
