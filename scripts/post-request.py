@@ -4,6 +4,10 @@ import boto3
 import requests
 from requests_aws4auth import AWS4Auth
 import argparse
+from datetime import datetime, timedelta
+import time
+import json
+import sys
 
 
 def get_role_session(environment, role):
@@ -43,8 +47,81 @@ def get_request_auth(credentials):
 
 def handle_request(method, url, auth):
     response = requests.request(method=method, url=url, auth=auth)
-    print(response.text)
-    print(response.status_code)
+    return response
+
+
+def start_query(client, log_group, query, search_time):
+    start_query_response = client.start_query(
+        logGroupName=log_group,
+        startTime=int((datetime.today() - timedelta(days=search_time)).timestamp()),
+        endTime=int(datetime.now().timestamp()),
+        queryString=query,
+    )
+
+    query_id = start_query_response['queryId']
+    response = None
+
+    # Keep retrying until we get a response. This could be a while due to configurable
+    # search duration, so we'll let the user cancel if necessary 
+    while response is None or response['status'] == 'Running':
+        print("Fetching results...", file=sys.stderr)
+        time.sleep(1)
+        response = client.get_query_results(queryId=query_id)
+
+    return response
+
+
+def query_cloudwatch(session, log_group, query, search_time):
+    client = session.client('logs')
+    response = start_query(client, log_group, query, search_time)
+
+    if response and response['status'] == 'Complete':
+        return response['results']
+    
+    return []
+
+
+def extract_request_id_and_message(log_results):
+    """Extract the request_id to further search the logs"""
+    for result in log_results:
+        for field in result:
+            if field['field'] == '@message':
+                message = field['value']
+                try:
+                    message_json = json.loads(message.split(' - ERROR - ')[-1].strip())
+                    request_id = message_json.get('request_id')
+                    if request_id:
+                        return request_id, message_json
+                except json.JSONDecodeError:
+                    print("Failed to parse message as JSON")
+    return None, None
+
+
+def filter_error_messages(log_results):
+    """Extract the error message to display to the user"""
+    error_messages = []
+    
+    for result in log_results:
+        for field in result:
+            if field['field'] == '@message' and 'ERROR' in field['value']:
+                message = field['value']
+                try:
+                    # Find the start and end for the part we want to keep
+                    start = message.index('ERROR - ') + len('ERROR - ')
+                    end = message.index(' ---', start)
+                    
+                    # Extract the part between 'ERROR - ' and ' ---'
+                    error_message = message[start:end].strip()
+                    
+                    # Further remove the request_id (first part before the first space)
+                    error_message = ' '.join(error_message.split(' ')[1:]).strip()
+                    
+                    error_messages.append(error_message)
+                except ValueError:
+                    # If expected parts are not found, ignore this message
+                    continue
+    
+    return error_messages
 
 
 def main():
@@ -64,6 +141,15 @@ def main():
     )
 
     arg_parser.add_argument(
+        "-s",
+        "--search-time",
+        help="How far back to search the logs in days",
+        required=False,
+        type=int,
+        default=1,
+    )
+
+    arg_parser.add_argument(
         "-w",
         "--workspace",
         help="Environment to run against",
@@ -75,6 +161,7 @@ def main():
 
     uid = args.uid
     ver = args.api
+    search_time = args.search_time
     workspace = args.workspace
 
     workspace_mapping = {
@@ -87,17 +174,47 @@ def main():
         "preproduction": "sirius-pre",
         "production": "sirius-prod",
     }
+
     try:
         branch_prefix = workspace_mapping[workspace]
     except KeyError:
         branch_prefix = f"{workspace}.dev."
 
-    session = get_role_session(role_session[workspace], "operator")
+    session = get_role_session(role_session[workspace], "breakglass")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 
     iap_request_url = f"https://{branch_prefix}lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
-    handle_request("GET", iap_request_url, auth)
+    response = handle_request("GET", iap_request_url, auth)
+
+
+    if response.status_code == 200:
+        combined_output = response.json()
+        if combined_output.get("status") == "COLLECTION_ERROR":
+            log_group = f'/aws/lambda/lpa-iap-processor-{workspace}'
+
+            log_results = query_cloudwatch(
+                session, log_group,
+                f'fields @ingestionTime, @log, @logStream, @message, @requestId, @timestamp | filter @message like /{uid}/',
+                search_time=search_time
+            )
+
+            request_id, log_message = extract_request_id_and_message(log_results)
+
+            if request_id and log_message:
+                error_log_results = query_cloudwatch(
+                    session, log_group,
+                    f'fields @message, requestId | filter @requestId like /{request_id}/',
+                    search_time=search_time
+                )
+                combined_output["error_messages"] = filter_error_messages(error_log_results)
+            elif request_id is None:
+                # If there's no error message alongside COLLECTION_ERROR, this could be due to the search period being too short
+                combined_output["error_messages"] = "Cannot find request_id. Try extending the search period further back with the -s argument."
+    else:
+        print(f"Failed to fetch data from API. Status code: {response.status_code}")
+
+    print(json.dumps(combined_output, indent=4))
 
 
 if __name__ == "__main__":
