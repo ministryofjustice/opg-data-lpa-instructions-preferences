@@ -53,7 +53,7 @@ jobs:
 
       - name: Trivy Image Vulnerability Scanner
         id: trivy_scan
-        uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d
+        uses: aquasecurity/trivy-action@7c2007bcb556501da015201bcba5aa14069b74e2
         with:
           image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
@@ -73,7 +73,7 @@ jobs:
         uses: unfor19/install-aws-cli-action@27d6061dae5d39e89be4d2246824f15e111a7e06
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@c7680c32522b91cf6f7481e49535e154b93bed6d
+        uses: aws-actions/configure-aws-credentials@61a110527dcc9ccef6c109117050c80a00bec898
         with:
           aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
@@ -84,7 +84,7 @@ jobs:
 
       - name: Login to ECR
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@45cfbd442aaae781d98e0789e8adaf7386a2d374
+        uses: aws-actions/amazon-ecr-login@85e5ec2948ecabc5baafeeaf4440a0c49346ac13
         with:
           registries: 311462405659
 
