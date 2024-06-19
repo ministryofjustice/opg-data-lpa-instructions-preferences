@@ -7,6 +7,7 @@ import argparse
 from datetime import datetime, timedelta
 import time
 import json
+import sys
 
 
 def get_role_session(environment, role):
@@ -63,6 +64,7 @@ def start_query(client, log_group, query, search_time):
     # Keep retrying until we get a response. This could be a while due to configurable
     # search duration, so we'll let the user cancel if necessary 
     while response is None or response['status'] == 'Running':
+        print("Fetching results...", file=sys.stderr)
         time.sleep(1)
         response = client.get_query_results(queryId=query_id)
 
@@ -178,7 +180,7 @@ def main():
     except KeyError:
         branch_prefix = f"{workspace}.dev."
 
-    session = get_role_session(role_session[workspace], "operator")
+    session = get_role_session(role_session[workspace], "breakglass")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 
