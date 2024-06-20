@@ -46,8 +46,16 @@ def get_request_auth(credentials):
 
 
 def handle_request(method, url, auth):
-    response = requests.request(method=method, url=url, auth=auth)
-    return response
+    while True:
+        response = requests.request(method=method, url=url, auth=auth)
+        if response.status_code == 200:
+            response_json = response.json()
+            status = response_json.get("status")
+            if status in ["COLLECTION_ERROR", "COLLECTION_COMPLETE"]:
+                return response
+            else:
+                print(f"{status}. Retrying in 10 seconds...", file=sys.stderr)
+                time.sleep(10)
 
 
 def start_query(client, log_group, query, search_time):
@@ -64,7 +72,6 @@ def start_query(client, log_group, query, search_time):
     # Keep retrying until we get a response. This could be a while due to configurable
     # search duration, so we'll let the user cancel if necessary 
     while response is None or response['status'] == 'Running':
-        print("Fetching results...", file=sys.stderr)
         time.sleep(1)
         response = client.get_query_results(queryId=query_id)
 
@@ -93,7 +100,8 @@ def extract_request_id_and_message(log_results):
                     if request_id:
                         return request_id, message_json
                 except json.JSONDecodeError:
-                    print("Failed to parse message as JSON")
+                    print("Failed to parse message as JSON", file=sys.stderr)
+                    print(json.JSONDecodeError)
     return None, None
 
 
@@ -185,11 +193,15 @@ def main():
     auth = get_request_auth(credentials)
 
     iap_request_url = f"https://{branch_prefix}lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
+
+
     response = handle_request("GET", iap_request_url, auth)
 
 
     if response.status_code == 200:
         combined_output = response.json()
+        print("Fetching results...", file=sys.stderr)
+
         if combined_output.get("status") == "COLLECTION_ERROR":
             log_group = f'/aws/lambda/lpa-iap-processor-{workspace}'
 
@@ -211,10 +223,11 @@ def main():
             elif request_id is None:
                 # If there's no error message alongside COLLECTION_ERROR, this could be due to the search period being too short
                 combined_output["error_messages"] = "Cannot find request_id. Try extending the search period further back with the -s argument."
+        if combined_output.get("status") != "COLLECTION_IN_PROGRESS":
+            print(json.dumps(combined_output, indent=4))
     else:
         print(f"Failed to fetch data from API. Status code: {response.status_code}")
 
-    print(json.dumps(combined_output, indent=4))
 
 
 if __name__ == "__main__":
