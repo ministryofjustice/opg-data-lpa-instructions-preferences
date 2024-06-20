@@ -188,7 +188,7 @@ def main():
     except KeyError:
         branch_prefix = f"{workspace}.dev."
 
-    session = get_role_session(role_session[workspace], "breakglass")
+    session = get_role_session(role_session[workspace], "operator")
     credentials = session.get_credentials()
     auth = get_request_auth(credentials)
 
