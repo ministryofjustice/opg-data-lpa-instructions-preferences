@@ -66,12 +66,12 @@ def start_query(client, log_group, query, search_time):
         queryString=query,
     )
 
-    query_id = start_query_response['queryId']
+    query_id = start_query_response["queryId"]
     response = None
 
     # Keep retrying until we get a response. This could be a while due to configurable
-    # search duration, so we'll let the user cancel if necessary 
-    while response is None or response['status'] == 'Running':
+    # search duration, so we'll let the user cancel if necessary
+    while response is None or response["status"] == "Running":
         time.sleep(1)
         response = client.get_query_results(queryId=query_id)
 
@@ -79,12 +79,12 @@ def start_query(client, log_group, query, search_time):
 
 
 def query_cloudwatch(session, log_group, query, search_time):
-    client = session.client('logs')
+    client = session.client("logs")
     response = start_query(client, log_group, query, search_time)
 
-    if response and response['status'] == 'Complete':
-        return response['results']
-    
+    if response and response["status"] == "Complete":
+        return response["results"]
+
     return []
 
 
@@ -92,43 +92,43 @@ def extract_request_id_and_message(log_results):
     """Extract the request_id to further search the logs"""
     for result in log_results:
         for field in result:
-            if field['field'] == '@message':
-                message = field['value']
+            if field["field"] == "@message":
+                message = field["value"]
                 try:
-                    message_json = json.loads(message.split(' - ERROR - ')[-1].strip())
-                    request_id = message_json.get('request_id')
+                    message_json = json.loads(message.split(" - ERROR - ")[-1].strip())
+                    request_id = message_json.get("request_id")
                     if request_id:
                         return request_id, message_json
                 except json.JSONDecodeError:
                     print("Failed to parse message as JSON", file=sys.stderr)
-                    print(json.JSONDecodeError)
+                    print(json.JSONDecodeError, file=sys.stderr)
     return None, None
 
 
 def filter_error_messages(log_results):
     """Extract the error message to display to the user"""
     error_messages = []
-    
+
     for result in log_results:
         for field in result:
-            if field['field'] == '@message' and 'ERROR' in field['value']:
-                message = field['value']
+            if field["field"] == "@message" and "ERROR" in field["value"]:
+                message = field["value"]
                 try:
                     # Find the start and end for the part we want to keep
-                    start = message.index('ERROR - ') + len('ERROR - ')
-                    end = message.index(' ---', start)
-                    
+                    start = message.index("ERROR - ") + len("ERROR - ")
+                    end = message.index(" ---", start)
+
                     # Extract the part between 'ERROR - ' and ' ---'
                     error_message = message[start:end].strip()
-                    
+
                     # Further remove the request_id (first part before the first space)
-                    error_message = ' '.join(error_message.split(' ')[1:]).strip()
-                    
+                    error_message = " ".join(error_message.split(" ")[1:]).strip()
+
                     error_messages.append(error_message)
                 except ValueError:
                     # If expected parts are not found, ignore this message
                     continue
-    
+
     return error_messages
 
 
@@ -194,40 +194,43 @@ def main():
 
     iap_request_url = f"https://{branch_prefix}lpa-iap.api.opg.service.justice.gov.uk/{ver}/image-request/{uid}"
 
-
     response = handle_request("GET", iap_request_url, auth)
-
 
     if response.status_code == 200:
         combined_output = response.json()
         print("Fetching results...", file=sys.stderr)
 
         if combined_output.get("status") == "COLLECTION_ERROR":
-            log_group = f'/aws/lambda/lpa-iap-processor-{workspace}'
+            log_group = f"/aws/lambda/lpa-iap-processor-{workspace}"
 
             log_results = query_cloudwatch(
-                session, log_group,
-                f'fields @ingestionTime, @log, @logStream, @message, @requestId, @timestamp | filter @message like /{uid}/',
-                search_time=search_time
+                session,
+                log_group,
+                f"fields @ingestionTime, @log, @logStream, @message, @requestId, @timestamp | filter @message like /{uid}/",
+                search_time=search_time,
             )
 
             request_id, log_message = extract_request_id_and_message(log_results)
 
             if request_id and log_message:
                 error_log_results = query_cloudwatch(
-                    session, log_group,
-                    f'fields @message, requestId | filter @requestId like /{request_id}/',
-                    search_time=search_time
+                    session,
+                    log_group,
+                    f"fields @message, requestId | filter @requestId like /{request_id}/",
+                    search_time=search_time,
                 )
-                combined_output["error_messages"] = filter_error_messages(error_log_results)
+                combined_output["error_messages"] = filter_error_messages(
+                    error_log_results
+                )
             elif request_id is None:
                 # If there's no error message alongside COLLECTION_ERROR, this could be due to the search period being too short
-                combined_output["error_messages"] = "Cannot find request_id. Try extending the search period further back with the -s argument."
+                combined_output["error_messages"] = (
+                    "Cannot find request_id. Try extending the search period further back with the -s argument."
+                )
         if combined_output.get("status") != "COLLECTION_IN_PROGRESS":
             print(json.dumps(combined_output, indent=4))
     else:
         print(f"Failed to fetch data from API. Status code: {response.status_code}")
-
 
 
 if __name__ == "__main__":
