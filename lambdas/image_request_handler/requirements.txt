@@ -1,4 +1,4 @@
-boto3==1.34.144
+boto3==1.34.145
 awslambdaric==2.0.12
 setuptools==71.1.0
 imageio==2.34.2
