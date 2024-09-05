@@ -27,7 +27,7 @@ jobs:
           - folder: 'environment'
           - folder: 'account'
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin@v3
+      - uses: actions/checkout@2d7d9f7ff5b310f983d059b68785b3c74d8b8edd # pin@v3
 
       - id: terraform_version
         name: Get terraform version
@@ -35,7 +35,7 @@ jobs:
         with:
           terraform_directory: "./terraform/${{ matrix.folder }}"
 
-      - uses: hashicorp/setup-terraform@7f4493e15578a47490e79892b308bf23dee56c45 # pin@v2.0.0
+      - uses: hashicorp/setup-terraform@a0b6ede12c06dbc21b9ea1f225a4121a2f203c69 # pin@v2.0.0
         with:
           terraform_version: ${{ steps.terraform_version.outputs.version }}
 
@@ -43,7 +43,7 @@ jobs:
         name: Setup TFLint
 
       - name: configure AWS credentials for terraform
-        uses: aws-actions/configure-aws-credentials@12e3392609eaaceb7ae6191b3f54bbcb85b5002b # pin@v1.7.0
+        uses: aws-actions/configure-aws-credentials@e26e19042832fb823bebedbd411b82b685244c69 # pin@v1.7.0
         with:
           aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
           aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
