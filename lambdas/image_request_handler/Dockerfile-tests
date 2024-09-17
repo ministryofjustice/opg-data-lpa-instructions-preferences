@@ -10,6 +10,9 @@ COPY tests ${FUNCTION_DIR}/tests
 COPY requirements.txt requirements.txt
 COPY requirements-dev.txt requirements-dev.txt
 
+RUN apt-get update && \
+    apt-get upgrade expat
+
 # Install the runtime interface client
 RUN python -m pip install --upgrade pip
 RUN python -m pip install \
