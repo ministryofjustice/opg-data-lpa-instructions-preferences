@@ -1,6 +1,6 @@
 # Define function directory
 ARG FUNCTION_DIR="/function"
-FROM python:3.12-alpine3.18 AS python-alpine
+FROM python:3.12-alpine3.19 AS python-alpine
 RUN apk add libstdc++
 
 RUN apk upgrade libcrypto1.1 libcom_err ncurses-terminfo-base ncurses-libs libssl3 libcrypto3
@@ -36,6 +36,7 @@ RUN python -m pip install \
 
 # Multi-stage build: grab a fresh copy of the base image
 FROM python-alpine
+
 # Add libzstd  library - needed for awslambdaric's runtime_client module
 RUN apk add zstd-libs
 # Include global arg in this stage of the build
