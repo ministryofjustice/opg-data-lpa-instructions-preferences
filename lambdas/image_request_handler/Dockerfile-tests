@@ -11,7 +11,7 @@ COPY requirements.txt requirements.txt
 COPY requirements-dev.txt requirements-dev.txt
 
 RUN apt-get update && \
-    apt-get upgrade expat
+    apt-get upgrade expat -y
 
 # Install the runtime interface client
 RUN python -m pip install --upgrade pip

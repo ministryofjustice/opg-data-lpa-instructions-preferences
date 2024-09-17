@@ -10,7 +10,7 @@ WORKDIR ${FUNCTION_DIR}
 COPY requirements.txt requirements.txt
 # Install tesseract build dependencies
 RUN apt-get update && \
-    apt-get upgrade expat && \
+    apt-get upgrade expat -y && \
     apt-get install -y libtesseract-dev libleptonica-dev tesseract-ocr build-essential && \
     rm -rf /var/lib/apt/lists/*
 # Pip dependency installs
@@ -33,7 +33,7 @@ RUN groupadd -g 999 python && \
 WORKDIR ${FUNCTION_DIR}
 # Install runtime dependencies
 RUN apt-get update && \
-    apt-get upgrade expat && \
+    apt-get upgrade expat -y && \
     apt-get install -y libgl1-mesa-glx libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
