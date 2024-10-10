@@ -51,12 +51,21 @@ jobs:
         id: build_container
         run: docker build --file ${{ matrix.path }}/Dockerfile --tag ${{ matrix.name }}:latest ${{ matrix.path }}
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@a70163716ac95dea0bf269be9aff669ad6a933c5
+        with:
+          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
+          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::311462405659:role/integrations-ci
+          role-duration-seconds: 900
+          role-session-name: OPGLPAIaPGithubAction
+
       - name: ecr login
         id: login_ecr
         uses: aws-actions/amazon-ecr-login@d5dd46d537c86e506335323688c342319bedcfe1 # pin@v1.5.1
         with:
           registries: 311462405659
-          aws-region: eu-west-1
 
       - name: Trivy Image Vulnerability Scanner
         id: trivy_scan
@@ -82,15 +91,6 @@ jobs:
       - name: Install AWS Cli
         uses: unfor19/install-aws-cli-action@27d6061dae5d39e89be4d2246824f15e111a7e06
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@a70163716ac95dea0bf269be9aff669ad6a933c5
-        with:
-          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
-          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
-          aws-region: eu-west-1
-          role-to-assume: arn:aws:iam::311462405659:role/integrations-ci
-          role-duration-seconds: 900
-          role-session-name: OPGLPAIaPGithubAction
 
       - name: Push to ECR
         env:
