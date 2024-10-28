@@ -132,13 +132,31 @@ def filter_error_messages(log_results):
     return error_messages
 
 
+def clean_uid(uid):
+    """Removes hyphens from the UID"""
+    cleaned_uid = uid.replace("-", "")
+
+    # Validate that the cleaned UID is numeric
+    if not cleaned_uid.isdigit():
+        raise argparse.ArgumentTypeError(
+            f"UID '{uid}' contains invalid characters after removing hyphens."
+        )
+
+    if len(cleaned_uid) != 12:
+        raise argparse.ArgumentTypeError(
+            f"UID {uid} should have a length of 12 after removing hyphens"
+        )
+
+    return cleaned_uid
+
+
 def main():
     arg_parser = argparse.ArgumentParser(
         description="Check specified LPA ID(s) against the Instructions and Preferences Gateway"
     )
 
     arg_parser.add_argument(
-        "-u", "--uid", help="UID of LPA to be checked", required=True, type=int
+        "-u", "--uid", help="UID of LPA to be checked", required=True, type=str
     )
 
     arg_parser.add_argument(
@@ -167,7 +185,12 @@ def main():
 
     args = arg_parser.parse_args()
 
-    uid = args.uid
+    # Clean and validate the UID
+    try:
+        uid = clean_uid(args.uid)
+    except argparse.ArgumentTypeError as e:
+        arg_parser.error(str(e))
+
     ver = args.api
     search_time = args.search_time
     workspace = args.workspace
