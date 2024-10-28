@@ -16,9 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Validate LPA ID
+        id: validate_lpa
         run: |
-          if [[ ${{ github.event.inputs.lpaId }} =~ ^7[0-9]{11}$ ]]; then
+          if [[ ${{ github.event.inputs.lpaId }} =~ ^7[0-9]{3}-?[0-9]{4}-?[0-9]{4}$ ]]; then
             echo "LPA ID is in a valid format"
+            clean_lpaId=$(echo "${{ github.event.inputs.lpaId }}" | sed 's/-//g')
+            echo "lpaId=${clean_lpaId}" >> $GITHUB_OUTPUT
           else
             echo "LPA ID is not valid"
             exit 1
@@ -31,10 +34,10 @@ jobs:
           aws-region: eu-west-1
           role-to-assume: arn:aws:iam::649098267436:role/integrations-ci
           role-duration-seconds: 900
-          role-session-name: "${{ github.actor }}DeleteInstructionsAndPreferences${{ github.event.inputs.lpaId }}"
+          role-session-name: "${{ github.actor }}DeleteInstructionsAndPreferences${{ steps.validate_lpa.outputs.lpaId }}"
       - name: Delete Instructions and Preferences from S3 bucket
         run: |
-          DELETE_COUNT=$(aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}-*" --dryrun | wc -l)
+          DELETE_COUNT=$(aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ steps.validate_lpa.outputs.lpaId }}-*" --dryrun | wc -l)
           if [[ $DELETE_COUNT -gt 10 ]]; then
             echo "WARNING: More than 10 files will be deleted from S3 bucket, exiting to prevent accidental deletion of data. Please delete the files manually."
             exit 1
@@ -42,6 +45,6 @@ jobs:
             echo "No files to delete from S3 bucket"
             exit 1
           else
-            aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ github.event.inputs.lpaId }}-*"
+            aws s3 rm s3://lpa-iap-production/ --recursive --exclude "*" --include "iap-${{ steps.validate_lpa.outputs.lpaId }}-*"
             echo "Deleted $DELETE_COUNT files from S3 bucket" >> $GITHUB_STEP_SUMMARY
           fi
