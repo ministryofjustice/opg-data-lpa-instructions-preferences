@@ -66,6 +66,10 @@ data "aws_s3_bucket" "sirius" {
   bucket = "opg-backoffice-datastore-${local.account.target_environment}"
 }
 
+data "aws_kms_key" "secrets_manager" {
+  key_id = "alias/secrets-manager-regional-kms-key"
+}
+
 // Access policy for the both s3 buckets and the SQS queue
 data "aws_iam_policy_document" "ual_iap_processor_lambda" {
   #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
@@ -105,6 +109,15 @@ data "aws_iam_policy_document" "ual_iap_processor_lambda" {
     resources = [data.aws_secretsmanager_secret.jwt_key.arn]
     actions = [
       "secretsmanager:GetSecretValue"
+    ]
+  }
+
+  statement {
+    sid       = "AllowKMSDecryptForSecretManager"
+    effect    = "Allow"
+    resources = [data.aws_kms_key.secrets_manager.arn]
+    actions = [
+      "kms:Decrypt"
     ]
   }
 
