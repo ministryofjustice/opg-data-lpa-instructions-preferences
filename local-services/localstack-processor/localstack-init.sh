@@ -12,7 +12,7 @@ awslocal lambda create-function \
           --function-name function \
           --code ImageUri=image-processor:latest \
           --timeout=900 \
-          --role arn:aws:iam::000000000:role/lambda-ex
+          --role arn:aws:iam::000000000:role/lambda-role
 
 echo "Creating event source mapping"
 
