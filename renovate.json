@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     "schedule:earlyMondays"
   ],
   "branchPrefix": "renovate-",
@@ -11,14 +11,16 @@
     "Renovate"
   ],
   "customManagers": [
-      {
-        "customType": "regex",
-        "fileMatch": ["^Dockerfile$"],
-        "matchStrings": [
-          "FROM (?<depName>.*):alpine(?<currentValue>.*)-slim"
-        ],
-        "datasourceTemplate": "docker"
-      }
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Dockerfile$"
+      ],
+      "matchStrings": [
+        "FROM (?<depName>.*):alpine(?<currentValue>.*)-slim"
+      ],
+      "datasourceTemplate": "docker"
+    }
   ],
   "packageRules": [
     {
@@ -28,9 +30,6 @@
         "Dependencies",
         "Renovate"
       ],
-      "matchPackagePatterns": [
-        "*"
-      ],
       "matchUpdateTypes": [
         "minor",
         "patch"
@@ -39,25 +38,36 @@
       "schedule": [
         "after 6am and before 9am on Monday"
       ],
-      "stabilityDays": 3
+      "minimumReleaseAge": "3 days",
+      "matchPackageNames": [
+        "*"
+      ]
     },
     {
       "description": "Docker file updates",
       "automerge": false,
       "groupName": "minor and patch updates (Docker)",
       "groupSlug": "all-minor-patch-updates-docker",
-      "labels": ["Dependencies", "Renovate"],
-      "matchManagers": ["dockerfile"],
-      "matchUpdateTypes": ["minor", "patch"],
+      "labels": [
+        "Dependencies",
+        "Renovate"
+      ],
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
       "prCreation": "immediate",
       "prPriority": 4,
-      "stabilityDays": 3
+      "minimumReleaseAge": "3 days"
     }
   ],
   "major": {
     "labels": [
-        "Dependencies",
-        "Renovate"
+      "Dependencies",
+      "Renovate"
     ],
     "prCreation": "immediate",
     "rangeStrategy": "pin",
@@ -76,7 +86,7 @@
       "after 6am and before 9am every weekday"
     ],
     "dependencyDashboardApproval": false,
-    "stabilityDays": 0,
+    "minimumReleaseAge": null,
     "rangeStrategy": "pin",
     "commitMessagePrefix": "[SECURITY]",
     "branchTopic": "{{{datasource}}}-{{{depName}}}-vulnerability",

@@ -51,9 +51,29 @@ jobs:
         id: build_container
         run: docker build --file ${{ matrix.path }}/Dockerfile --tag ${{ matrix.name }}:latest ${{ matrix.path }}
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722
+        with:
+          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
+          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
+          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::311462405659:role/integrations-ci
+          role-duration-seconds: 900
+          role-session-name: OPGLPAIaPGithubAction
+
+      - name: ecr login
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@24b5850e1456eedf7a4b32f9c854c324802f44b5 # pin@v1.5.1
+        with:
+          registries: 311462405659
+
       - name: Trivy Image Vulnerability Scanner
         id: trivy_scan
-        uses: aquasecurity/trivy-action@d9cd5b1c23aaf8cb31bb09141028215828364bbb
+        uses: aquasecurity/trivy-action@a11da62073708815958ea6d84f5650c78a3ef85b
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
+          TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
         with:
           image-ref: ${{ matrix.name }}:latest
           severity: 'HIGH,CRITICAL'
@@ -72,21 +92,6 @@ jobs:
       - name: Install AWS Cli
         uses: unfor19/install-aws-cli-action@27d6061dae5d39e89be4d2246824f15e111a7e06
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@e26e19042832fb823bebedbd411b82b685244c69
-        with:
-          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
-          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
-          aws-region: eu-west-1
-          role-to-assume: arn:aws:iam::311462405659:role/integrations-ci
-          role-duration-seconds: 900
-          role-session-name: OPGLPAIaPGithubAction
-
-      - name: Login to ECR
-        id: login_ecr
-        uses: aws-actions/amazon-ecr-login@00e8074ea5f4936907c7b26611e2b9b4691c2784
-        with:
-          registries: 311462405659
 
       - name: Push to ECR
         env:
