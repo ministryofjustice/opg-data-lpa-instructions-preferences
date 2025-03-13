@@ -23,7 +23,7 @@ awslocal lambda create-function \
           --function-name function \
           --code ImageUri=image-request-handler:latest \
           --region eu-west-1 \
-          --role arn:aws:iam::000000000:role/lambda-ex
+          --role arn:aws:iam::000000000:role/lambda-role
 
 API_NAME=opg-data-lpa-instructions-preferences
 
