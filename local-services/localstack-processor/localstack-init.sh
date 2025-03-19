@@ -11,6 +11,7 @@ echo "Creating image-processor lambda"
 
 awslocal lambda create-function \
           --function-name function \
+          --package-type Image \
           --code ImageUri=image-processor:latest \
           --timeout=900 \
           --region eu-west-1 \
