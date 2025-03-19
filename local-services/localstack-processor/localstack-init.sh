@@ -1,3 +1,4 @@
+#!/bin/sh
 set -e
 
 awslocal secretsmanager create-secret --name "local/jwt-key" --secret-string "FAKETOKEN"
@@ -12,7 +13,7 @@ awslocal lambda create-function \
           --function-name function \
           --code ImageUri=image-processor:latest \
           --timeout=900 \
-          --region eu-west-1 
+          --region eu-west-1 \
           --role arn:aws:iam::000000000:role/lambda-role
 
 echo "Creating event source mapping"
