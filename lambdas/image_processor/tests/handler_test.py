@@ -63,7 +63,7 @@ def test_get_timestamp_as_str(image_processor):
     timestamp_str = image_processor.get_timestamp_as_str()
 
     # Verify that the timestamp string is correct
-    expected_str = str(int(datetime.datetime.utcnow().timestamp()))
+    expected_str = str(int(datetime.datetime.now(datetime.UTC).timestamp()))
     assert timestamp_str == expected_str
 
 

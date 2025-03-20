@@ -99,6 +99,7 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
       - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 4566:4566
     healthcheck:
@@ -119,6 +120,8 @@ services:
       LAMBDA_REMOVE_CONTAINERS: "true"
       LAMBDA_FORWARD_URL: http://image-processor:8080
       DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 4567:4566
     healthcheck:
