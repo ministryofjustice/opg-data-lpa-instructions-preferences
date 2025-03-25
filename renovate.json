@@ -11,6 +11,9 @@
     "Dependencies",
     "Renovate"
   ],
+  "ignoreDeps": [
+    "github.com/ministryofjustice/opg-terraform-aws-moj-ip-allow-list"
+  ],
   "customManagers": [
     {
       "customType": "regex",
