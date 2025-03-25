@@ -89,9 +89,12 @@ services:
       dockerfile: Dockerfile
     environment:
       SERVICES: s3,lambda,apigateway
+      AWS_ACCESS_KEY_ID: fake
+      AWS_SECRET_ACCESS_KEY: fake
       DEFAULT_REGION: eu-west-1
       USE_SINGLE_REGION: 1
       DEBUG: 1
+      LS_LOG: trace
       HOSTNAME_EXTERNAL: localstack-request-handler
       LAMBDA_EXECUTOR: docker
       LAMBDA_REMOVE_CONTAINERS: "true"
@@ -99,6 +102,7 @@ services:
       DOCKER_HOST: unix:///var/run/docker.sock
     volumes:
       - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 4566:4566
     healthcheck:
@@ -119,6 +123,8 @@ services:
       LAMBDA_REMOVE_CONTAINERS: "true"
       LAMBDA_FORWARD_URL: http://image-processor:8080
       DOCKER_HOST: unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     ports:
       - 4567:4566
     healthcheck:
