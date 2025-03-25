@@ -89,9 +89,12 @@ services:
       dockerfile: Dockerfile
     environment:
       SERVICES: s3,lambda,apigateway
+      AWS_ACCESS_KEY_ID: fake
+      AWS_SECRET_ACCESS_KEY: fake
       DEFAULT_REGION: eu-west-1
       USE_SINGLE_REGION: 1
       DEBUG: 1
+      LS_LOG: trace
       HOSTNAME_EXTERNAL: localstack-request-handler
       LAMBDA_EXECUTOR: docker
       LAMBDA_REMOVE_CONTAINERS: "true"
