@@ -141,7 +141,7 @@ class ImageProcessor:
 
     @staticmethod
     def get_timestamp_as_str() -> str:
-        return str(int(datetime.datetime.utcnow().timestamp()))
+        return str(int(datetime.datetime.now(datetime.UTC).timestamp()))
 
     def create_output_dir(self) -> None:
         """
