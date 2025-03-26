@@ -22,6 +22,7 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
+      AWS_XRAY_SDK_ENABLED: false
       ENVIRONMENT: local
       VERSION: v1
       LOGGER_LEVEL: DEBUG
@@ -52,6 +53,7 @@ services:
       SIRIUS_URL_PART: /v1
       SESSION_DATA: publicapi@opgtest.com
       AWS_LAMBDA_FUNCTION_TIMEOUT: 900
+      AWS_XRAY_SDK_ENABLED: false
       LOGGER_LEVEL: DEBUG
 
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
