@@ -110,6 +110,8 @@ docker-compose up
 cd integration
 python3 -m pytest .
 ```
+In CI/CD, be sure to upload any new or updated test files in s3-uploads, to the opg-backoffice-datastore-integration S3 bucket.
+We have considered automating this upload in CI, but not pursued this for now due to the work involved to address security concerns.
 
 ### Setting up UAT against real sirius
 
