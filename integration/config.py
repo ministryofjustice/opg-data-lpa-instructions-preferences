@@ -303,4 +303,49 @@ templates = {
             "signedUrls": {},
         },
     },
+    "LP1F-hi-res": {
+        "lpa_uid": "700000000100",
+        "expected_collection_started_response": {
+            "uId": "700000000100",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000100",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000100",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000100-instructions": "",
+                "iap-700000000100-preferences": "",
+            },
+        },
+    },
+    "LP1F-with-hi-res-continuation-sheet": {
+        "lpa_uid": "700000000101",
+        "expected_collection_started_response": {
+            "uId": "700000000101",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000101",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000101",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000101-instructions": "",
+                "iap-700000000101-preferences": "",
+                "iap-700000000101-continuation_instructions_1": "",
+                "iap-700000000101-continuation_instructions_2": "",
+                "iap-700000000101-continuation_preferences_1": "",
+            },
+        },
+    },
 }
