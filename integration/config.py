@@ -345,6 +345,8 @@ templates = {
                 "iap-700000000101-continuation_instructions_1": "",
                 "iap-700000000101-continuation_instructions_2": "",
                 "iap-700000000101-continuation_preferences_1": "",
+                "iap-700000000101-continuation_preferences_2": "",
+                "iap-700000000101-continuation_preferences_3": "",
             },
         },
     },
