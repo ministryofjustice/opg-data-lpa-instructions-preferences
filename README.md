@@ -110,8 +110,14 @@ docker-compose up
 cd integration
 python3 -m pytest .
 ```
+
+### Issues to be aware of when running integration tests in CI
 In CI/CD, be sure to upload any new or updated test files in s3-uploads, to the opg-backoffice-datastore-integration S3 bucket.
-We have considered automating this upload in CI, but not pursued this for now due to the work involved to address security concerns.
+Failure to do so would cause a confusing situation where the exact same tests work fine locally but not in CI.
+We've considered automating this upload in CI, but not pursued this for now due to the work that would involve to address security concerns.
+
+If you need troubleshoot by inspecting CloudWatch logs for a CI dev environment, please be aware that the role needed to do this, is not,
+as one might expect, ual-dev-operator, but, instead, sirius-dev-operator. 
 
 ### Setting up UAT against real sirius
 
