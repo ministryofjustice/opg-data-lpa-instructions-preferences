@@ -303,4 +303,25 @@ templates = {
             "signedUrls": {},
         },
     },
+    "LP1F-hi-res": {
+        "lpa_uid": "700000000100",
+        "expected_collection_started_response": {
+            "uId": "700000000100",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000100",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000100",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000100-instructions": "",
+                "iap-700000000100-preferences": "",
+            },
+        },
+    },
 }
