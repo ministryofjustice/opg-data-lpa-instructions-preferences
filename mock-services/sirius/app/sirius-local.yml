@@ -81,8 +81,7 @@ paths:
                 lpa0101:
                   value:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-local/LP1F-Scan.pdf', 'template': 'LP1F'}]
-                    // either continuation sheet is in this file, or sep file 
-                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/LPC-Scan.pdf', 'template': 'LPC'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-local/700000069315_20250401121101.243519_LPC.pdf', 'template': 'LPC'}]
               schema:
                 type: object
                 properties:

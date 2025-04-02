@@ -80,8 +80,8 @@ paths:
                     lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/7000-0004-2643_20250227131843.371062_LP1F.pdf', 'template': 'LP1F'}]
                 lpa0101:
                   value:
-                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/A Hi Res Lpa with checkbox for continuation sheet.pdf', 'template': 'LP1F'}]
-                    // either continuation sheet is in this file, or sep file
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LP1F-Scan.pdf', 'template': 'LP1F'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/700000069315_20250401121101.243519_LPC.pdf', 'template': 'LPC'}]
               schema:
                 type: object
                 properties:
