@@ -15,8 +15,8 @@ tags:
 
 x-amazon-apigateway-request-validators:
   all:
-    validateRequestParameters: true
-    validateRequestBody: true
+    validateRequestParameters: false
+    validateRequestBody: false
 x-amazon-apigateway-gateway-responses:
   ACCESS_DENIED:
       responseTemplates:
