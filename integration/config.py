@@ -336,11 +336,14 @@ templates = {
             "status": "COLLECTION_IN_PROGRESS",
             "signedUrls": {},
         },
-        # TODO due to a known issue UML-3915 this goes to error, until this is fixed we have to expect an error for now
+        # TODO due to a known issue UML-3915 this won't get the continuation sheets yet but will appear to have worked
         "expected_collection_completed_response": {
             "uId": "700000000101",
-            "status": "COLLECTION_ERROR",
-            "signedUrls": {},
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000101-instructions": "",
+                "iap-700000000101-preferences": "",
+            },
         },
         # TODO below is the expected response when UML-3915 is fixed
         #"expected_collection_completed_response": {
