@@ -34,8 +34,8 @@ class SiriusService:
         encoded_jwt = jwt.encode(
             {
                 "session-data": session_data,
-                "iat": datetime.datetime.utcnow(),
-                "exp": datetime.datetime.utcnow() + datetime.timedelta(seconds=3600),
+                "iat": datetime.datetime.now(datetime.UTC),
+                "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=3600),
             },
             secret,
             algorithm="HS256",
