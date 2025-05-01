@@ -28,6 +28,8 @@ echo "Creating API Gateway"
 sed "s/\${region}/eu-west-1/g" /tmp/image-request-handler.yml > /tmp/image-request-handler-updated.yml
 sed -i "s/\${account_id}/000000000000/g" /tmp/image-request-handler-updated.yml
 sed -i "s/\$\${stageVariables.app_name}/image-request-handler/g" /tmp/image-request-handler-updated.yml
+sed -i "s/validateRequestParameters: true/validateRequestParameters: false/g" /tmp/image-request-handler-updated.yml
+sed -i "s/validateRequestBody: true/validateRequestBody: false/g" /tmp/image-request-handler-updated.yml
 
 cat /tmp/image-request-handler-updated.yml
 
