@@ -10,21 +10,16 @@ do
     awslocal s3 cp $lpafile s3://opg-backoffice-datastore-local/$(basename $lpafile)
 done
 
-#awslocal s3api put-bucket-policy \
-#    --policy '{ "Statement": [ { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::lpa-iap-bucket/*", "Condition":  { "StringNotEquals": { "s3:x-amz-server-side-encryption": "AES256" } } }, { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::lpa-iap-bucket/*", "Condition":  { "Bool": { "aws:SecureTransport": false } } } ] }' \
-#    --bucket "lpa-iap-bucket-local"
-
-#awslocal s3api put-bucket-policy \
-#    --policy '{ "Statement": [ { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::sirius-bucket/*", "Condition":  { "StringNotEquals": { "s3:x-amz-server-side-encryption": "AES256" } } }, { "Sid": "DenyUnEncryptedObjectUploads", "Effect": "Deny", "Principal": { "AWS": "*" }, "Action": "s3:PutObject", "Resource": "arn:aws:s3:eu-west-1::sirius-bucket/*", "Condition":  { "Bool": { "aws:SecureTransport": false } } } ] }' \
-#    --bucket "sirius-bucket-local"
-
 echo "Creating Lambda Function"
 
+zip lambda.zip forwarder.py
+
 awslocal lambda create-function \
-          --function-name function \
-          --package-type Image \
-          --code ImageUri=image-request-handler:latest \
+          --function-name image-request-handler \
           --region eu-west-1 \
+          --runtime python3.11 \
+          --zip-file fileb://lambda.zip \
+          --handler forwarder.handler \
           --role arn:aws:iam::000000000000:role/lambda-role
 
 API_NAME=opg-data-lpa-instructions-preferences
@@ -32,7 +27,7 @@ API_NAME=opg-data-lpa-instructions-preferences
 echo "Creating API Gateway"
 sed "s/\${region}/eu-west-1/g" /tmp/image-request-handler.yml > /tmp/image-request-handler-updated.yml
 sed -i "s/\${account_id}/000000000000/g" /tmp/image-request-handler-updated.yml
-sed -i "s/\$\${stageVariables.app_name}/function/g" /tmp/image-request-handler-updated.yml
+sed -i "s/\$\${stageVariables.app_name}/image-request-handler/g" /tmp/image-request-handler-updated.yml
 
 cat /tmp/image-request-handler-updated.yml
 
@@ -47,7 +42,7 @@ awslocal apigateway create-deployment \
     --region eu-west-1 \
     --rest-api-id ${API_ID} \
     --stage-name v1 \
-    --variables account_id=000000000000,region=eu-west-1,app_name=function
+    --variables account_id=000000000000,region=eu-west-1,app_name=image-request-handler
 
 echo "API Gateway URL: http://localhost:4566/restapis/${API_ID}/v1/_user_request_/"
 echo "Example curl command: curl -XGET http://localhost:4566/restapis/${API_ID}/v1/_user_request_/image-request/700000000047"

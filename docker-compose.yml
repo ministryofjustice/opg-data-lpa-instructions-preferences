@@ -23,6 +23,7 @@ services:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
       AWS_XRAY_SDK_ENABLED: false
+      AWS_REGION: eu-west-1
       ENVIRONMENT: local
       VERSION: v1
       LOGGER_LEVEL: DEBUG
@@ -46,6 +47,7 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
+      AWS_REGION: eu-west-1
       ENVIRONMENT: local
       TARGET_ENVIRONMENT: local
       SECRET_PREFIX: local
