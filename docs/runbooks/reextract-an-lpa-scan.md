@@ -13,7 +13,21 @@ opg-data-lpa-instructions-preferences/scripts
 aws-vault exec identity -- python post-request.py -w production -u <LPA ID> | jq
 ```
 
-This will return a JSON object containing links to the new extracts. You can then use these links to check the new extracts are readable and undistorted.
+## Viewing the images
+Once the extractions have been completed, the script will return JSON with links to download the images, e.g.:
+
+```bash
+{
+ "uId": <LPA-ID>
+ "status": "COLLECTION_COMPLETE",
+ "signedUrls": {
+  "iap-<LPA-ID>-instructions": "<link>"
+  "iap-<LPA-ID>-preferences": "<link>"
+ }
+}
+```
+
+This will return a JSON object containing links to the new extracts. Once downloaded, use the `Preview` app on Mac (it will be easier to select all related images to view at the same time) to view the images and ensure that the images are legible and undistorted.
 
 ## Troubleshooting
 If the new extracts are still distorted or unreadable after this, you will need to contact the [code owners](https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences/blob/main/CODEOWNERS) to investigate further.
