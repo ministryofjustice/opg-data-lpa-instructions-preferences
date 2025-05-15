@@ -17,8 +17,8 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "^Dockerfile$"
+      "managerFilePatterns": [
+        "/^Dockerfile$/"
       ],
       "matchStrings": [
         "FROM (?<depName>.*):alpine(?<currentValue>.*)-slim"
