@@ -1,9 +1,10 @@
 locals {
-  environment       = terraform.workspace
-  account           = contains(keys(var.accounts), local.environment) ? var.accounts[local.environment] : var.accounts.development
-  branch_build_flag = contains(keys(var.accounts), local.environment) ? false : true
-  a_record          = local.branch_build_flag ? "${local.environment}.${data.aws_route53_zone.environment_cert.name}" : data.aws_route53_zone.environment_cert.name
-  api_name          = "image-request-handler"
+  environment        = terraform.workspace
+  account            = contains(keys(var.accounts), local.environment) ? var.accounts[local.environment] : var.accounts.development
+  branch_build_flag  = contains(keys(var.accounts), local.environment) ? false : true
+  a_record           = local.branch_build_flag ? "${local.environment}.${data.aws_route53_zone.environment_cert.name}" : data.aws_route53_zone.environment_cert.name
+  api_name           = "image-request-handler"
+  target_environment = contains(keys(var.environment_mapping), local.environment) ? var.environment_mapping[local.environment] : var.environment_mapping.default
 
   expiration_days            = 365
   noncurrent_expiration_days = 30
@@ -57,10 +58,13 @@ variable "accounts" {
       opg_hosted_zone      = string
       extra_allowed_roles  = list(string)
       vpc_id               = string
-      target_environment   = string
       secret_prefix        = string
       s3_vpc_endpoint_ids  = set(string)
     })
   )
   description = "A map of accounts to deploy to"
+}
+
+variable "environment_mapping" {
+  type = map(string)
 }
