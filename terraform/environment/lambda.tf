@@ -31,9 +31,9 @@ module "processor_lamdba" {
   lambda_name = "lpa-iap-processor-${local.environment}"
   environment_variables = {
     ENVIRONMENT        = local.environment
-    SIRIUS_URL         = var.use_mock_sirius ? "http://mock-sirius.lpa-iap-${local.environment}.ecs" : "http://api.${local.account.target_environment}.ecs"
+    SIRIUS_URL         = var.use_mock_sirius ? "http://mock-sirius.lpa-iap-${local.environment}.ecs" : "http://api.${local.target_environment}.ecs"
     SESSION_DATA       = local.session_data
-    TARGET_ENVIRONMENT = local.account.target_environment
+    TARGET_ENVIRONMENT = local.target_environment
     SECRET_PREFIX      = local.account.secret_prefix
     SIRIUS_URL_PART    = "/api/public/v1"
     LOGGER_LEVEL       = "INFO"
@@ -54,6 +54,6 @@ module "processor_lamdba" {
 data "aws_security_group" "lambda_api_ingress" {
   filter {
     name   = "tag:Name"
-    values = ["integration-lambda-api-access-${local.account.target_environment}"]
+    values = ["integration-lambda-api-access-${local.target_environment}"]
   }
 }

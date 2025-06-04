@@ -63,7 +63,7 @@ resource "aws_iam_role_policy_attachment" "ual_iap_processor_lambda_attachment" 
 }
 
 data "aws_s3_bucket" "sirius" {
-  bucket = "opg-backoffice-datastore-${local.account.target_environment}"
+  bucket = "opg-backoffice-datastore-${local.target_environment}"
 }
 
 data "aws_kms_key" "secrets_manager" {

@@ -181,9 +181,23 @@ jobs:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
+  demo_environment_plan_apply:
+    name: Demo Environment Terraform Plan and Apply
+    needs: [
+      'production_environment_plan_apply'
+    ]
+    uses: ./.github/workflows/sub-task-terraform.yml
+    with:
+      terraform_path: 'terraform/environment'
+      image_tag: main-${{ needs.create_tags.outputs.version_tag }}
+      workspace: demo
+    secrets:
+      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
+      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+
   workflow_complete:
     name: Workflow Complete
-    needs: ['production_environment_plan_apply']
+    needs: ['production_environment_plan_apply', 'demo_environment_plan_apply']
     runs-on: ubuntu-latest
     steps:
       - name: Completion message
