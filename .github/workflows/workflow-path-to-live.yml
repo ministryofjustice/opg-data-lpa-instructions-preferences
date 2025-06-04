@@ -184,7 +184,8 @@ jobs:
   demo_environment_plan_apply:
     name: Demo Environment Terraform Plan and Apply
     needs: [
-      'production_environment_plan_apply'
+      'production_environment_plan_apply',
+      'create_tags'
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
