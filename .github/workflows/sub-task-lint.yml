@@ -31,7 +31,7 @@ jobs:
 
       - id: terraform_version
         name: Get terraform version
-        uses: ministryofjustice/opg-github-actions/.github/actions/terraform-version@73bfe6f3ea05ffbc3dd278fe29c113ec1e7dcefc # v3.1.1
+        uses: ministryofjustice/opg-github-actions/.github/actions/terraform-version@78208f9a60e457c51a35a5fd8502606d734981eb # v4.0.0
         with:
           terraform_directory: "./terraform/${{ matrix.folder }}"
 
