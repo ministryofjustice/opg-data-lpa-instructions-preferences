@@ -1,7 +1,7 @@
 ARG FUNCTION_DIR="/function"
 
 # === BUILD IMAGE ===
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim-bookworm AS builder
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
@@ -23,7 +23,7 @@ COPY extraction ${FUNCTION_DIR}/extraction
 
 
 # === FINAL IMAGE ===
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Create python user
@@ -34,7 +34,7 @@ WORKDIR ${FUNCTION_DIR}
 # Install runtime dependencies
 RUN apt-get update && \
     apt-get upgrade expat -y && \
-    apt-get install -y libgl1-mesa-glx libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
+    apt-get install -y libgl1 libglx-mesa0 libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder --chown=python:python ${FUNCTION_DIR} ${FUNCTION_DIR}
