@@ -34,7 +34,7 @@ WORKDIR ${FUNCTION_DIR}
 # Install runtime dependencies
 RUN apt-get update && \
     apt-get upgrade expat -y && \
-    apt-get install -y libgl1-mesa-glx libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
+    apt-get install -y libgl1 libglx-mesa0 libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder --chown=python:python ${FUNCTION_DIR} ${FUNCTION_DIR}
