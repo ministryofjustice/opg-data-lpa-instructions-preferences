@@ -2,7 +2,6 @@ ARG FUNCTION_DIR="/function"
 
 # === BUILD IMAGE ===
 FROM python:3.12-slim@sha256:9c1d9ed7593f2552a4ea47362ec0d2ddf5923458a53d0c8e30edf8b398c94a31 AS builder
->>>>>>> main
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
