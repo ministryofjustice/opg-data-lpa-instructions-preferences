@@ -2,6 +2,7 @@ ARG FUNCTION_DIR="/function"
 
 # === BUILD IMAGE ===
 FROM python:3.12-slim@sha256:9c1d9ed7593f2552a4ea47362ec0d2ddf5923458a53d0c8e30edf8b398c94a31 AS builder
+>>>>>>> main
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
@@ -13,6 +14,10 @@ RUN apt-get update && \
     apt-get upgrade expat -y && \
     apt-get install -y libtesseract-dev libleptonica-dev tesseract-ocr build-essential && \
     rm -rf /var/lib/apt/lists/*
+
+# Make tesserocr 2.6.0 compile with newer headers
+ENV CXXFLAGS="-std=gnu++14"
+
 # Pip dependency installs
 RUN python -m pip install --upgrade pip
 RUN python -m pip install \
