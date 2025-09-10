@@ -13,6 +13,10 @@ RUN apt-get update && \
     apt-get upgrade expat -y && \
     apt-get install -y libtesseract-dev libleptonica-dev tesseract-ocr build-essential && \
     rm -rf /var/lib/apt/lists/*
+
+# Make tesserocr 2.6.0 compile with newer headers
+ENV CXXFLAGS="-std=gnu++14"
+
 # Pip dependency installs
 RUN python -m pip install --upgrade pip
 RUN python -m pip install \
