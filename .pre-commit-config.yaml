@@ -27,11 +27,8 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-  - repo: https://github.com/awslabs/git-secrets
-    rev: master
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
     hooks:
-    - id: git-secrets
-  - repo: https://github.com/zricethezav/gitleaks
-    rev: v8.24.0
-    hooks:
-      - id: gitleaks
+    -   id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
