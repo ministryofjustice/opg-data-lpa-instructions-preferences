@@ -14,10 +14,9 @@ locals {
   allowed_roles = tolist(concat(["arn:aws:iam::${local.account.ual_account_id}:role/${local.ual_api_task_env}-api-task-role"], local.account.extra_allowed_roles))
 
   api_template_vars = {
-    region        = "eu-west-1"
-    environment   = local.environment
-    account_id    = local.account.account_id
-    allowed_roles = join("\", \"", local.allowed_roles)
+    region      = "eu-west-1"
+    environment = local.environment
+    account_id  = local.account.account_id
   }
 
   session_data = local.account.name == "development" ? "publicapi@opgtest.com" : "opg+publicapi@digital.justice.gov.uk"
