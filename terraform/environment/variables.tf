@@ -17,7 +17,6 @@ locals {
     region        = "eu-west-1"
     environment   = local.environment
     account_id    = local.account.account_id
-    allowed_roles = join("\", \"", local.allowed_roles)
   }
 
   session_data = local.account.name == "development" ? "publicapi@opgtest.com" : "opg+publicapi@digital.justice.gov.uk"
