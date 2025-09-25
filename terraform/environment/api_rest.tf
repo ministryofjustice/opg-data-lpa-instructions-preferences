@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "lpa_iap_ip_restriction_policy" {
 }
 
 module "allow_list" {
-  source = "git@github.com:ministryofjustice/opg-terraform-aws-moj-ip-allow-list.git?ref=v3.4.4"
+  source = "git@github.com:ministryofjustice/opg-terraform-aws-moj-ip-allow-list.git?ref=v3.4.5"
 }
 
 locals {
