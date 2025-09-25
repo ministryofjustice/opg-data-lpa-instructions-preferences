@@ -64,6 +64,7 @@ jobs:
       source_github_token: ${{ secrets.GITHUB_TOKEN }}
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   unit_tests:
     name: Build, Scan and Push
@@ -94,11 +95,13 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: ${{ needs.create_tags.outputs.version_tag }}
-      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
       mock_sirius: "true"
+      use_ssh_private_key: true
+      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   integration_tests:
     name: Run integration tests
@@ -126,10 +129,12 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      use_ssh_private_key: true
       workspace: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   workflow_complete:
     name: Workflow Complete
