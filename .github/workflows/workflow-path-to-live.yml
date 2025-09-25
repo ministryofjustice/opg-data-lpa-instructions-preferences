@@ -85,11 +85,13 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: ${{ needs.create_tags.outputs.version_tag }}
-      workspace: development
       mock_sirius: "true"
+      use_ssh_private_key: true
+      workspace: development
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   development_integration_tests:
     name: Development Run integration tests
@@ -114,10 +116,12 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      use_ssh_private_key: true
       workspace: development
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   preproduction_account_plan_apply:
     name: Preproduction Account Terraform Plan and Apply
@@ -145,10 +149,12 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
+      use_ssh_private_key: true
       workspace: preproduction
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   production_account_plan_apply:
     name: Production Account Terraform Plan and Apply
@@ -176,10 +182,12 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
+      use_ssh_private_key: true
       workspace: production
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   demo_environment_plan_apply:
     name: Demo Environment Terraform Plan and Apply
@@ -191,10 +199,12 @@ jobs:
     with:
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
+      use_ssh_private_key: true
       workspace: demo
     secrets:
       aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
       aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   workflow_complete:
     name: Workflow Complete
