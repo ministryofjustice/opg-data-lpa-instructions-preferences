@@ -79,7 +79,7 @@ def test_init(image_request_handler):
         "iap-700000001-instructions",
         "iap-700000001-preferences",
     ]
-    assert image_request_handler.url_expiration == 60
+    assert image_request_handler.url_expiration == 120
     assert (
         image_request_handler.image_to_store_metadata_against
         == "iap-700000001-instructions"

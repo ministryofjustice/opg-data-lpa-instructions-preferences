@@ -28,7 +28,7 @@ class ImageRequestHandler:
         self.continuation_sheet_instructions_count = 0
         self.continuation_sheet_preferences_count = 0
         self.continuation_sheet_unknown_count = 0
-        self.url_expiration = 60
+        self.url_expiration = 120
         self.event = event
 
     def setup_sqs_connection(self):
