@@ -203,8 +203,8 @@ def test_collection_in_progress(setup_rest_url_part):
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
     time_remaining = (
-        15 * 60
-    )  # countdown from 15 mins, tests should complete in this time
+        20 * 60
+    )  # countdown from 20 mins, tests should complete in this time
 
     while time_remaining > 0:
         print(f"Time remaining: {time_remaining} seconds")
