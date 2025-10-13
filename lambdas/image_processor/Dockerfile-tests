@@ -1,7 +1,7 @@
 ARG FUNCTION_DIR="/function"
 
 # === BUILD IMAGE ===
-FROM python:3.12-slim@sha256:9c1d9ed7593f2552a4ea47362ec0d2ddf5923458a53d0c8e30edf8b398c94a31 AS builder
+FROM python:3.12-slim@sha256:1aa78876248db92b67d93d039d3149e5fe01a979665bc0f33594ceb74c6720c1 AS builder
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
@@ -28,7 +28,7 @@ COPY extraction ${FUNCTION_DIR}/extraction
 
 
 # === FINAL IMAGE ===
-FROM python:3.12-slim@sha256:9c1d9ed7593f2552a4ea47362ec0d2ddf5923458a53d0c8e30edf8b398c94a31
+FROM python:3.12-slim@sha256:1aa78876248db92b67d93d039d3149e5fe01a979665bc0f33594ceb74c6720c1
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
@@ -36,7 +36,7 @@ WORKDIR ${FUNCTION_DIR}
 # Install runtime dependencies
 RUN apt-get update && \
     apt-get upgrade expat -y && \
-    apt-get install -y libgl1-mesa-glx libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
+    apt-get install -y libglx-mesa0 libglib2.0-0 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr libzbar0 libzbar-dev && \
     rm -rf /var/lib/apt/lists/*
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder ${FUNCTION_DIR} ${FUNCTION_DIR}
