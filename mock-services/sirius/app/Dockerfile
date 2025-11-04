@@ -1,4 +1,4 @@
-FROM stoplight/prism:5.14.2
+FROM stoplight/prism:5.14.3
 COPY sirius.yml run.sh /app/
 RUN apk upgrade libcrypto1.1 libssl3 busybox ssl_client zlib
 
