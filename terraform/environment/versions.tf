@@ -1,5 +1,5 @@
 terraform {
-  required_version = "<= 1.13.1"
+  required_version = "<= 1.13.5"
 
   required_providers {
     aws = {
@@ -8,7 +8,7 @@ terraform {
     }
     pagerduty = {
       source  = "PagerDuty/pagerduty"
-      version = "~> 3.28.0"
+      version = "~> 3.30.0"
     }
   }
 }
