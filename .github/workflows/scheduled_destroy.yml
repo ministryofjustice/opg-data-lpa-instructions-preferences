@@ -51,5 +51,6 @@ jobs:
         working-directory: terraform/environment
         env:
           TF_VAR_pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
         run: |
           ./scripts/workspace_cleanup.sh $(terraform-workspace-manager -protected-workspaces=true -aws-account-id=288342028542 -aws-iam-role=integrations-ci)
