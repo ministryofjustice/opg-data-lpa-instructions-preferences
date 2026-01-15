@@ -1,0 +1,64 @@
+site_name: form-tools
+repo_url: https://github.com/moj-analytical-services/form-tools
+
+theme:
+  name: tech_docs_template
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.indexes
+  logo: logos/moj.png
+  favicon: favicons/moj.ico
+
+nav:
+  - Home: "README.md"
+  - User Guide:
+      - Using and creating form metadata: guide/metadata.md
+      - Extracting metadata from a template: guide/extract.md
+      - Configuring processing: guide/config.md
+      - Process a scanned form: guide/process.md
+  - API:
+      - Form Metadata:
+          - BoundingBox: api/form_meta_classes/bounding_box.md
+          - FormField: api/form_meta_classes/form_field.md
+          - FormPage: api/form_meta_classes/form_page.md
+          - FormMetadata: api/form_meta_classes/form_meta.md
+      - Form Metadata Extractors:
+          - PDF: api/extractors/pdf.md
+      - Form Operator:
+          - BoundingBoxOperator: >-
+              api/form_operator_classes/bounding_box_operator.md
+          - FormOperatorConfig: >-
+              api/form_operator_classes/form_operator_config.md
+          - FormPageOperator: >-
+              api/form_operator_classes/form_page_operator.md
+          - FormOperator: >-
+              api/form_operator_classes/form_operator.md
+      - Utilities:
+          - ImageReader: api/utilities/image_reader.md
+
+plugins:
+  - mkdocstrings:
+      custom_templates: templates
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: false
+  - material/search:
+
+markdown_extensions:
+  - mdx_include
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.arithmatex:
+      generic: true
+  - admonition
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

@@ -25,6 +25,7 @@ RUN python -m pip install \
 COPY app ${FUNCTION_DIR}/app
 COPY tests ${FUNCTION_DIR}/tests
 COPY extraction ${FUNCTION_DIR}/extraction
+COPY form-tools/form_tools ${FUNCTION_DIR}/form_tools
 
 
 # === FINAL IMAGE ===
