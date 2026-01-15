@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "form-tools"
+version = "0.2.0"
+description = ""
+authors = ["gwionap <gwion.aprhobat@justice.gov.uk>"]
+readme = "README.md"
+packages = [{include = "form_tools"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9, <3.13"
+awswrangler = ">=2.17.0"
+dataengineeringutils3 = "^1.4.1"
+Pillow = ">=9.2,<11.0"
+opencv-python = "^4.6.0.66"
+pdf2image = "^1.16.0"
+pytesseract = "^0.3.9"
+pdfminer-six = "^20220524"
+jsonschema = "^4.7.2"
+mojap-metadata = "^1.10.2"
+pydantic = "^1.10.2"
+charset-normalizer = "^2.1.0"
+tesserocr = ">=v2.5.2, <=2.7.0"
+arrow-pd-parser = "^v1.3.3"
+virtualenv = ">=20.24.6"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.2"
+moto = "^4.1.3"
+pytest-cov = "^4.0.0"
+pre-commit = "^2.20.0"
+scikit-image = ">=0.19.3"
+mdx-include = "^1.4.2"
+mkdocs-material = ">=8.5.6"
+mkdocstrings = ">=0.19.0"
+mkdocstrings-python = ">=0.7.1"
+mypy = "^0.991"
+ipykernel = "^6.21.1"
+mkdocs-tech-docs-template = "^0.0.25"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+form-tools = "form_tools.command_line:Main"

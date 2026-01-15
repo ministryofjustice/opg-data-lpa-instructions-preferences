@@ -1,0 +1,10 @@
+detector:
+  name: invalid_detector
+matcher:
+  id: FLANN
+  args:
+    - algorithm: 1
+      trees: 5
+    - check: 50
+knn: 2
+proportion: 0.7
