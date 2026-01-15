@@ -9,4 +9,5 @@ test:
 	docker compose up unit-tests-processor
 
 integration-test: up
-	(cd integration; python -m pytest .)
+	cd integration; python -m pytest .
+
