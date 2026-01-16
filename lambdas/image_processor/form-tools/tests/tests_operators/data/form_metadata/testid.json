@@ -1,0 +1,80 @@
+{
+    "$schema": "https://moj-analytical-services.github.io/metadata_schema/mojap_metadata/v1.3.0.json",
+    "name": "test",
+    "description": "",
+    "file_format": "",
+    "sensitive": false,
+    "columns": [
+        {
+            "name": "my_string_field",
+            "page_number": 1,
+            "bounding_box": {
+                "left": 100,
+                "width": 100,
+                "top": 600,
+                "height": 20
+            },
+            "type": "string"
+        },
+        {
+            "name": "my_other_string_field",
+            "page_number": 1,
+            "bounding_box": {
+                "left": 250,
+                "width": 1000,
+                "top": 400,
+                "height": 30
+            },
+            "type": "string"
+        },
+        {
+            "name": "my_int_field",
+            "page_number": 2,
+            "bounding_box": {
+                "left": 113,
+                "width": 107,
+                "top": 741,
+                "height": 52
+            },
+            "type": "int64",
+            "confidence": 0.8,
+            "nullable": true,
+            "some_extra_info": 32
+        },
+        {
+            "name": "my_bool_field",
+            "page_number": 2,
+            "bounding_box": {
+                "left": 247,
+                "width": 907,
+                "top": 741,
+                "height": 52
+            },
+            "type": "bool"
+        }
+    ],
+    "primary_key": [],
+    "partitions": [],
+    "form_pages": [
+        {
+            "page_number": 1,
+            "identifier": "first",
+            "required": true,
+            "duplicates": false
+        },
+        {
+            "page_number": 2,
+            "identifier": "second",
+            "required": false,
+            "duplicates": true,
+            "my_extra_property": true
+        }
+    ],
+    "form_formats": [
+        "pdf"
+    ],
+    "form_identifier": "the form[0-9]",
+    "from_template": "",
+    "excluded_sections": [],
+    "form_template": "templates/test"
+}
