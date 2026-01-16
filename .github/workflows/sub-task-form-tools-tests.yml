@@ -1,11 +1,21 @@
-# yamllint disable rule:line-length
-name: Test
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: none
+  issues: none
+  packages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: write
+  statuses: none
+
 on:
-  - pull_request
+  workflow_call:
 
 jobs:
-  preview:
-    name: Test
+  form_tools_tests:
+    name: Run unit tests
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
@@ -29,6 +39,7 @@ jobs:
             echo "Removing lock file and installing latest possible dependencies"
             rm poetry.lock
           fi
+          cd lambdas/image_processor/form-tools
           python -m pip install --upgrade pip
           pip install poetry
           poetry config virtualenvs.create false \
@@ -37,4 +48,5 @@ jobs:
         env:
           TESSDATA_PREFIX: /usr/share/tesseract-ocr/4.00/tessdata/
         run: |
+          cd lambdas/image_processor/form-tools
           pytest tests/ -vv
