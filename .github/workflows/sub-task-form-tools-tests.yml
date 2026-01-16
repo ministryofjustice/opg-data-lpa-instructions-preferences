@@ -1,16 +1,26 @@
-# yamllint disable rule:line-length
-name: Test
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: none
+  issues: none
+  packages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: write
+  statuses: none
+
 on:
-  - pull_request
+  workflow_call:
 
 jobs:
-  preview:
-    name: Test
+  form_tools_tests:
+    name: Run unit tests
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12']
+        python-version: ['3.12']
         poetry-install: [from-lock-file, fresh-install]
     steps:
       - uses: actions/checkout@v2
@@ -23,6 +33,7 @@ jobs:
           sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config poppler-utils
       - name: Install dependencies ${{ matrix.poetry-install }}
         run: |
+          cd lambdas/image_processor/form-tools
           if [ "${{ matrix.poetry-install }}" == "from-lock-file" ]; then
             echo "Installing dependencies from lock file"
           else
@@ -35,6 +46,7 @@ jobs:
             && poetry install --no-interaction --no-ansi
       - name: Run Tests
         env:
-          TESSDATA_PREFIX: /usr/share/tesseract-ocr/4.00/tessdata/
+          TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata/
         run: |
+          cd lambdas/image_processor/form-tools
           pytest tests/ -vv
