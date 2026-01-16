@@ -67,9 +67,14 @@ jobs:
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   unit_tests:
-    name: Build, Scan and Push
+    name: Unit tests
     needs: ['create_tags', 'branch_name']
     uses: ./.github/workflows/sub-task-unit-tests.yml
+
+  form_tools_tests:
+    name: Form tools tests
+    needs: ['create_tags', 'branch_name']
+    uses: ./.github/workflows/sub-task-form-tools-tests.yml
 
   docker_build_scan_push:
     name: Build, Scan and Push
@@ -89,7 +94,8 @@ jobs:
       'terraform_lint',
       'create_tags',
       'branch_name',
-      'unit_tests'
+      'unit_tests',
+      'form_tools_tests',
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
