@@ -1,0 +1,19 @@
+detector:
+  name: SIFT
+matcher:
+  id: FLANN
+  args:
+    - algorithm: 1
+      trees: 5
+    - check: 50
+knn: 2
+proportion: 0.7
+ocr_options:
+  rotation_engine: tesseract
+  text_extraction_engine: tesseract
+homography_options:
+  singular_matrix_threshold: 0.05
+preprocessing_transforms:
+  - name: remove_specks
+    kwargs:
+      adaptive_thresholding: False

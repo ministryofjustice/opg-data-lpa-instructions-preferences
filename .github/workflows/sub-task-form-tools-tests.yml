@@ -1,0 +1,52 @@
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  deployments: none
+  issues: none
+  packages: none
+  pull-requests: none
+  repository-projects: none
+  security-events: write
+  statuses: none
+
+on:
+  workflow_call:
+
+jobs:
+  form_tools_tests:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+        poetry-install: [from-lock-file, fresh-install]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install tesseract-ocr and poppler
+        run: |
+          sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config poppler-utils
+      - name: Install dependencies ${{ matrix.poetry-install }}
+        run: |
+          cd lambdas/image_processor/form-tools
+          if [ "${{ matrix.poetry-install }}" == "from-lock-file" ]; then
+            echo "Installing dependencies from lock file"
+          else
+            echo "Removing lock file and installing latest possible dependencies"
+            rm poetry.lock
+          fi
+          python -m pip install --upgrade pip
+          pip install poetry
+          poetry config virtualenvs.create false \
+            && poetry install --no-interaction --no-ansi
+      - name: Run Tests
+        env:
+          TESSDATA_PREFIX: /usr/share/tesseract-ocr/4.00/tessdata/
+        run: |
+          cd lambdas/image_processor/form-tools
+          pytest tests/ -vv
