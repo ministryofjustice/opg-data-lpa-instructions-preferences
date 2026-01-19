@@ -44,7 +44,7 @@ class TestFormPageOperator:
         ],
     )
     def test_create_from_config(self, config, expected):
-        from form_tools.form_operators.form_page_operator import FormPageOperator
+        from .form_tools.form_operators.form_page_operator import FormPageOperator
 
         if expected:
             operator = FormPageOperator.create_from_config(config)
@@ -78,8 +78,8 @@ class TestFormPageOperator:
     def test_check_image_text_against_form_page(
         self, form_meta_path, page_number, ocr_text, expected
     ):
-        from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.form_meta import FormMetadata
+        from .form_tools.form_operators.form_page_operator import FormPageOperator
+        from .form_tools.form_meta import FormMetadata
 
         meta = FormMetadata.from_json(form_meta_path)
         form_page = meta.form_page(page_number)
@@ -99,8 +99,8 @@ class TestFormPageOperator:
         ],
     )
     def test_preprocessing(self, config, page_image_path):
-        from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.utils.image_reader import ImageReader
+        from .form_tools.form_operators.form_page_operator import FormPageOperator
+        from .form_tools.utils.image_reader import ImageReader
 
         operator = FormPageOperator.create_from_config(config)
         _, page_images = ImageReader.read(page_image_path)
@@ -168,10 +168,10 @@ class TestFormPageOperator:
         new_environ = {"PYTEST_TEST_ENV": "test", **old_environ}
         os.environ.update(new_environ)
 
-        from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.form_meta import FormMetadata
-        from form_tools.utils.image_reader import ImageReader
-        from form_tools.form_operators.preprocessors import convert_img_to_grayscale
+        from .form_tools.form_operators.form_page_operator import FormPageOperator
+        from .form_tools.form_meta import FormMetadata
+        from .form_tools.utils.image_reader import ImageReader
+        from .form_tools.form_operators.preprocessors import convert_img_to_grayscale
 
         _, page_images = ImageReader.read(page_image_path)
         _, page_template_images = ImageReader.read(page_template_image_path)

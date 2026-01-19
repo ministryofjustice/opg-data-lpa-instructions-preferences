@@ -11,11 +11,11 @@ image_path = "tests/tests_operators/data/images/random_image.jpg"
     "v1, v2, h1, h2", [(0, 50, 25, 100), (2, 10, 12, 36), (0, 1, 0, 100)]
 )
 def test_bounding_box_operator(v1, v2, h1, h2):
-    from form_tools.form_operators.bounding_box_operator import (
+    from .form_tools.form_operators.bounding_box_operator import (
         BoundingBoxOperator,
         BoundingBox,
     )
-    from form_tools.utils.image_reader import ImageReader
+    from .form_tools.utils.image_reader import ImageReader
 
     cv_img = cv2.imread(image_path)
     pil_img = Image.open(image_path)

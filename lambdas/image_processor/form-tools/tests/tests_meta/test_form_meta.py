@@ -6,7 +6,7 @@ class TestFormMetadata:
     expected_page_numbers = [1, 2]
 
     def setup_test(self):
-        from form_tools.form_meta.form_meta import FormMetadata
+        from .form_tools.form_meta.form_meta import FormMetadata
 
         return FormMetadata.from_json(self.test_meta_location)
 

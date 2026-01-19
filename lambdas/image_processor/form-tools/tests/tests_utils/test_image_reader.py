@@ -22,7 +22,7 @@ class TestImageReader:
     TIFF_IMAGE_PATH = "tests/tests_utils/images/random_images.tif"
 
     def setup_test(self):
-        from form_tools.utils.image_reader import ImageReader
+        from .form_tools.utils.image_reader import ImageReader
 
         return ImageReader
 
