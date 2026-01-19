@@ -16,9 +16,9 @@ class TestFormOperator:
         ],
     )
     def test_attributes(self, config, expected):
-        from form_tools.form_operators.form_operator import FormOperator
-        from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.form_operators.ocr_engines.base import BaseOcrEngine
+        from .form_tools.form_operators.form_operator import FormOperator
+        from .form_tools.form_operators.form_page_operator import FormPageOperator
+        from .form_tools.form_operators.ocr_engines.base import BaseOcrEngine
 
         if expected:
             operator = FormOperator.create_from_config(config)
@@ -41,7 +41,7 @@ class TestFormOperator:
         ],
     )
     def test_form_meta_store(self, form_meta_directory, expected):
-        from form_tools.form_operators.form_operator import FormOperator
+        from .form_tools.form_operators.form_operator import FormOperator
 
         meta_store = FormOperator.form_meta_store(form_meta_directory)
         assert sorted(expected) == sorted([k for k in meta_store])
@@ -77,7 +77,7 @@ class TestFormOperator:
     def test_match_form_images_text_to_form_meta(
         self, form_meta_directory, image_text, expected
     ):
-        from form_tools.form_operators.form_operator import FormOperator
+        from .form_tools.form_operators.form_operator import FormOperator
 
         operator = FormOperator.create_from_config(self.DEFAULT_CONFIG_PATH)
         matching_meta_store = operator.match_form_images_text_to_form_meta(
@@ -108,8 +108,8 @@ class TestFormOperator:
         ],
     )
     def test_preprocess_form_images(self, config, page_image_paths, changed):
-        from form_tools.form_operators.form_operator import FormOperator
-        from form_tools.utils.image_reader import ImageReader
+        from .form_tools.form_operators.form_operator import FormOperator
+        from .form_tools.utils.image_reader import ImageReader
 
         imgs = []
         for p in page_image_paths:
@@ -149,8 +149,8 @@ class TestFormOperator:
         ],
     )
     def test_ocr_methods(self, images, expected_images, expected_text):
-        from form_tools.utils.image_reader import ImageReader
-        from form_tools.form_operators.form_operator import FormOperator
+        from .form_tools.utils.image_reader import ImageReader
+        from .form_tools.form_operators.form_operator import FormOperator
 
         operator = FormOperator.create_from_config(self.DEFAULT_CONFIG_PATH)
 
@@ -246,9 +246,9 @@ class TestFormOperator:
         expected,
         error,
     ):
-        from form_tools.utils.image_reader import ImageReader
-        from form_tools.form_operators.form_operator import FormOperator
-        from form_tools.form_meta.form_meta import FormMetadata
+        from .form_tools.utils.image_reader import ImageReader
+        from .form_tools.form_operators.form_operator import FormOperator
+        from .form_tools.form_meta.form_meta import FormMetadata
 
         meta = FormMetadata.from_json(form_meta)
 

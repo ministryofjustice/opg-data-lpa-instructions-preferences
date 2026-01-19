@@ -4,7 +4,7 @@ from jsonschema.exceptions import ValidationError
 
 class TestBoundingBox:
     def setup_test(self):
-        from form_tools.form_meta.bounding_box import BoundingBox
+        from .form_tools.form_meta.bounding_box import BoundingBox
 
         return BoundingBox
 

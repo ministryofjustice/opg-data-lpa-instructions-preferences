@@ -11,7 +11,7 @@ class TestPdfFormMetaExtractor:
     EXPECTED_FIELDS = ["myfield", "myotherfield", "mysecondpagefield"]
 
     def setup_test(self):
-        from form_tools.form_meta.extractors.pdf_form_extractor import (
+        from .form_tools.form_meta.extractors.pdf_form_extractor import (
             PdfFormMetaExtractor,
         )
 

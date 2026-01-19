@@ -56,7 +56,7 @@ import pytest
     ],
 )
 def test_form_field(input, output):
-    from form_tools.form_meta.form_field import FormField
+    from .form_tools.form_meta.form_field import FormField
 
     form_field = FormField.from_dict(input)
     form_field_dict = form_field.dict()

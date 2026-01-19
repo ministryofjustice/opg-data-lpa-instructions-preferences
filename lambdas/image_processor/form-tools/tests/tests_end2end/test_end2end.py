@@ -14,9 +14,9 @@ from skimage.metrics import structural_similarity
     ],
 )
 def test_end2end(form_identifier, status):
-    from form_tools.form_operators import FormOperator
-    from form_tools.utils.image_reader import ImageReader
-    from form_tools.form_meta.extractors.pdf_form_extractor import PdfFormMetaExtractor
+    from .form_tools.form_operators import FormOperator
+    from .form_tools.utils.image_reader import ImageReader
+    from .form_tools.form_meta.extractors.pdf_form_extractor import PdfFormMetaExtractor
 
     test_paths = {
         "template_images": "tests/tests_end2end/data/template_images",
