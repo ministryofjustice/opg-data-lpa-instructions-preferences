@@ -21,7 +21,6 @@ jobs:
       max-parallel: 4
       matrix:
         python-version: ['3.12']
-        poetry-install: [from-lock-file, fresh-install]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -31,19 +30,11 @@ jobs:
       - name: Install tesseract-ocr and poppler
         run: |
           sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config poppler-utils
-      - name: Install dependencies ${{ matrix.poetry-install }}
+      - name: Install dependencies
         run: |
           cd lambdas/image_processor/form-tools
-          if [ "${{ matrix.poetry-install }}" == "from-lock-file" ]; then
-            echo "Installing dependencies from lock file"
-          else
-            echo "Removing lock file and installing latest possible dependencies"
-            rm poetry.lock
-          fi
-          python -m pip install --upgrade pip
-          pip install poetry
-          poetry config virtualenvs.create false \
-            && poetry install --no-interaction --no-ansi
+          pip install -r ../requirements.txt
+          pip install -r requirements-dev.txt
       - name: Run Tests
         env:
           TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata/
