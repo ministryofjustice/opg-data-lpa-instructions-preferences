@@ -11,11 +11,10 @@ mojap_metadata==1.16.0
 moto==5.1.18
 opencv-python==4.12.0.88
 pdf2image==1.17.0
-pdfminer==20191125
 pydantic==1.10.24
 pyjwt==2.10.1
 pyopengl==3.1.10
-pypdf==6.4.1
+pypdf==6.6.0
 pyzbar==0.1.9
 requests==2.32.5
 setuptools==80.9.0
@@ -24,6 +23,5 @@ tesserocr==2.7.0
 charset-normalizer==2.1.0
 dataengineeringutils3==1.4.1
 jsonschema==4.7.2
-pdfminer-six==20220524
+pdfminer-six==20251107
 pytesseract==0.3.9
-virtualenv==20.24.6
