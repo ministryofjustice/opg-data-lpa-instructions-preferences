@@ -759,13 +759,7 @@ class ExtractionService:
         count_lp1f = matched_meta_ids.count("lp1f")
         count_lp1h = matched_meta_ids.count("lp1h")
 
-        if count_lp1f > 1 or count_lp1h > 1:
-            return False
-
-        if count_lp1f > 0 and count_lp1h > 0:
-            return False
-
-        return True
+        return count_lp1f + count_lp1h <= 1
 
     def split_out_scans_from_continuation_matches(
         self, matching_images: List[MatchingMetaToImages], scan_location: str
