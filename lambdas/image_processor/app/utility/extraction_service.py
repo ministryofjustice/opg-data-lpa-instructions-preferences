@@ -257,10 +257,8 @@ class ExtractionService:
     @staticmethod
     def is_accepted_filetype(file_path):
         accepted_extensions = (".pdf", ".tiff", ".tif")
-        if not file_path.lower().endswith(accepted_extensions):
-            return False
-        else:
-            return True
+
+        return file_path.lower().endswith(accepted_extensions)
 
     def get_matching_scan_item(
         self,
@@ -990,9 +988,7 @@ class ExtractionService:
         unique_words_count = (unique_words_count1 + unique_words_count2) / 2
 
         # calculate the similarity score
-        similarity = common_words_count / (common_words_count + unique_words_count)
-
-        return similarity
+        return common_words_count / (common_words_count + unique_words_count)
 
     def mixed_mode_page_identifier(
         self,
@@ -1011,24 +1007,20 @@ class ExtractionService:
 
         similarity_score = self.get_similarity_score(sorted_scan_template_entities)
         meta_id_to_use = self.get_meta_id_to_use(sorted_scan_template_entities)
-        if not inline_continuation:
-            matching_image_results_list = []
-            matching_image_results = self.get_matching_image_results(
-                meta_id_to_use,
-                similarity_score,
-                sorted_scan_template_entities,
-                form_image_locations,
-            )
-            matching_image_results_list.append(matching_image_results)
-        else:
-            matching_image_results_list = self.get_matching_continuation_image_results(
+        if inline_continuation:
+            return self.get_matching_continuation_image_results(
                 meta_id_to_use,
                 similarity_score,
                 sorted_scan_template_entities,
                 form_image_locations,
             )
 
-        return matching_image_results_list
+        return [self.get_matching_image_results(
+            meta_id_to_use,
+            similarity_score,
+            sorted_scan_template_entities,
+            form_image_locations,
+        )]
 
     def create_scan_to_template_distances(self, form_images_as_strings, form_metastore):
         scan_to_template_similarities = []
@@ -1077,16 +1069,11 @@ class ExtractionService:
           `meta_page_text` if a regex match is found. Otherwise, returns 0.
         """
         page_regex = form_page.identifier
-        regex_match = (
-            True if re.search(page_regex, form_image_as_string, re.DOTALL) else False
-        )
 
-        if regex_match:
-            ratio = fuzz.ratio(form_image_as_string, meta_page_text)
-        else:
-            ratio = 0
+        if re.search(page_regex, form_image_as_string, re.DOTALL):
+            return fuzz.ratio(form_image_as_string, meta_page_text)
 
-        return ratio
+        return 0
 
     def get_similarity_score(self, sorted_scan_template_entities):
         similarity_score = self.similarity_score(
@@ -1099,8 +1086,7 @@ class ExtractionService:
 
     @staticmethod
     def get_meta_id_to_use(sorted_scan_template_entities):
-        meta_id_to_use = sorted_scan_template_entities[0]["meta"]
-        return meta_id_to_use
+        return sorted_scan_template_entities[0]["meta"]
 
     def get_matching_image_results(
         self,
