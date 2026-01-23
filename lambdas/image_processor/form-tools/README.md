@@ -36,27 +36,6 @@ To do this from the command line and output the metadata to `my_form_meta.json` 
 form-tools extract-meta my_form.pdf my_form_meta.json --form-image-directory template_images
 ```
 
-To interact with the API directly in python you should use the built in `PdfFormMetaExtractor` class.
-
-```py
-from form_tools.form_meta.extractors.pdf_form_extractor import PdfFormMetaExtractor
-
-# Instantiate extractor
-pfme = PdfFormMetaExtractor()
-
-# Create FormMetadata object and populate
-# image directory template_images
-form_metadata = pfme.extract_meta(
-    form_template_path="my_form.pdf",
-    form_image_dir="template_images"
-)
-
-# Write FormMetadata to json file
-form_metadata.to_json(
-    "my_form_meta.json",
-)
-```
-
 The output metadata should contain bounding box coordinates for each field in the form that correspond to regions in the images outputted to `template_images`.
 
 **Note**: The output metadata will not be able to be used immediately to align a scanned image to the template as the `form_identifier` key and `identifier` key for each `form_page` in the metadata will need to be populated with a valid regular expression so that the correct page in the scanned image can be compared with the correct page in the template images.
@@ -92,21 +71,6 @@ To align the scanned image from the command line you would then run:
 
 ```
 form-tools process-form my_scanned_form.pdf config.yaml
-```
-
-To interact with the API directly in python you would use the `FormOperator` class.
-
-```py
-from form_tools.form_operators import FormOperator
-
-form_operator = FormOperator.create_from_config("config.yaml")
-
-_ = form_operator.run_full_pipeline(
-    form_path="my_scanned_form.pdf",
-    pass_dir="s3://my-bucket/pass_directory",
-    fail_dir="s3://my-bucket/fail_directory",
-    form_meta_directory="metadata",
-)
 ```
 
 > **Note**: The scanned image could be stored in an AWS S3 bucket. In that case you would pass the S3 path (e.g. `s3://my-bucket/my_scanned_form.pdf`). Only the config and metadata directory need to be located in your local working directory.
