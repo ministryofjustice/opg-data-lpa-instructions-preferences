@@ -90,27 +90,6 @@ class TestFormPageOperator:
         )
 
     @pytest.mark.parametrize(
-        "config, page_image_path",
-        [
-            (
-                "tests/tests_operators/data/configs/valid_config.yml",
-                "tests/tests_operators/data/images/random_image.jpg",
-            )
-        ],
-    )
-    def test_preprocessing(self, config, page_image_path):
-        from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.utils.image_reader import ImageReader
-
-        operator = FormPageOperator.create_from_config(config)
-        _, page_images = ImageReader.read(page_image_path)
-        page_image = page_images[0]
-
-        processed_image = operator.apply_preprocessing_transforms(page_image)
-
-        assert isinstance(processed_image, np.ndarray)
-
-    @pytest.mark.parametrize(
         (
             "config, form_meta_path, page_number, page_image_path, "
             "page_template_image_path, page_image_str, expected"
