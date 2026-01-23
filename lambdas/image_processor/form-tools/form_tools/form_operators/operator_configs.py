@@ -80,44 +80,6 @@ class HomographyConfig(BaseModel):
     singular_matrix_threshold: Optional[Union[float, None]] = None
 
 
-class OcrConfig(BaseModel):
-    """Config for OCR engine options
-
-    Attributes:
-        rotation_engine (str): Choice of OCR engine
-            to perform auto rotation
-        text_extraction_engine (str): Choice of OCR
-            engine to perform text extraction
-        minimum_orientation_confidence (Optional[float]):
-            The minimum confidence by which to accept
-            an autorotation result
-    """
-
-    rotation_engine: str
-    text_extraction_engine: str
-    minimum_orientation_confidence: Optional[float] = 1.5
-
-
-class PreprocessingTransform(BaseModel):
-    """Config for a preprocessing transformation
-
-    Attributes:
-        name (str): Name of the preprocessing
-            transformation as included in
-            `form_tools.form_operators.preprocessors`
-        args (Optional[List[Any]]):
-            Agruments to pass to the
-            transformation
-        kwargs (Optional[Dict[str, Any]]):
-            Keyword arguments to pass to
-            the transformation
-    """
-
-    name: str
-    args: Optional[Union[List[Any], None]] = None
-    kwargs: Optional[Union[Dict[str, Any], None]] = None
-
-
 class FormOperatorConfig(BaseModel):
     """Config for a `FormOperator`
 
