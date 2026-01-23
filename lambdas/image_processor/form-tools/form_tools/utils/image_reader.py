@@ -9,22 +9,19 @@ from PIL import Image
 from glob import glob
 from pathlib import Path
 from pdf2image import convert_from_bytes
-from dataengineeringutils3.s3 import s3_path_to_bucket_key
 from typing import List, Tuple, Union, Optional, ByteString, Dict, Any
-
-from .constants import aws_default_region
 
 
 class ImageReader:
     """ImageReader utility class
 
-    General purpose class for reading image files from a local
-    path or from an AWS S3 bucket. The reader can also handle
-    reading multi-page image formats if saved as pdf or tif.
+    General purpose class for reading image files from a local path. The reader
+    can also handle reading multi-page image formats if saved as pdf or tif.
 
     Attributes:
         multi_page_formats (List[str]): List of multi page image
             formats supported by the class
+
     """
 
     multi_page_formats = [".pdf", ".tif"]
@@ -46,35 +43,21 @@ class ImageReader:
 
     @staticmethod
     def _read_bytes(
-        file_path: str, s3_client: Optional[Union[boto3.client, None]] = None
+        file_path: str,
     ) -> ByteString:
         """Reads raw bytes from image file
 
-        Reads an image as raw bytes from either a
-        local filepath or an AWS S3 location.
+        Reads an image as raw bytes from a local filepath.
 
         Params:
-            file_path (str): Local or s3 filepath to image
-            s3_client (Optional[Union[boto3.client, None]]):
-                boto3 s3 client
+            file_path (str): Local filepath to image
 
         Returns:
             (ByteString): Byte string for image
+
         """
-        if file_path.startswith("s3://"):
-            if "AWS_DEFAULT_REGION" not in os.environ:
-                os.environ["AWS_DEFAULT_REGION"] = aws_default_region
-
-            if s3_client is None:
-                s3_client = boto3.client("s3")
-
-            b, k = s3_path_to_bucket_key(file_path)
-
-            raw_img = s3_client.get_object(Bucket=b, Key=k).get("Body").read()
-
-        else:
-            with open(file_path, "rb") as img_file:
-                raw_img = img_file.read()
+        with open(file_path, "rb") as img_file:
+            raw_img = img_file.read()
 
         return raw_img
 
@@ -87,7 +70,7 @@ class ImageReader:
         into an opencv numpy ndarray image.
 
         Params:
-            file_path (str): Local or s3 filepath to image
+            file_path (str): Local filepath to image
             **bytes_kwargs: Optional keyword arguments to pass onto
                 `_read_bytes` method.
 
@@ -103,13 +86,10 @@ class ImageReader:
     def _read_tif(file_path: str, **multiread_kwargs) -> Tuple[bool, List[np.ndarray]]:
         """tif image reader method
 
-        The reader method for tif image files. If the file
-        is located in S3, it will first be downloaded to
-        a temporary file before being read in by
-        `cv2.imreadmulti`.
+        The reader method for tif image files. 
 
         Params:
-            file_path (str): Local or s3 filepath to image
+            file_path (str): Local filepath to image
             **bytes_kwargs: Optional keyword arguments to pass onto
                 `_read_bytes` method.
 
@@ -119,13 +99,7 @@ class ImageReader:
                 is a multipage image, and the second the
                 list of images returned
         """
-        if file_path.startswith("s3://"):
-            _, tmp = tempfile.mkstemp(suffix=".tif")
-            wr.s3.download(path=file_path, local_file=tmp)
-            _, imgs = cv2.imreadmulti(tmp, **multiread_kwargs)
-            os.remove(tmp)
-        else:
-            _, imgs = cv2.imreadmulti(file_path, **multiread_kwargs)
+        _, imgs = cv2.imreadmulti(file_path, **multiread_kwargs)
 
         multipage = True
         if isinstance(imgs, tuple):
@@ -151,7 +125,7 @@ class ImageReader:
         a list of opencv images.
 
         Params:
-            file_path (str): Local or s3 filepath to image
+            file_path (str): Local filepath to image
             conversion_parameters (Optional[Dict[str, Any]]):
                 Options to pass to `pdf2image.convert_from_bytes`
             **bytes_kwargs: Optional keyword arguments to pass onto
@@ -185,12 +159,12 @@ class ImageReader:
         """Reads image from a single file
 
         Generic reader method for reading a single
-        image file from a local or S3 path. Determines
+        image file from a local path. Determines
         the correct reader method to use based on the
         filepath's suffix.
 
         Params:
-            file_path (str): Local or s3 filepath to image
+            file_path (str): Local filepath to image
             **reader_kwargs: Optional keyword arguments to pass onto
                 specific reader methods e.g. `_read_tif`
 
@@ -222,10 +196,10 @@ class ImageReader:
         """Reads a directory of image files
 
         Generic reader method for reading a set of images
-        located in an S3 or local directory.
+        located in a local directory.
 
         Params:
-            file_dir (str): Local or s3 directory path
+            file_dir (str): Local directory path
             valid_suffix (Optional[Union[str, List[str], None]]):
                 List of valid image suffixes - reader will only read
                 files in the directory with a matching suffix
@@ -240,11 +214,7 @@ class ImageReader:
         """
         file_dir = file_dir if file_dir.endswith("/") else file_dir + "/"
 
-        if file_dir.startswith("s3://"):
-            img_fps = wr.s3.list_objects(file_dir)
-
-        else:
-            img_fps = glob(file_dir + "*")
+        img_fps = glob(file_dir + "*")
 
         if valid_suffix is not None:
             valid_suffix = (
@@ -278,11 +248,10 @@ class ImageReader:
     ) -> Tuple[bool, List[np.ndarray]]:
         """Reads an image file or directory
 
-        Reads an image file or directory either locally
-        or stored in AWS S3.
+        Reads an image file or directory either locally.
 
         Params:
-            file_path_or_dir (str): Local or s3 directory path
+            file_path_or_dir (str): Local directory path
             valid_suffix (Optional[Union[str, List[str], None]]):
                 List of valid image suffixes - reader will only read
                 files in a directory with a matching suffix
@@ -316,12 +285,11 @@ class ImageReader:
     ):
         """Reads an image file or directory
 
-        Reads an image file or directory either locally
-        or stored in AWS S3 and stores each image as a
-        seperate image file in a local directory.
+        Reads an image file or directory either locally and stores each image as
+         a seperate image file in a local directory.
 
         Params:
-            path (str): Local or s3 directory path
+            path (str): Local  directory path
             output_folder (str): Directory for storing written
                 images
             file_format (Optional[str]): Output file format
@@ -330,6 +298,7 @@ class ImageReader:
                 Optional parameters to pass onto `cv2.imwrite`
             **reader_kwargs: Optional keyword arguments to pass onto
                 specific reader methods e.g. `_read_tif`
+
         """
         _, images = cls.read(path, **reader_kwargs)
         for i, img in enumerate(images):

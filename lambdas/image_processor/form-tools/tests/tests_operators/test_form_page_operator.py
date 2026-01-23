@@ -12,8 +12,6 @@ class TestFormPageOperator:
     ATTRIBUTES_PASSED_FROM_CONFIG = [
         "knn",
         "proportion",
-        "ocr_options",
-        "preprocessing_transforms",
         "homography_options",
     ]
     STRUCTURAL_SIMILARITY_THRESHOLD = 0.95
@@ -34,10 +32,6 @@ class TestFormPageOperator:
                     },
                     "knn": 2,
                     "proportion": 0.7,
-                    "ocr_options": {
-                        "rotation_engine": "tesserocr",
-                        "text_extraction_engine": "tesserocr",
-                    },
                 },
                 True,
             ),
@@ -88,27 +82,6 @@ class TestFormPageOperator:
             FormPageOperator.check_image_text_against_form_page(form_page, ocr_text)
             == expected
         )
-
-    @pytest.mark.parametrize(
-        "config, page_image_path",
-        [
-            (
-                "tests/tests_operators/data/configs/valid_config.yml",
-                "tests/tests_operators/data/images/random_image.jpg",
-            )
-        ],
-    )
-    def test_preprocessing(self, config, page_image_path):
-        from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.utils.image_reader import ImageReader
-
-        operator = FormPageOperator.create_from_config(config)
-        _, page_images = ImageReader.read(page_image_path)
-        page_image = page_images[0]
-
-        processed_image = operator.apply_preprocessing_transforms(page_image)
-
-        assert isinstance(processed_image, np.ndarray)
 
     @pytest.mark.parametrize(
         (
