@@ -12,8 +12,6 @@ from pdf2image import convert_from_bytes
 from dataengineeringutils3.s3 import s3_path_to_bucket_key
 from typing import List, Tuple, Union, Optional, ByteString, Dict, Any
 
-from .constants import aws_default_region
-
 
 class ImageReader:
     """ImageReader utility class
@@ -61,18 +59,6 @@ class ImageReader:
         Returns:
             (ByteString): Byte string for image
         """
-        if file_path.startswith("s3://"):
-            if "AWS_DEFAULT_REGION" not in os.environ:
-                os.environ["AWS_DEFAULT_REGION"] = aws_default_region
-
-            if s3_client is None:
-                s3_client = boto3.client("s3")
-
-            b, k = s3_path_to_bucket_key(file_path)
-
-            raw_img = s3_client.get_object(Bucket=b, Key=k).get("Body").read()
-
-        else:
             with open(file_path, "rb") as img_file:
                 raw_img = img_file.read()
 
