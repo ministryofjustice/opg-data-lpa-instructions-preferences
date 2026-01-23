@@ -8,6 +8,3 @@ matcher:
     - check: 50
 knn: 1
 proportion: 1
-ocr_options:
-  rotation_engine: tesseract
-  text_extraction_engine: tesseract
