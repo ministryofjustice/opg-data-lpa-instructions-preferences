@@ -144,25 +144,6 @@ class FormOperator(BaseModel):
             for p in Path(form_meta_directory).glob("*.json")
         }
 
-    def form_images_to_text(self, images: List[np.ndarray]) -> List[str]:
-        """Extracts text from given images
-
-        Takes a list of form page images and uses
-        the configured OCR engine to extract
-        text from each image.
-
-        Params:
-            images (List[ndarray]):
-                A list of form page images
-
-        Return:
-            (ndarray):
-                A list of recognised text from
-                the given images
-        """
-        engine = self.text_extractrion_engine
-        return engine.extract_text_from_images(images)
-
     def align_images_to_template(
         self,
         image_page_mapping: Dict[int, List[np.ndarray]],
