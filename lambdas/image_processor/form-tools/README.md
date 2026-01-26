@@ -96,18 +96,6 @@ form-tools process-form my_scanned_form.pdf config.yaml
 
 To interact with the API directly in python you would use the `FormOperator` class.
 
-```py
-from form_tools.form_operators import FormOperator
-
-form_operator = FormOperator.create_from_config("config.yaml")
-
-_ = form_operator.run_full_pipeline(
-    form_path="my_scanned_form.pdf",
-    pass_dir="s3://my-bucket/pass_directory",
-    fail_dir="s3://my-bucket/fail_directory",
-    form_meta_directory="metadata",
-)
-```
 
 > **Note**: The scanned image could be stored in an AWS S3 bucket. In that case you would pass the S3 path (e.g. `s3://my-bucket/my_scanned_form.pdf`). Only the config and metadata directory need to be located in your local working directory.
 
