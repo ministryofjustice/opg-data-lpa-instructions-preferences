@@ -47,46 +47,6 @@ class TestFormOperator:
         assert sorted(expected) == sorted([k for k in meta_store])
 
     @pytest.mark.parametrize(
-        "form_meta_directory, image_text, expected",
-        [
-            ("tests/tests_operators/data/configs", [""], []),
-            (
-                "tests/tests_operators/data/form_metadata",
-                [
-                    "hello",
-                    "this is my dummy form text",
-                    "it should have a page with an identifier",
-                    "and here it comes",
-                    "the form2",
-                ],
-                ["testid", "test"],
-            ),
-            (
-                "tests/tests_operators/data/form_metadata",
-                [
-                    "hello",
-                    "this is my dummy form text",
-                    "it should have a page with an identifier",
-                    "but it doesn't have one",
-                    "but here's a similar one for the form ",
-                ],
-                [],
-            ),
-        ],
-    )
-    def test_match_form_images_text_to_form_meta(
-        self, form_meta_directory, image_text, expected
-    ):
-        from form_tools.form_operators.form_operator import FormOperator
-
-        operator = FormOperator.create_from_config(self.DEFAULT_CONFIG_PATH)
-        matching_meta_store = operator.match_form_images_text_to_form_meta(
-            form_meta_directory, image_text
-        )
-        matching_ids = [k for k in matching_meta_store]
-        assert sorted(expected) == sorted(matching_ids)
-
-    @pytest.mark.parametrize(
         "images, expected_images, expected_text",
         [
             (

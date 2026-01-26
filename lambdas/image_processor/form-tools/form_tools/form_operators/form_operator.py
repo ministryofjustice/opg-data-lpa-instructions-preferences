@@ -144,34 +144,6 @@ class FormOperator(BaseModel):
             for p in Path(form_meta_directory).glob("*.json")
         }
 
-    def match_form_images_text_to_form_meta(
-        self, form_meta_directory: str, form_images_as_strings: List[str]
-    ):
-        """Filters form meta directory using given form image strings
-
-        Loops through `FormMetadata` objects in a given directory
-        and only returns those where the given form images
-        contains the given metadata's identifier
-
-        Params:
-            form_meta_directory (str):
-                The local path to the directory containing
-                `FormMetadata` compliant json files
-            form_images_as_strings (List[str]):
-                List of recognised text from a set of form images
-
-        Return:
-            (Dict[str, FormMetadata]):
-                A dictionary of `FormMetadata` objects
-        """
-        results = {}
-        for id, meta in self.form_meta_store(form_meta_directory).items():
-            valid, _ = self.form_identifier_match(form_images_as_strings, meta)
-            if valid:
-                results[id] = meta
-
-        return results
-
     def form_images_to_text(self, images: List[np.ndarray]) -> List[str]:
         """Extracts text from given images
 
@@ -190,70 +162,6 @@ class FormOperator(BaseModel):
         """
         engine = self.text_extractrion_engine
         return engine.extract_text_from_images(images)
-
-    def form_identifier_match(
-        self,
-        form_images_as_strings: List[str],
-        form_meta: FormMetadata,
-        identifier: Optional[Union[str, None]] = None,
-        excluded: Optional[Union[List[str], None]] = None,
-        filter_excluded_out: Optional[bool] = True,
-    ) -> Tuple[bool, List[int]]:
-        """Checks if a form metadata identifier is in a form
-
-        Takes a list of form page image text and checks
-        whether the text contains the required `FormMetadata`
-        objects' identifier, if none is supplied.
-
-        Params:
-            form_images_as_strings (List[str]):
-                List of recognised text from a set of form images
-            form_meta (FormMetadata): A `FormMetadata`
-                object for comparison
-            identifier (Optional[Union[List[str], None]]):
-                Alternative identifier to use rather
-                than the one recorded in the `FormMetadata`
-                object
-            excluded (Optional[Union[List[str], None]]):
-                Alternative excluded sections to use rather
-                than those recorded in the `FormMetadata`
-                object
-            filter_excluded_out (Optional[bool]):
-                Whether to filter pages matching
-                excluded sections out before comparison
-
-        Return:
-            (Tuple[bool, List[int]]):
-                A tuple where the first argument
-                specifies whether there is a match
-                and the second is the list of page
-                numbers where the match occur
-        """
-        form_identifier = (
-            form_meta.form_identifier if identifier is None else identifier
-        )
-        form_excluded = form_meta.excluded_sections if excluded is None else excluded
-
-        form_match = False
-        form_matches = []
-        for i, img_str in enumerate(form_images_as_strings):
-            id_match = re.search(form_identifier, img_str, re.DOTALL)
-
-            if form_excluded is not None and filter_excluded_out:
-                excl_match = [
-                    re.search(exl, img_str, re.DOTALL) for exl in form_excluded
-                ]
-
-                excl_flag = len([e for e in excl_match if e is not None]) > 0
-
-            else:
-                excl_flag = False
-
-            if id_match is not None and not excl_flag:
-                form_match = True
-                form_matches += [i]
-
-        return form_match, form_matches
 
     def align_images_to_template(
         self,
