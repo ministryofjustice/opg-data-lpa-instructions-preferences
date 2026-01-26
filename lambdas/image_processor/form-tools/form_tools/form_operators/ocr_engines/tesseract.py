@@ -121,11 +121,3 @@ class TesseractOcrEngine(BaseOcrEngine):
             api_kwargs={"psm": PSM.AUTO_OSD, "lang": "eng"},
             method_name="_get_text",
         )
-
-    def auto_rotate_images(self, images: List[np.ndarray]):
-        rotation_arguments = self._run_tesseract_on_images(
-            images=images,
-            api_kwargs={"psm": PSM.OSD_ONLY, "lang": "osd"},
-            method_name="_get_osd",
-        )
-        return self._rotate_images(images, rotation_arguments)

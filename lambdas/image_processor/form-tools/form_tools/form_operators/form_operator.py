@@ -172,27 +172,6 @@ class FormOperator(BaseModel):
 
         return results
 
-    def auto_rotate_form_images(self, images: List[np.ndarray]) -> List[np.ndarray]:
-        """Auto-rotates given images
-
-        Takes a list of form page images and uses
-        the configured OCR engine to auto-rotate
-        so that text has the correct orientation.
-        If the OCR engine cannot auto-rotate a page,
-        it will return the original image.
-
-        Params:
-            images (List[ndarray]):
-                A list of form page images
-
-        Return:
-            (ndarray):
-                A list of (possibly rotated)
-                form page images
-        """
-        engine = self.rotation_engine
-        return engine.auto_rotate_images(images)
-
     def form_images_to_text(self, images: List[np.ndarray]) -> List[str]:
         """Extracts text from given images
 

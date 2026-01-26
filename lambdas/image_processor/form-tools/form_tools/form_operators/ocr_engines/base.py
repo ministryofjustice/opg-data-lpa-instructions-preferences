@@ -18,10 +18,6 @@ class BaseOcrEngine(ABC, BaseModel):
     def extract_text_from_images(images: List[ndarray]):
         ...
 
-    @abstractmethod
-    def auto_rotate_images(images: List[ndarray]):
-        ...
-
     def _rotate_image(
         self,
         image: ndarray,

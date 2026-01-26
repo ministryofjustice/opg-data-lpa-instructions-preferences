@@ -121,9 +121,6 @@ class TestFormOperator:
             _, exp = ImageReader.read(p)
             expected_imgs.extend(exp)
 
-        rimgs = operator.auto_rotate_form_images(imgs)
-        assert [np.array_equal(im1, im2) for im1, im2 in zip(rimgs, expected_imgs)]
-
         text = operator.form_images_to_text(rimgs)
         assert [re.search(p, t) is not None for p, t in zip(expected_text, text)]
 
