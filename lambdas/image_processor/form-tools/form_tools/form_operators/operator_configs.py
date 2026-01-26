@@ -80,51 +80,10 @@ class HomographyConfig(BaseModel):
     singular_matrix_threshold: Optional[Union[float, None]] = None
 
 
-class OcrConfig(BaseModel):
-    """Config for OCR engine options
-
-    Attributes:
-        rotation_engine (str): Choice of OCR engine
-            to perform auto rotation
-        text_extraction_engine (str): Choice of OCR
-            engine to perform text extraction
-        minimum_orientation_confidence (Optional[float]):
-            The minimum confidence by which to accept
-            an autorotation result
-    """
-
-    rotation_engine: str
-    text_extraction_engine: str
-    minimum_orientation_confidence: Optional[float] = 1.5
-
-
-class PreprocessingTransform(BaseModel):
-    """Config for a preprocessing transformation
-
-    Attributes:
-        name (str): Name of the preprocessing
-            transformation as included in
-            `form_tools.form_operators.preprocessors`
-        args (Optional[List[Any]]):
-            Agruments to pass to the
-            transformation
-        kwargs (Optional[Dict[str, Any]]):
-            Keyword arguments to pass to
-            the transformation
-    """
-
-    name: str
-    args: Optional[Union[List[Any], None]] = None
-    kwargs: Optional[Union[Dict[str, Any], None]] = None
-
-
 class FormOperatorConfig(BaseModel):
     """Config for a `FormOperator`
 
     Attributes:
-        ocr_options (OcrConfig): An `OcrConfig`
-            object for deciding which engines
-            to use on the form
         detector (DetectorConfig):
             A `DetectorConfig` object for
             deciding which opencv detector to use
@@ -143,16 +102,11 @@ class FormOperatorConfig(BaseModel):
             test
         knn (int): The number of nearest neighbours to
             return as part of a KNN match procedure
-        preprocessing_transforms ([List[PreprocessingTransform], None]]):
-            List of `PreprocessingTransform` objects for applying
-            preprocessing transforms to a form image
     """
 
-    ocr_options: OcrConfig
     detector: DetectorConfig
     matcher: MatcherConfig
     minimum_matches: Optional[int] = 10
     homography_options: Optional[Union[HomographyConfig, None]] = None
     proportion: Optional[float] = 1.0
     knn: Optional[int] = 2
-    preprocessing_transforms: Optional[Union[List[PreprocessingTransform], None]] = None
