@@ -964,61 +964,6 @@ class ExtractionService:
         return matching_images[0]
 
     @staticmethod
-    def double_image_size(image_list: list) -> list:
-        """
-        Takes in a list of NumPy arrays representing images, doubles the size of each image,
-        and returns the new list of NumPy arrays with the doubled-sized images.
-        """
-        # Create an empty list to store the new images
-        doubled_images = []
-
-        # Loop through each image in the input list
-        for image in image_list:
-            # Get the current size of the image
-            height, width = image.shape[:2]
-            image = cv2.resize(
-                image,
-                (round(2 * width), round(2 * height)),
-                interpolation=cv2.INTER_LANCZOS4,
-            )
-            doubled_images.append(image)
-
-        # Return the list of doubled-size images
-        return doubled_images
-
-    @staticmethod
-    def match_first_form_image_text_to_form_meta(
-        metastore: dict,
-        form_images_as_strings: list,
-        form_operator: FormOperator,
-    ) -> dict:
-        """Filters form meta directory using given form image string
-        of first page
-
-        Loops through `FormMetadata` objects in a given directory
-        and only returns those where the given form images
-        contains the given metadata's identifier
-
-        Params:
-            metastore (dict):
-                The metastore of all our config items
-            form_images_as_strings (List[str]):
-                List of recognised text from a set of form images
-
-        Return:
-            (Dict[str, FormMetadata]):
-                A dictionary of `FormMetadata` objects
-        """
-        results = {}
-        for id, meta in metastore.items():
-            valid, _ = form_operator.form_identifier_match(
-                [form_images_as_strings[0]], meta
-            )
-            if valid:
-                results[id] = meta
-        return results
-
-    @staticmethod
     def similarity_score(str1: str, str2: str) -> float:
         """
         Computes the similarity score between two strings by counting the number of common words

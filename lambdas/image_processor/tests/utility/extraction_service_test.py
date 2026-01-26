@@ -436,15 +436,6 @@ def test_find_matches_from_barcodes_multiple_matches(
     assert len(result.image_page_map) == 2
 
 
-def test_double_image_size():
-    pass
-
-
-def test_match_first_form_image_text_to_form_meta():
-    # This is largely covered by form tool tests
-    pass
-
-
 def test_similarity_score(extraction_service):
     # Test case 1: Identical strings
     str1 = "The quick brown fox jumps over the lazy dog."
