@@ -87,49 +87,6 @@ class TestFormOperator:
         assert sorted(expected) == sorted(matching_ids)
 
     @pytest.mark.parametrize(
-        "config, page_image_paths, changed",
-        [
-            (
-                "tests/tests_operators/data/configs/valid_config.yml",
-                [
-                    "tests/tests_operators/data/images/original.png",
-                    "tests/tests_operators/data/images/rotated15.png",
-                ],
-                True,
-            ),
-            (
-                "tests/tests_operators/data/configs/valid_config2.yml",
-                [
-                    "tests/tests_operators/data/images/original.png",
-                    "tests/tests_operators/data/images/rotated15.png",
-                ],
-                False,
-            ),
-        ],
-    )
-    def test_preprocess_form_images(self, config, page_image_paths, changed):
-        from form_tools.form_operators.form_operator import FormOperator
-        from form_tools.utils.image_reader import ImageReader
-
-        imgs = []
-        for p in page_image_paths:
-            _, new_imgs = ImageReader.read(p)
-            imgs.extend(new_imgs)
-
-        operator = FormOperator.create_from_config(config)
-        new_imgs = operator.preprocess_form_images(imgs)
-
-        assert len(new_imgs) == len(imgs)
-
-        if changed:
-            assert all(
-                [not np.array_equal(im1, im2) for im1, im2 in zip(imgs, new_imgs)]
-            )
-
-        else:
-            assert all([np.array_equal(im1, im2) for im1, im2 in zip(imgs, new_imgs)])
-
-    @pytest.mark.parametrize(
         "images, expected_images, expected_text",
         [
             (

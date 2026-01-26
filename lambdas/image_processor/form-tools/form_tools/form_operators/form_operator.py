@@ -172,26 +172,6 @@ class FormOperator(BaseModel):
 
         return results
 
-    def preprocess_form_images(self, images: List[np.ndarray]) -> List[np.ndarray]:
-        """Apply preprocessing transformations to each form page
-
-        Loops through a set of form page images and applies the
-        preprocessing transformations specified in the `FormOperatorConfig`
-        used to instantiate the `FormOperator`
-
-        Params:
-            images (List[ndarray]):
-                A list of form page images
-
-        Return:
-            (ndarray):
-                A list of processed form page images
-        """
-        return [
-            self.form_page_operator.apply_preprocessing_transforms(image)
-            for image in images
-        ]
-
     def auto_rotate_form_images(self, images: List[np.ndarray]) -> List[np.ndarray]:
         """Auto-rotates given images
 

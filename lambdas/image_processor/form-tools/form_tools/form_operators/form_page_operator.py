@@ -217,40 +217,6 @@ class FormPageOperator(BaseModel):
             True if re.search(page_regex, image_str, re.DOTALL) is not None else False
         )
 
-    def apply_preprocessing_transforms(self, page_image: np.ndarray):
-        """Applies preprocessing transformations to a form page image
-
-        Applies the preprocessing transformations listed in the
-        config to the given image, in the order given in the config.
-        If no transformations are specified, returns the original image.
-
-        Params:
-            page_image (ndarray): The image of the form page
-                to apply transformations to
-
-        Returns:
-            (ndarray): The processed form page image
-        """
-        preprocessing_config = self.config.preprocessing_transforms
-        if preprocessing_config is not None:
-            for transform_config in preprocessing_config:
-                transform_name = transform_config.name
-                transform_args = transform_config.args
-                transform_kwargs = transform_config.kwargs
-
-                transform_args = [] if transform_args is None else transform_args
-                transform_kwargs = {} if transform_kwargs is None else transform_kwargs
-
-                transforms_module = importlib.import_module(
-                    f"{module_name}.preprocessors"
-                )
-
-                transform = getattr(transforms_module, transform_name)
-
-                page_image = transform(page_image, *transform_args, **transform_kwargs)
-
-        return page_image
-
     def _return_matches(
         self,
         page_image_descriptions: np.ndarray,
