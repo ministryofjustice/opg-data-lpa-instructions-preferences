@@ -12,7 +12,6 @@ class TestFormPageOperator:
     ATTRIBUTES_PASSED_FROM_CONFIG = [
         "knn",
         "proportion",
-        "preprocessing_transforms",
         "homography_options",
     ]
     STRUCTURAL_SIMILARITY_THRESHOLD = 0.95

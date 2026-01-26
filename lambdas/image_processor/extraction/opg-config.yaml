@@ -11,5 +11,3 @@ proportion: 0.7
 pass_directory: pass
 fail_directory: fail
 form_metadata_directory: metadata
-preprocessing_transforms:
-  - name: remove_specks

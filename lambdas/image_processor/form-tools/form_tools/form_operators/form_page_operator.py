@@ -12,7 +12,6 @@ from typing import Union, List, Tuple, Optional
 from .operator_configs import (
     FormOperatorConfig,
     HomographyConfig,
-    PreprocessingTransform,
 )
 from . import __name__ as module_name
 from ..form_meta.form_meta import FormPage
@@ -37,9 +36,6 @@ class FormPageOperator(BaseModel):
         minimum_matches (int): The minimum number of
             good keypoint matches to allow homography
             matrix to be computed
-        preprocessing_transforms (Union[List[PreprocessingTransform], None]):
-            List of transformations and their arguments
-            to apply to the images before processing
     """
 
     config: FormOperatorConfig
@@ -113,10 +109,6 @@ class FormPageOperator(BaseModel):
     @property
     def homography_options(self) -> Union[HomographyConfig, None]:
         return self.config.homography_options
-
-    @property
-    def preprocessing_transforms(self) -> Union[List[PreprocessingTransform], None]:
-        return self.config.preprocessing_transforms
 
     @classmethod
     def create_from_config(

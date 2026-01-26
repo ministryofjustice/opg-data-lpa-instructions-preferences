@@ -12,7 +12,3 @@ minimum_matches: 5
 homography_options:
   threshold: 5.0
   singular_matrix_threshold: 0.05
-preprocessing_transforms:
-  - name: remove_specks
-    kwargs:
-      adaptive_thresholding: True
