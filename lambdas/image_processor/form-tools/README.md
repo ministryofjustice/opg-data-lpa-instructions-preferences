@@ -78,8 +78,8 @@ matcher:
     - check: 50
 knn: 2
 proportion: 0.7
-pass_directory: s3://my-bucket/pass_directory
-fail_directory: s3://my-bucket/fail_directory
+pass_directory: pass_directory
+fail_directory: fail_directory
 form_metadata_directory: metadata
 ```
 
@@ -93,8 +93,6 @@ form-tools process-form my_scanned_form.pdf config.yaml
 
 To interact with the API directly in python you would use the `FormOperator` class.
 
-
-> **Note**: The scanned image could be stored in an AWS S3 bucket. In that case you would pass the S3 path (e.g. `s3://my-bucket/my_scanned_form.pdf`). Only the config and metadata directory need to be located in your local working directory.
 
 ## Running documentation locally
 

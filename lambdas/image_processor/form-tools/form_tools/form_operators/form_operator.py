@@ -14,7 +14,6 @@ from pydantic import BaseModel
 from arrow_pd_parser import writer
 from tempfile import NamedTemporaryFile
 from typing import Union, List, Dict, Tuple, Optional
-from dataengineeringutils3.s3 import s3_path_to_bucket_key, _add_slash
 
 from ..form_meta import FormMetadata
 from ..utils.image_reader import ImageReader
@@ -242,16 +241,15 @@ class FormOperator(BaseModel):
     def _copy_to_fail(form_path: str, fail_dir: str, meta_id: str, timestamp: int):
         """Helper method for copying failed forms to a fail directory
 
-        Copies a given form from it's local / S3 location to
-        a given fail directory (either locally or in S3).
+        Copies a given form from it's location to a given fail directory.
         Failed copies will be partitioned by the given meta id
         and timestamp
 
         Params:
             form_path (str):
-                Local or S3 path to form
+                Local path to form
             fail_dir (str):
-                Local or S3 path to fail directory
+                Local path to fail directory
             meta_id (str):
                 The id for the form metadata where the form
                 has failed to be processed against
@@ -262,22 +260,8 @@ class FormOperator(BaseModel):
 
         full_fail_path = os.path.join(full_fail_dir, Path(form_path).name)
 
-        if full_fail_path.startswith("s3://") and form_path.startswith("s3://"):
-            b, k = s3_path_to_bucket_key(form_path)
-            source_path = os.path.join(f"s3://{b}", Path(k).parent)
-
-            wr.s3.copy_objects(
-                [full_fail_path],
-                source_path=_add_slash(source_path),
-                target_path=_add_slash(full_fail_dir),
-            )
-
-        else:
-            _ = Path(full_fail_dir).mkdir(parents=True, exist_ok=False)
-            if form_path.startswith("s3://"):
-                _ = wr.s3.download(form_path, local_file=full_fail_path)
-            else:
-                _ = copy(form_path, full_fail_path)
+        _ = Path(full_fail_dir).mkdir(parents=True, exist_ok=False)
+        _ = copy(form_path, full_fail_path)
 
     @staticmethod
     def _write_to_pass(
@@ -292,7 +276,7 @@ class FormOperator(BaseModel):
         """Helper method for writing out processing outputs
 
         Writes extracted fields to a pass directory either
-        locally or in S3.
+        locally.
 
         Params:
             extracted_fields (Dict[str, Union[List[ndarray], ndarray]]):
@@ -300,9 +284,9 @@ class FormOperator(BaseModel):
                 values are image(s) corresponding to the form
                 field
             original_path (str):
-                Local or S3 path to original form
+                Local path to original form
             pass_dir (str):
-                Local or S3 path to pass directory
+                Local path to pass directory
             meta_id (str):
                 The id for the form metadata where the form
                 has failed to be processed against
@@ -343,12 +327,7 @@ class FormOperator(BaseModel):
                         f"{i:02d}_{Path(original_path).stem}{output_extension}",
                     )
 
-                    if full_pass_path.startswith("s3://"):
-                        with NamedTemporaryFile(suffix=output_extension) as tmp:
-                            _ = cv2.imwrite(tmp.name, img)
-                            _ = wr.s3.upload(tmp.name, full_pass_path)
-                    else:
-                        _ = Path(full_pass_path).parent.mkdir(
-                            parents=True, exist_ok=False
-                        )
-                        _ = cv2.imwrite(full_pass_path, img)
+                    _ = Path(full_pass_path).parent.mkdir(
+                        parents=True, exist_ok=False
+                    )
+                    _ = cv2.imwrite(full_pass_path, img)
