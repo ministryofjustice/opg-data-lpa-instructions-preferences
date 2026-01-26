@@ -78,9 +78,6 @@ matcher:
     - check: 50
 knn: 2
 proportion: 0.7
-ocr_options:
-  rotation_engine: tesseract
-  text_extraction_engine: tesseract
 pass_directory: s3://my-bucket/pass_directory
 fail_directory: s3://my-bucket/fail_directory
 form_metadata_directory: metadata

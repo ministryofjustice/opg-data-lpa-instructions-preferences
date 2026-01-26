@@ -8,9 +8,6 @@ matcher:
     - check: 50
 knn: 2
 proportion: 0.7
-ocr_options:
-  rotation_engine: tesseract
-  text_extraction_engine: tesseract
 pass_directory: pass
 fail_directory: fail
 form_metadata_directory: metadata

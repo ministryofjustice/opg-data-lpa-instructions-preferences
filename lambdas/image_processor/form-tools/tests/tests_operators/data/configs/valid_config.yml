@@ -9,9 +9,6 @@ matcher:
 knn: 0
 proportion: 1
 minimum_matches: 5
-ocr_options:
-  rotation_engine: tesseract
-  text_extraction_engine: tesseract
 homography_options:
   threshold: 5.0
   singular_matrix_threshold: 0.05

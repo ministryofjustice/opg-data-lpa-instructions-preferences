@@ -12,7 +12,6 @@ class TestFormPageOperator:
     ATTRIBUTES_PASSED_FROM_CONFIG = [
         "knn",
         "proportion",
-        "ocr_options",
         "preprocessing_transforms",
         "homography_options",
     ]
@@ -34,10 +33,6 @@ class TestFormPageOperator:
                     },
                     "knn": 2,
                     "proportion": 0.7,
-                    "ocr_options": {
-                        "rotation_engine": "tesserocr",
-                        "text_extraction_engine": "tesserocr",
-                    },
                 },
                 True,
             ),

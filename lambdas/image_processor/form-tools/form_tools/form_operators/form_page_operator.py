@@ -11,7 +11,6 @@ from typing import Union, List, Tuple, Optional
 
 from .operator_configs import (
     FormOperatorConfig,
-    OcrConfig,
     HomographyConfig,
     PreprocessingTransform,
 )
@@ -35,8 +34,6 @@ class FormPageOperator(BaseModel):
         matcher (cv2 Matcher): An opencv matcher object
         proportion (float): Proportion of keypoint matches
             to keep or to use in KNN ratio test
-        ocr_options (OcrConfig): OCR engine
-            choices for form operator
         minimum_matches (int): The minimum number of
             good keypoint matches to allow homography
             matrix to be computed
@@ -108,10 +105,6 @@ class FormPageOperator(BaseModel):
     @property
     def proportion(self) -> float:
         return self.config.proportion
-
-    @property
-    def ocr_options(self) -> OcrConfig:
-        return self.config.ocr_options
 
     @property
     def minimum_matches(self) -> Union[int, None]:

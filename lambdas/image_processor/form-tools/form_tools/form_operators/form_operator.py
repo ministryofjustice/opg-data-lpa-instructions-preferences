@@ -17,7 +17,6 @@ from typing import Union, List, Dict, Tuple, Optional
 from dataengineeringutils3.s3 import s3_path_to_bucket_key, _add_slash
 
 from ..form_meta import FormMetadata
-from .ocr_engines.base import BaseOcrEngine
 from ..utils.image_reader import ImageReader
 from .form_page_operator import FormPageOperator
 from .operator_configs import FormOperatorConfig
@@ -37,11 +36,6 @@ class FormOperator(BaseModel):
     Attributes:
         config (FormOperatorConfig): A form operator config
             for setting up image transformations
-        rotation_engine (BaseOcrEngine): A OCR
-            engine to use for auto-rotating form images
-            based on
-        text_extraction_engine (BaseOcrEngine): A OCR
-            engine to use for text extraction
         form_page_operator (FormPageOperator): A
             `FormPageOperator` populated from the given
             `FormOperatorConfig` for processing individual
@@ -49,39 +43,6 @@ class FormOperator(BaseModel):
     """
 
     config: FormOperatorConfig
-
-    @staticmethod
-    def _get_ocr_engine(engine_name: str) -> BaseOcrEngine:
-        """Helper for retrieving OCR engine from name
-
-        Takes an OCR engine name and works out the
-        corresponding engine class for importing
-        from `form_tools.form_operators.ocr_engines`
-
-        Params:
-            engine_name (str): The name of the OCR engine
-                to fetch
-
-        Return:
-            (BaseOcrEngine):
-                The given engine's class
-        """
-        engine_class_name = engine_name[0].upper() + engine_name[1:] + "OcrEngine"
-        module = importlib.import_module(
-            f"form_tools.form_operators.ocr_engines.{engine_name.lower()}"
-        )
-        engine = getattr(module, engine_class_name)
-        return engine
-
-    @property
-    def rotation_engine(self) -> BaseOcrEngine:
-        engine = self._get_ocr_engine(self.config.ocr_options.rotation_engine)
-        return engine(**self.config.ocr_options.dict())
-
-    @property
-    def text_extractrion_engine(self) -> BaseOcrEngine:
-        engine = self._get_ocr_engine(self.config.ocr_options.text_extraction_engine)
-        return engine(**self.config.ocr_options.dict())
 
     @property
     def form_page_operator(self) -> FormPageOperator:

@@ -18,14 +18,11 @@ class TestFormOperator:
     def test_attributes(self, config, expected):
         from form_tools.form_operators.form_operator import FormOperator
         from form_tools.form_operators.form_page_operator import FormPageOperator
-        from form_tools.form_operators.ocr_engines.base import BaseOcrEngine
 
         if expected:
             operator = FormOperator.create_from_config(config)
             page_operator = FormPageOperator.create_from_config(config)
 
-            assert isinstance(operator.rotation_engine, BaseOcrEngine)
-            assert isinstance(operator.text_extractrion_engine, BaseOcrEngine)
             assert operator.form_page_operator.dict() == page_operator.dict()
             assert operator.config.dict() == page_operator.config.dict()
 
