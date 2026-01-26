@@ -354,25 +354,10 @@ class FormPageOperator(BaseModel):
         keypoint_matches: List[cv2.DMatch],
         aligned_page_image: np.ndarray,
     ):
-        """Helper to determine if a homography matrix is degenerate
-
-        Takes a homography matrix and checks whether it's determinant
-        is near enough to 0 to be considered singular. Whether the
-        determinant is 'near enough' is determined by the
-        `singular_matrix_threshold` provided in the `homography_options`
-        in the config.
-
-        Params:
-            homography_matrix (ndarray): A
-                ndarray representing a
-                homography matrix between an
-                image and it's template
-
-        Returns:
-            (bool): Whether the matrix is considered degenerate
-        """
-        if "PYTEST_TEST_ENV" not in os.environ:
-            cv2.startWindowThread()
+        if "PYTEST_TEST_ENV" in os.environ:
+            return
+        
+        cv2.startWindowThread()
 
         matchedVis = cv2.drawMatches(
             page_image,
@@ -383,22 +368,10 @@ class FormPageOperator(BaseModel):
             None,
         )
 
-        if "PYTEST_TEST_ENV" not in os.environ:
-            cv2.imshow("Matched Keypoints", matchedVis)
-            cv2.waitKey(0)
-
-        stacked = np.hstack([aligned_page_image, page_template_image])
-
-        overlay = page_template_image.copy()
-        output = aligned_page_image.copy()
-
-        cv2.addWeighted(overlay, 0.5, output, 0.5, 0, output)
-
-        if "PYTEST_TEST_ENV" not in os.environ:
-            # show the two output image alignment visualizations
-            cv2.imshow("Image Alignment Stacked", stacked)
-            cv2.imshow("Image Alignment Overlay", output)
-            cv2.waitKey(0)
+        cv2.imshow("Matched Keypoints", matchedVis)
+        cv2.imshow("Template", page_template_image)
+        cv2.imshow("Aligned", aligned_page_image)
+        cv2.waitKey(0)
 
     def align_image_to_template(
         self,
@@ -459,7 +432,7 @@ class FormPageOperator(BaseModel):
 
             if debug:
                 self._show_debug_images(
-                    page_image, kps_img, page_template_image, kps_tmpt, good, aligned
+                    page_image, kps_img, page_template_image, kps_tmpt, good, aligned.copy()
                 )
 
             return aligned

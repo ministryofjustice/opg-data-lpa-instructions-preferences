@@ -2,6 +2,7 @@ import datetime
 import copy
 import os
 import tempfile
+import logging
 
 import cv2
 import re
@@ -488,9 +489,10 @@ class ExtractionService:
         try:
             # Align the images to the metadata template
             logger.debug("Aligning images...")
-
+            debug = logger.level == logging.DEBUG
+            
             aligned_images = form_operator.align_images_to_template(
-                matched_items.image_page_map, form_meta=meta, debug=False
+                matched_items.image_page_map, form_meta=meta, debug=debug
             )
 
             # Extract the fields from the form images
@@ -501,7 +503,7 @@ class ExtractionService:
                 form_meta=meta,
                 as_bytes=False,
                 encode_type=encode_type,
-                debug=False,
+                debug=debug,
             )
 
             # Write the extracted fields to the pass directory
