@@ -118,11 +118,14 @@ class BucketManager:
         lpa_scans = s3_urls_dict.get("lpaScans", [])
         lpa_locations = []
         for lpa_scan in lpa_scans:
-            scan_location = ScanLocation(
-                location=lpa_scan["location"], template=lpa_scan["template"]
-            )
-            lpa_locations.append(scan_location)
-            self.info_msg.document_templates.append(scan_location.template)
+            try:
+                scan_location = ScanLocation(
+                    location=lpa_scan["location"], template=lpa_scan["template"]
+                )
+                lpa_locations.append(scan_location)
+                self.info_msg.document_templates.append(scan_location.template)
+            except KeyError as e:
+                raise Exception(f"Error adding scan location {lpa_scan}: {e}")
 
         lpa_locations_reordered = self.reorder_list_by_relevance(lpa_locations)
 
