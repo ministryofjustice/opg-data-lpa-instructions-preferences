@@ -66,7 +66,7 @@ class PathSelectionService:
 
         if not self.check_continuation_sheets_match_expected(continuation_sheets, continuation_sheet_type):
             logger.warning(
-                "Images extracted from Continuation Sheets do not match what is expected based on the checkbox. Continuation keys={continuation_keys_to_use}, Continuation sheet type={continuation_sheet_type}"
+                f"Images extracted from Continuation Sheets do not match what is expected based on the checkbox. Continuation keys={continuation_keys_to_use}, Continuation sheet type={continuation_sheet_type}"
             )
         # The following line can be uncommented once UML-3201 and UML-3202 are done. For now we only log not error
         # raise Exception("Images extracted from Continuation Sheets do not match what is expected based on the checkbox")
