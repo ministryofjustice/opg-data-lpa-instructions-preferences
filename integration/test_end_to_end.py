@@ -180,10 +180,15 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
 
         assert response.status_code == 200
         assert response_object["status"] == template_data[response_type]["status"]
-        assert len(response_object["signedUrls"]) == len(
-            template_data[response_type]["signedUrls"]
-        )
 
+        actual_keys = set(response_object["signedUrls"].keys())
+        expected_keys = set(template_data[response_type]["signedUrls"].keys())
+
+        assert expected_keys.issubset(actual_keys), (
+            f"\nMissing expected keys for template {template}\n"
+            f"Expected: {expected_keys}\n"
+            f"Actual: {actual_keys}"
+        )
 
 @pytest.mark.order(1)
 def test_collection_started(setup_rest_url_part, cleanup_iap_buckets):
