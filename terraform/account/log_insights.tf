@@ -8,7 +8,6 @@ fields status, @timestamp, @message
 EOF
 }
 
-
 resource "aws_cloudwatch_query_definition" "iap_error_messages" {
   name         = "Instructions-and-Preferences/Failed-Cases"
   query_string = <<EOF
@@ -23,5 +22,18 @@ fields @timestamp, coalesce(@requestId, request_id) as RequestID
 | sort @timestamp asc, RequestID asc
 | stats latest(@timestamp) as Time, latest(uid) as CaseNumber, latest(error) as ReasonFailed, latest(docs) as DocumentTemplates, latest(matched) as MatchedTemplates by RequestID
 | display fromMillis(Time) as TimeStamp, CaseNumber, ReasonFailed, DocumentTemplates, MatchedTemplates, RequestID
+EOF
+}
+
+resource "aws_cloudwatch_query_definition" "iap_completed_messages" {
+  name         = "Instructions-and-Preferences/Completed-Cases"
+  query_string = <<EOF
+fields @timestamp, coalesce(@requestId, request_id) as RequestID
+| filter @message like 'Completed'
+| parse @message 'document_templates": [*]' as docs
+| parse @message 'matched_templates": [*]' as matched
+| sort @timestamp asc, RequestID asc
+| stats latest(@timestamp) as Time, latest(uid) as CaseNumber, latest(docs) as DocumentTemplates, latest(matched) as MatchedTemplates by RequestID
+| display fromMillis(Time) as TimeStamp, CaseNumber, DocumentTemplates, MatchedTemplates, RequestID
 EOF
 }
