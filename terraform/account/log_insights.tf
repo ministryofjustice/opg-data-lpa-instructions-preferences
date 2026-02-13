@@ -4,8 +4,7 @@ resource "aws_cloudwatch_query_definition" "iap_count_by_status" {
 # Used to report on the success failure rate of document processing
 fields status, @timestamp, @message
 | filter ispresent(status)
-| stats count(*) by status
-| sort @timestamp asc
+| stats count_distinct(uid) by status
 EOF
 }
 
