@@ -14,11 +14,11 @@ on:
   workflow_call:
     inputs:
       tag:
-        description: 'Tag for docker image'
+        description: "Tag for docker image"
         required: true
         type: string
       branch_name:
-        description: 'Branch we are on'
+        description: "Branch we are on"
         required: true
         type: string
     secrets:
@@ -34,14 +34,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: 'lpa-iap-request-handler-lambda'
-            path: 'lambdas/image_request_handler'
-          - name: 'lpa-iap-scan-processor-lambda'
-            path: 'lambdas/image_processor'
-          - name: 'lpa-iap-mock-sirius'
-            path: 'mock-services/sirius/app'
-          - name: 'lpa-iap-mock-sirius-web'
-            path: 'mock-services/sirius/web'
+          - name: "lpa-iap-request-handler-lambda"
+            path: "lambdas/image_request_handler"
+          - name: "lpa-iap-scan-processor-lambda"
+            path: "lambdas/image_processor"
+          - name: "lpa-iap-mock-sirius"
+            path: "mock-services/sirius/app"
+          - name: "lpa-iap-mock-sirius-web"
+            path: "mock-services/sirius/web"
     steps:
       - name: Check out code
         id: checkout_code
@@ -49,7 +49,7 @@ jobs:
 
       - name: Build Container
         id: build_container
-        run: docker build --file ${{ matrix.path }}/Dockerfile --tag ${{ matrix.name }}:latest ${{ matrix.path }}
+        run: docker build --platform linux/amd64 --provenance=false --file ${{ matrix.path }}/Dockerfile --tag ${{ matrix.name }}:latest ${{ matrix.path }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
@@ -76,22 +76,21 @@ jobs:
           TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
         with:
           image-ref: ${{ matrix.name }}:latest
-          severity: 'HIGH,CRITICAL'
-          format: 'sarif'
+          severity: "HIGH,CRITICAL"
+          format: "sarif"
           security-checks: "vuln"
           ignore-unfixed: true
-          output: 'trivy-results.sarif'
+          output: "trivy-results.sarif"
 
       - name: Upload Trivy scan results to GitHub Security tab
         id: trivy_upload_sarif
         uses: github/codeql-action/upload-sarif@b20883b0cd1f46c72ae0ba6d1090936928f9fa30 # v4.32.0
         if: always()
         with:
-          sarif_file: 'trivy-results.sarif'
+          sarif_file: "trivy-results.sarif"
 
       - name: Install AWS Cli
         uses: unfor19/install-aws-cli-action@f5b46b7f32cf5e7ebd652656c5036bf83dd1e60c # 1.0.8
-
 
       - name: Push to ECR
         env:
