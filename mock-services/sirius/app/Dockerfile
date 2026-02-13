@@ -5,7 +5,7 @@ RUN apk upgrade libcrypto1.1 libcrypto3 libssl3 busybox ssl_client zlib
 # Patch vulnerable tar version
 RUN npm install tar@7.5.7 \
     --prefix /usr/local/lib/node_modules/npm/node_modules \
-    --no-save \
+    --no-save
 
 RUN rm -rf /usr/local/lib/node_modules/npm/node_modules/cross-spawn
 RUN npm install cross-spawn@7.0.5  \
