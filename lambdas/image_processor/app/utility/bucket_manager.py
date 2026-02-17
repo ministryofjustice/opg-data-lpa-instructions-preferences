@@ -119,8 +119,18 @@ class BucketManager:
         lpa_locations = []
         for lpa_scan in lpa_scans:
             try:
+                # lpa_scan["template"] is sourced from the sirius field "sourceDocumentType"
+                # PoaNotes attached to cases are not stored with a "sourceDocumentType" so "template"
+                # does not exist in these cases.
+                template_type = lpa_scan.get("template")
+                if template_type is None:
+                    logger.info(
+                        f"Template not provided for scan location: {lpa_scan}"
+                    )
+                    continue
+
                 scan_location = ScanLocation(
-                    location=lpa_scan["location"], template=lpa_scan["template"]
+                    location=lpa_scan["location"], template=template_type
                 )
                 lpa_locations.append(scan_location)
                 self.info_msg.document_templates.append(scan_location.template)
