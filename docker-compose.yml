@@ -1,6 +1,3 @@
----
-version: '3'
-
 services:
   image-request-handler:
     image: image-request-handler:latest
