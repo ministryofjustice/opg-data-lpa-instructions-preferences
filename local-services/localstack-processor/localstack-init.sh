@@ -17,6 +17,7 @@ awslocal lambda create-function \
           --runtime python3.11 \
           --zip-file fileb://lambda.zip \
           --handler forwarder.handler \
+          --timeout 600 \
           --role arn:aws:iam::000000000000:role/lambda-role
 
 echo "Creating event source mapping"

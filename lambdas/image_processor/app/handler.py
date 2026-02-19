@@ -69,6 +69,10 @@ class ImageProcessor:
                 sirius_response_dict, self.output_folder_path
             )
 
+            # Log out recoverable failures from sirius file downloads
+            for failure in downloaded_scan_locations.failures:
+                logger.error(f"{self.request_id} Error adding scan location: {failure.redacted_location}")
+
             # Extract all relevant images relating to instructions and preferences from downloaded documents
             continuation_keys_to_use = extraction_service.run_iap_extraction(
                 downloaded_scan_locations

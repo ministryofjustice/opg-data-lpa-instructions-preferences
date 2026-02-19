@@ -284,7 +284,6 @@ templates = {
     #         "signedUrls": {},
     #     },
     # },
-    # TODO once UML-3201 and UML-3202 are done, we will switch on the throwing of an error, and so need to uncomment this
     "LP1F-instructions-are-too-black": {
         "lpa_uid": "700000000099",
         "expected_collection_started_response": {
@@ -359,5 +358,28 @@ templates = {
         #        "iap-700000000101-continuation_preferences_3": "",
         #    },
         #},
+    },
+    "LP1H-with-lpanote-attachments": {
+        "lpa_uid": "700000000102",
+        "expected_collection_started_response": {
+            "uId": "700000000102",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000102",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000102",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000102-instructions": "",
+                "iap-700000000102-preferences": "",
+                "iap-700000000102-continuation_instructions_1": "",
+                "iap-700000000102-continuation_preferences_1": "",
+            },
+        },
     },
 }
