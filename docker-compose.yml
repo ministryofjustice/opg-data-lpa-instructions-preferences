@@ -92,15 +92,8 @@ services:
       SERVICES: s3,lambda,apigateway
       AWS_ACCESS_KEY_ID: fake
       AWS_SECRET_ACCESS_KEY: fake
-      DEFAULT_REGION: eu-west-1
-      USE_SINGLE_REGION: 1
       DEBUG: 1
-      LS_LOG: trace
-      HOSTNAME_EXTERNAL: localstack-request-handler
-      LAMBDA_EXECUTOR: docker
-      LAMBDA_REMOVE_CONTAINERS: "true"
-      LAMBDA_FORWARD_URL: http://image-request-handler:8080
-      DOCKER_HOST: unix:///var/run/docker.sock
+      LOCALSTACK_HOST: localstack-request-handler
     volumes:
       - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
       - /var/run/docker.sock:/var/run/docker.sock
@@ -116,14 +109,8 @@ services:
       dockerfile: Dockerfile
     environment:
       SERVICES: secretsmanager,lambda,sqs
-      DEFAULT_REGION: eu-west-1
-      USE_SINGLE_REGION: 1
       DEBUG: 1
-      HOSTNAME_EXTERNAL: localstack-processor
-      LAMBDA_EXECUTOR: docker
-      LAMBDA_REMOVE_CONTAINERS: "true"
-      LAMBDA_FORWARD_URL: http://image-processor:8080
-      DOCKER_HOST: unix:///var/run/docker.sock
+      LOCALSTACK_HOST: localstack-processor
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
