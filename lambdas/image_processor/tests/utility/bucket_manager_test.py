@@ -6,7 +6,6 @@ import pytest
 from app.utility.bucket_manager import BucketManager, ScanLocation
 from app.utility.custom_logging import LogMessageDetails
 
-
 @pytest.fixture(autouse=True)
 def setup_environment_variables():
     os.environ["ENVIRONMENT"] = "testing"
@@ -50,7 +49,14 @@ def test_setup_s3_connection(mock_boto3, bucket_manager):
 def test_download_scanned_images(bucket_manager, monkeypatch):
     # Define test data
     s3_urls_dict = {
-        "lpaScans": [{"location": "s3://my_bucket/my_scan.pdf", "template": "TEST"}],
+        "lpaScans": [
+            {
+                "location": "s3://my_bucket/5fbcd594bac0e_my_scan.pdf", "template": "TEST"
+            },
+            {
+                "location": "s3://my_bucket/5a980ebab6ae2_additional - correspondence.msg",
+            },
+        ],
         "continuationSheets": [
             {
                 "location": "s3://my_bucket/my_continuation_sheet1.pdf",
@@ -75,7 +81,7 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
     # Check that the expected S3 files were downloaded
     assert len(mock_download_file.mock_calls) == 3
     mock_download_file.assert_any_call(
-        "my_bucket", "my_scan.pdf", "/tmp/output/my_scan.pdf"
+        "my_bucket", "5fbcd594bac0e_my_scan.pdf", "/tmp/output/5fbcd594bac0e_my_scan.pdf"
     )
     mock_download_file.assert_any_call(
         "my_bucket",
@@ -90,7 +96,7 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
 
     # Check that the function returned the expected file paths
     expected_result = {
-        "scans": [{"location": "/tmp/output/my_scan.pdf", "template": "TEST"}],
+        "scans": [{"location": "/tmp/output/5fbcd594bac0e_my_scan.pdf", "template": "TEST"}],
         "continuations": {
             "continuation_1": {
                 "location": "/tmp/output/my_continuation_sheet1.pdf",
@@ -101,6 +107,7 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
                 "template": "TEST",
             },
         },
+        "failures": [{"redacted_location": "s3://my_bucket/5a980ebab6ae2_****.msg"}],
     }
 
     assert result.scans[0].template == expected_result["scans"][0]["template"]
@@ -120,6 +127,9 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
     assert (
         result.continuations["continuation_2"].template
         == expected_result["continuations"]["continuation_2"]["template"]
+    )
+    assert (
+        result.failures[0].redacted_location == expected_result["failures"][0]["redacted_location"]
     )
 
 

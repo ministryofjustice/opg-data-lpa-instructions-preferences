@@ -1,4 +1,5 @@
 import os
+import re
 import boto3
 from app.utility.custom_logging import custom_logger
 
@@ -18,24 +19,39 @@ class ScanLocation:
     def location(self) -> str:
         return self.__location
 
+    @property
+    def redacted_location(self) -> str:
+        redacted_file_path = re.sub(
+            r"(.*/[a-f0-9]{,13}_).*(\.\w{3,4})$",
+            r"\1****\2",
+            self.__location
+        )
+        return redacted_file_path
+
     def set_location(self, location):
         self.__location = location
 
 
 class ScanLocationStore:
-    def __init__(self, scans: ScanLocation = None, continuations: ScanLocation = None):
+    def __init__(self, scans: ScanLocation = None, continuations: ScanLocation = None, failures: ScanLocation = None):
         if continuations is None:
             continuations = {}
         if scans is None:
             scans = []
+        if failures is None:
+            failures = []
         self.scans = scans
         self.continuations = continuations
+        self.failures = failures
 
     def add_scan(self, scan: ScanLocation):
         self.scans.append(scan)
 
     def add_continuation(self, key: str, continuation: ScanLocation):
         self.continuations[key] = continuation
+
+    def add_failure(self, scan: ScanLocation):
+        self.failures.append(scan)
 
 
 class BucketManager:
@@ -114,18 +130,25 @@ class BucketManager:
         Returns:
             A dictionary containing the local file paths of the downloaded scanned images.
         """
+        scan_locations = ScanLocationStore()
+
         # Extract the S3 URLs for the possible LPA sheet scans
         lpa_scans = s3_urls_dict.get("lpaScans", [])
         lpa_locations = []
         for lpa_scan in lpa_scans:
-            try:
-                scan_location = ScanLocation(
-                    location=lpa_scan["location"], template=lpa_scan["template"]
-                )
-                lpa_locations.append(scan_location)
-                self.info_msg.document_templates.append(scan_location.template)
-            except KeyError as e:
-                raise Exception(f"Error adding scan location: {e}")
+            # lpa_scan["template"] is sourced from the sirius field "sourceDocumentType"
+            # PoaNotes attached to cases are not stored with a "sourceDocumentType" so "template"
+            # does not exist in these cases.
+            scan_location = ScanLocation(
+                location=lpa_scan["location"], template=lpa_scan.get("template")
+            )
+
+            if scan_location.template is None:
+                scan_locations.add_failure(scan_location)
+                continue
+
+            lpa_locations.append(scan_location)
+            self.info_msg.document_templates.append(scan_location.template)
 
         lpa_locations_reordered = self.reorder_list_by_relevance(lpa_locations)
 
@@ -146,7 +169,6 @@ class BucketManager:
                 "No documents returned by Sirius. Sirius response dictionary"
             )
 
-        scan_locations = ScanLocationStore()
         for lpa_location in lpa_locations_reordered:
             try:
                 # Extract the file path and bucket name from the S3 URL
