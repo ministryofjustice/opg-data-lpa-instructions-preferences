@@ -29,6 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install tesseract-ocr and poppler
         run: |
+          sudo apt-get update
           sudo apt-get install tesseract-ocr libtesseract-dev libleptonica-dev pkg-config poppler-utils
       - name: Install dependencies
         run: |
