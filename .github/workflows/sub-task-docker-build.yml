@@ -75,6 +75,7 @@ jobs:
           TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
           TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
         with:
+          version: v0.69.2
           image-ref: ${{ matrix.name }}:latest
           severity: "HIGH,CRITICAL"
           format: "sarif"
