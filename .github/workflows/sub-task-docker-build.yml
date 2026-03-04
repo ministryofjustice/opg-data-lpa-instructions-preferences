@@ -79,7 +79,7 @@ jobs:
           image-ref: ${{ matrix.name }}:latest
           severity: "HIGH,CRITICAL"
           format: "sarif"
-          security-checks: "vuln"
+          scanners: "vuln"
           ignore-unfixed: true
           output: "trivy-results.sarif"
 
