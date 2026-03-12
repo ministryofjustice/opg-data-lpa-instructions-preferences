@@ -1,5 +1,5 @@
-boto3==1.42.63
+boto3==1.42.64
 awslambdaric==3.1.1
 setuptools==80.10.2
-imageio==2.37.2
+imageio==2.37.3
 aws-xray-sdk==2.15.0
