@@ -50,7 +50,7 @@ jobs:
           terraform_version: 1.13.1
       
       - name: Setup SSH private key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.1
+        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
         if: inputs.use_ssh_private_key == true
         with:
           ssh-private-key: ${{ secrets.ssh_private_key }}
