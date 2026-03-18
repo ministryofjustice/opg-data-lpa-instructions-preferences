@@ -17,7 +17,7 @@ pdfminer-six==20251230
 pydantic==1.10.26
 pyjwt==2.12.1
 pyopengl==3.1.10
-pypdf==6.8.0
+pypdf==6.9.0
 pytesseract==0.3.13
 pyzbar==0.1.9
 requests==2.32.5
