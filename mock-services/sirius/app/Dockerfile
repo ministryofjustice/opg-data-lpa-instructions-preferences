@@ -4,13 +4,21 @@ RUN apk upgrade libcrypto1.1 libcrypto3 libssl3 busybox ssl_client zlib
 
 WORKDIR  /app
 
-RUN  npm install @stoplight/prism-cli
+COPY ./package.json /app/package.json
+COPY ./package-lock.json /app/package-lock.json
+
+RUN npm ci --ignore-scripts
+
 
 RUN npm update tar lodash fast-xml-parser --save
 
 RUN npm uninstall -g npm
 
+RUN apk upgrade --no-cache zlib
 
+RUN chown -R node:node /app 
+
+USER node
 
 RUN chmod +x run.sh
 ENTRYPOINT ["/app/run.sh"]
