@@ -15,7 +15,6 @@ resource "aws_iam_role_policy_attachment" "ual_iap_request_handler_lambda_attach
 
 // Access policy for the s3 bucket
 data "aws_iam_policy_document" "ual_iap_request_handler_lambda" {
-  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
   statement {
     sid       = "AllowS3Actions"
     effect    = "Allow"
@@ -33,7 +32,6 @@ data "aws_iam_policy_document" "ual_iap_request_handler_lambda" {
     ]
   }
 
-  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
   statement {
     sid    = "AllowXRayAccess"
     effect = "Allow"
@@ -72,7 +70,6 @@ data "aws_kms_key" "secrets_manager" {
 
 // Access policy for the both s3 buckets and the SQS queue
 data "aws_iam_policy_document" "ual_iap_processor_lambda" {
-  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
   statement {
     sid       = "AllowS3PutInBucket"
     effect    = "Allow"
@@ -80,7 +77,6 @@ data "aws_iam_policy_document" "ual_iap_processor_lambda" {
     actions   = ["s3:PutObject", "s3:ListBucket"]
   }
 
-  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
   statement {
     sid       = "AllowS3GetInBucket"
     effect    = "Allow"
@@ -136,7 +132,6 @@ data "aws_iam_policy_document" "ual_iap_processor_lambda" {
     ]
   }
 
-  #tfsec:ignore:aws-iam-no-policy-wildcards - this is not overly permissive
   statement {
     sid    = "AllowXRayAccess"
     effect = "Allow"
