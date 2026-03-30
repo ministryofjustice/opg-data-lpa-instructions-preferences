@@ -26,6 +26,8 @@ on:
         required: true
       aws_secret_access_key_actions:
         required: true
+      SNYK_OPG_ORG_TOKEN:
+        required: true
 
 jobs:
   docker_build_scan_push:
@@ -36,12 +38,16 @@ jobs:
         include:
           - name: "lpa-iap-request-handler-lambda"
             path: "lambdas/image_request_handler"
+            snyk_policy_path: "lambdas/image_request_handler/.snyk"
           - name: "lpa-iap-scan-processor-lambda"
             path: "lambdas/image_processor"
+            snyk_policy_path: "lambdas/image_processor/.snyk"
           - name: "lpa-iap-mock-sirius"
             path: "mock-services/sirius/app"
+            snyk_policy_path: "mock-services/sirius/app/.snyk"
           - name: "lpa-iap-mock-sirius-web"
             path: "mock-services/sirius/web"
+            snyk_policy_path: "mock-services/sirius/web/.snyk"
     steps:
       - name: Check out code
         id: checkout_code
@@ -66,29 +72,21 @@ jobs:
         uses: aws-actions/amazon-ecr-login@c962da2960ed15f492addc26fffa274485265950 # v2.0.2
         with:
           registries: 311462405659
-
-      - name: Trivy Image Vulnerability Scanner
-        id: trivy_scan
-        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TRIVY_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-db:2
-          TRIVY_JAVA_DB_REPOSITORY: ${{ steps.login_ecr.outputs.registry }}/trivy-db-public-ecr/aquasecurity/trivy-java-db:1
+      
+      - name: Snyk Scan
+        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@8dea82fc8b8e7ffca431f0fb83848d523147ccd8 #v4.5.0
         with:
-          version: v0.69.2
-          image-ref: ${{ matrix.name }}:latest
-          severity: "HIGH,CRITICAL"
-          format: "sarif"
-          scanners: "vuln"
-          ignore-unfixed: true
-          output: "trivy-results.sarif"
+          SNYK_TEST_IMAGE: ${{ matrix.name }}:latest
+          SNYK_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
+          snyk_test_args: >
+            --severity-threshold=high --fail-on=upgradable
+          snyk_policy_path: ./${{ matrix.snyk_policy_path }}
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        id: trivy_upload_sarif
+      - name: Upload Snyk scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
         if: always()
         with:
-          sarif_file: "trivy-results.sarif"
+          sarif_file: "test-results/snyk.sarif"
 
       - name: Install AWS Cli
         uses: unfor19/install-aws-cli-action@f5b46b7f32cf5e7ebd652656c5036bf83dd1e60c # 1.0.8
