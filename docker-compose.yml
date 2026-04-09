@@ -141,3 +141,26 @@ services:
       - ./mock-services/sirius/app/sirius-local.yml:/app/sirius.yml:ro
     ports:
       - 7013:4010
+
+  integration-test:
+    build:
+      context: ./integration
+    image: iap-integration-test:latest
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-local}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-local}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-local}
+      AWS_REGION: "eu-west-1"
+      ENVIRONMENT: ${ENVIRONMENT:-local}
+      WORKSPACE: ${WORKSPACE:-local}
+
+  form-tools-test:
+    build:
+      context: ./lambdas/image_processor
+      dockerfile: form-tools-test.Dockerfile
+    image: iap-form-tools-test:latest
+    environment:
+      PYTHONPATH: .
+      TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata/
+    volumes:
+      - ./lambdas/image_processor/form-tools:/app
