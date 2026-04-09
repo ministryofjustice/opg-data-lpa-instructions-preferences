@@ -3,6 +3,7 @@ permissions:
   checks: read
   contents: read
   deployments: none
+  id-token: write
   issues: none
   packages: none
   pull-requests: none

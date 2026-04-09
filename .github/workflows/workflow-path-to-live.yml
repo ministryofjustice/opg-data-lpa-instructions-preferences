@@ -17,6 +17,7 @@ permissions:
   checks: read
   contents: write
   deployments: none
+  id-token: write
   issues: none
   packages: none
   pull-requests: write
