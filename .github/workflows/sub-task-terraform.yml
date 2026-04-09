@@ -18,16 +18,24 @@ on:
         default: 'false'
         required: false
         type: string
+      default_role:
+        description: 'The default CI role to assume'
+        required: true
+        type: string
+      oidc_role:
+        description: 'The OIDC role to assume for AWS access'
+        required: true
+        type: string
+      management_role:
+        description: 'The management CI role to assume'
+        required: false
+        type: string
       use_ssh_private_key:
         type: boolean
         description: "Flag used to decide if the workflow should use the SSH_PRIVATE_KEY secret"
         required: false
         default: false
     secrets:
-      aws_access_key_id_actions:
-        required: true
-      aws_secret_access_key_actions:
-        required: true
       pagerduty_token:
         required: false
       ssh_private_key:
@@ -41,26 +49,22 @@ jobs:
         with:
           fetch-depth: '0'
 
-      - name: Install AWS Cli
-        uses: unfor19/install-aws-cli-action@f5b46b7f32cf5e7ebd652656c5036bf83dd1e60c # 1.0.8
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
           terraform_version: 1.13.1
-      
+
       - name: Setup SSH private key
-        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
-        if: inputs.use_ssh_private_key == true
+        id: deploy-key
+        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@a2907c7c7be94301c965ace76a2cfa407ad6fc88 # v4.6.0
         with:
-          ssh-private-key: ${{ secrets.ssh_private_key }}
+          deploy_key: ${{ secrets.ssh_private_key }}
 
       - name: Configure AWS Credentials For Terraform
         uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
         with:
-          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
-          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
           aws-region: eu-west-1
+          role-to-assume: ${{ inputs.oidc_role }}
           role-duration-seconds: 3600
           role-session-name: OPGUALIaPGithubAction
 
@@ -69,21 +73,25 @@ jobs:
         working-directory: ./${{ inputs.terraform_path }}
 
       - name: Terraform Plan
+        working-directory: ./${{ inputs.terraform_path }}
         env:
           TF_WORKSPACE: ${{ inputs.workspace }}
+          TF_VAR_default_role: ${{ inputs.default_role }}
+          TF_VAR_management_role: ${{ inputs.management_role }}
           TF_VAR_image_tag: ${{ inputs.image_tag }}
           TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
           TF_VAR_pagerduty_token: ${{ secrets.pagerduty_token }}
         run: |
           terraform workspace show
           terraform plan -input=false -parallelism=30
-        working-directory: ./${{ inputs.terraform_path }}
 
       - name: Terraform Apply
+        working-directory: ./${{ inputs.terraform_path }}
         env:
           TF_WORKSPACE: ${{ inputs.workspace }}
+          TF_VAR_default_role: ${{ inputs.default_role }}
+          TF_VAR_management_role: ${{ inputs.management_role }}
           TF_VAR_image_tag: ${{ inputs.image_tag }}
           TF_VAR_use_mock_sirius: ${{ inputs.mock_sirius }}
           TF_VAR_pagerduty_token: ${{ secrets.pagerduty_token }}
         run: terraform apply -lock-timeout=300s -input=false -auto-approve -parallelism=30
-        working-directory: ./${{ inputs.terraform_path }}
