@@ -26,19 +26,8 @@ jobs:
           role-duration-seconds: 3600
           role-session-name: OPGUALIaPIntegrationTestsGithubAction
 
-      - name: install python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
-        with:
-          python-version: '3.14'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-        working-directory: integration
-
       - name: Run integration tests
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           WORKSPACE: ${{ inputs.workspace }}
-        run: python -m pytest .
-        working-directory: integration
+        run: docker compose run --rm --build integration-test
