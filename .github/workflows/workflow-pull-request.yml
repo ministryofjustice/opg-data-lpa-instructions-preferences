@@ -169,7 +169,7 @@ jobs:
       use_ssh_private_key: ${{ matrix.use_ssh_private_key }}
       workspace: ${{ matrix.workspace }}
     secrets:
-      ssh_private_key_allow_list_repository: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   integration_tests:
     name: Run integration tests

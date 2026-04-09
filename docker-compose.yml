@@ -153,3 +153,14 @@ services:
       AWS_REGION: "eu-west-1"
       ENVIRONMENT: ${ENVIRONMENT:-local}
       WORKSPACE: ${WORKSPACE:-local}
+
+  form-tools-test:
+    build:
+      context: ./lambdas/image_processor
+      dockerfile: form-tools-test.Dockerfile
+    image: iap-form-tools-test:latest
+    environment:
+      PYTHONPATH: .
+      TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata/
+    volumes:
+      - ./lambdas/image_processor/form-tools:/app
