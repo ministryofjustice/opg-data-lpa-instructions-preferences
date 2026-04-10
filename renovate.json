@@ -43,7 +43,7 @@
       "schedule": [
         "after 6am and before 9am on Monday"
       ],
-      "minimumReleaseAge": "3 days",
+      "minimumReleaseAge": "7 days",
       "matchPackageNames": [
         "*"
       ]
@@ -66,7 +66,7 @@
       ],
       "prCreation": "immediate",
       "prPriority": 4,
-      "minimumReleaseAge": "3 days"
+      "minimumReleaseAge": "7 days"
     }
   ],
   "major": {
