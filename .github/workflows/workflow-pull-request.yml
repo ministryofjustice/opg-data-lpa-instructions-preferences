@@ -13,6 +13,7 @@ permissions:
   checks: read
   contents: write
   deployments: none
+  id-token: write
   issues: none
   packages: none
   pull-requests: write
@@ -59,11 +60,10 @@ jobs:
     uses: ./.github/workflows/sub-task-lint.yml
     needs: ['branch_name']
     with:
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
       workspace: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       source_github_token: ${{ secrets.GITHUB_TOKEN }}
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   unit_tests:
@@ -84,11 +84,9 @@ jobs:
       tag: ${{ needs.create_tags.outputs.version_tag }}
       branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       SNYK_OPG_ORG_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
 
-  terraform_apply_with_mock_sirius:
+  terraform_apply_ephemeral_environment_with_mock_sirius:
     name: Terraform Plan and Apply Environment
     needs: [
       'docker_build_scan_push',
@@ -100,32 +98,95 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
-      terraform_path: 'terraform/environment'
+      apply: true
+      default_role: ${{ vars.DEVELOPMENT_ROLE }}
       image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
       mock_sirius: "true"
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      terraform_path: 'terraform/environment'
       use_ssh_private_key: true
       workspace: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
+      ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
+
+  plan_path_to_live:
+    strategy:
+      matrix:
+        include:
+          - workspace: development
+            terraform_path: "terraform/account"
+            oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+            default_role: ${{ vars.DEVELOPMENT_ROLE }}
+            management_role: ${{ vars.MANAGEMENT_ROLE }}
+            use_ssh_private_key: false
+          - workspace: development
+            terraform_path: "terraform/environment"
+            oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+            default_role: ${{ vars.DEVELOPMENT_ROLE }}
+            management_role: ${{ vars.MANAGEMENT_ROLE }}
+            use_ssh_private_key: true
+          - workspace: preproduction
+            terraform_path: "terraform/account"
+            oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+            default_role: ${{ vars.PREPRODUCTION_PULL_REQUEST_ROLE }}
+            management_role: ${{ vars.MANAGEMENT_ROLE }}
+            use_ssh_private_key: false
+          - workspace: preproduction
+            terraform_path: "terraform/environment"
+            oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+            default_role: ${{ vars.PREPRODUCTION_PULL_REQUEST_ROLE }}
+            management_role: ${{ vars.MANAGEMENT_ROLE }}
+            use_ssh_private_key: true
+          - workspace: production
+            terraform_path: "terraform/account"
+            oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+            default_role: ${{ vars.PRODUCTION_PULL_REQUEST_ROLE }}
+            management_role: ${{ vars.MANAGEMENT_ROLE }}
+            use_ssh_private_key: false
+          - workspace: production
+            terraform_path: "terraform/environment"
+            oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+            default_role: ${{ vars.PRODUCTION_PULL_REQUEST_ROLE }}
+            management_role: ${{ vars.MANAGEMENT_ROLE }}
+            use_ssh_private_key: true
+    name: "TF Plan: ${{matrix.terraform_path}} - ${{ matrix.workspace }}"
+    needs: [
+      'docker_build_scan_push',
+      'terraform_lint',
+      'create_tags',
+      'branch_name',
+      'unit_tests',
+      'form_tools_tests',
+    ]
+    uses: ./.github/workflows/sub-task-terraform.yml
+    with:
+      apply: false
+      default_role: ${{ matrix.default_role }}
+      image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      management_role: ${{ matrix.management_role }}
+      oidc_role: ${{ matrix.oidc_role }}
+      terraform_path: ${{ matrix.terraform_path }}
+      use_ssh_private_key: ${{ matrix.use_ssh_private_key }}
+      workspace: ${{ matrix.workspace }}
+    secrets:
+      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   integration_tests:
     name: Run integration tests
     needs: [
-      'terraform_apply_with_mock_sirius',
+      'branch_name',
       'create_tags',
-      'branch_name'
+      'plan_path_to_live',
+      'terraform_apply_ephemeral_environment_with_mock_sirius'
     ]
     uses: ./.github/workflows/sub-task-integration-tests.yml
     with:
       environment: 'development'
       workspace: ${{ needs.branch_name.outputs.formatted_branch }}
-    secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
-  terraform_apply:
+  terraform_apply_ephemeral_environment:
     name: Terraform Plan and Apply Environment
     needs: [
       'integration_tests',
@@ -134,19 +195,21 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
-      terraform_path: 'terraform/environment'
+      apply: true
+      default_role: ${{ vars.DEVELOPMENT_ROLE }}
       image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      terraform_path: 'terraform/environment'
       use_ssh_private_key: true
       workspace: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   workflow_complete:
     name: Workflow Complete
     runs-on: ubuntu-latest
-    needs: ['terraform_apply']
+    needs: ['terraform_apply_ephemeral_environment']
     steps:
       - name: Completion message
         run: echo "Workflow Complete"

@@ -4,7 +4,7 @@ locals {
 }
 
 variable "default_role" {
-  default     = "integrations-ci"
+  default     = "opg-data-lpa-iap-development-ci"
   type        = string
   description = "Default role to assume when running Terraform"
 }
