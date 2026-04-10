@@ -17,6 +17,7 @@ permissions:
   checks: read
   contents: write
   deployments: none
+  id-token: write
   issues: none
   packages: none
   pull-requests: write
@@ -56,8 +57,6 @@ jobs:
       tag: ${{ needs.create_tags.outputs.version_tag }}
       branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       SNYK_OPG_ORG_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
 
   development_account_plan_apply:
@@ -68,12 +67,15 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/account'
-      image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       workspace: development
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.DEVELOPMENT_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
+      use_ssh_private_key: false
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   development_environment_apply_with_mock_sirius:
@@ -84,14 +86,16 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/environment'
-      image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       mock_sirius: "true"
       use_ssh_private_key: true
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.DEVELOPMENT_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
       workspace: development
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   development_integration_tests:
@@ -103,9 +107,6 @@ jobs:
     with:
       environment: 'development'
       workspace: 'development'
-    secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
 
   development_environment_plan_apply:
     name: Development Environment Terraform Plan and Apply
@@ -115,13 +116,15 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/environment'
-      image_tag: ${{ needs.create_tags.outputs.version_tag }}
+      image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.DEVELOPMENT_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
       workspace: development
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   preproduction_account_plan_apply:
@@ -132,12 +135,15 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/account'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       workspace: preproduction
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.PREPRODUCTION_MAIN_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
+      use_ssh_private_key: false
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   preproduction_environment_plan_apply:
@@ -148,13 +154,15 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
       workspace: preproduction
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.PREPRODUCTION_MAIN_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   production_account_plan_apply:
@@ -165,12 +173,14 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/account'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       workspace: production
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.PRODUCTION_MAIN_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
 
   production_environment_plan_apply:
@@ -181,13 +191,15 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
       workspace: production
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.PRODUCTION_MAIN_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   demo_environment_plan_apply:
@@ -198,13 +210,15 @@ jobs:
     ]
     uses: ./.github/workflows/sub-task-terraform.yml
     with:
+      apply: true
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
       workspace: demo
+      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      default_role: ${{ vars.DEVELOPMENT_ROLE }}
+      management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
-      aws_access_key_id_actions: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-      aws_secret_access_key_actions: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   workflow_complete:
