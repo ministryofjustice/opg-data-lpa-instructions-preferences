@@ -170,6 +170,7 @@ jobs:
       use_ssh_private_key: ${{ matrix.use_ssh_private_key }}
       workspace: ${{ matrix.workspace }}
     secrets:
+      pagerduty_token: ${{ secrets.PAGERDUTY_TOKEN }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
   integration_tests:
