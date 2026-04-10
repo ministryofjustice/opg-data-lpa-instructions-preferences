@@ -29,10 +29,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_ACTIONS }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_ACTIONS }}
           aws-region: eu-west-1
-          role-to-assume: arn:aws:iam::649098267436:role/integrations-ci
+          role-to-assume: ${{ vars.OIDC_PRODUCTION_IAP_S3_DELETION }}
           role-duration-seconds: 900
           role-session-name: "${{ github.actor }}DeleteInstructionsAndPreferences${{ steps.validate_lpa.outputs.lpaId }}"
       - name: Delete Instructions and Preferences from S3 bucket
