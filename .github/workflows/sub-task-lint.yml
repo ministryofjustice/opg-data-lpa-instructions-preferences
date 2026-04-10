@@ -7,15 +7,15 @@ defaults:
 on:
   workflow_call:
     inputs:
+      oidc_role:
+        description: 'The OIDC role to assume for AWS access'
+        required: true
+        type: string
       workspace:
         description: 'Terraform workspace'
         required: true
         type: string
     secrets:
-      aws_access_key_id_actions:
-        required: true
-      aws_secret_access_key_actions:
-        required: true
       ssh_private_key:
         required: false
       source_github_token:
@@ -47,11 +47,10 @@ jobs:
       - name: configure AWS credentials for terraform
         uses: aws-actions/configure-aws-credentials@61815dcd50bd041e203e49132bacad1fd04d2708 # v5.1.1
         with:
-          aws-access-key-id: ${{ secrets.aws_access_key_id_actions }}
-          aws-secret-access-key: ${{ secrets.aws_secret_access_key_actions }}
           aws-region: eu-west-1
+          role-to-assume: ${{ inputs.oidc_role }}
           role-duration-seconds: 1800
-          role-session-name: OPGUseAnLPAECRGithubAction
+          role-session-name: OPGLPAIaPTerraformLintGithubAction
 
       - name: terraform fmt ${{ matrix.folder }} check
         run: terraform fmt --check --recursive
@@ -60,11 +59,12 @@ jobs:
       - name: terraform lint ${{ matrix.folder }}
         run:  tflint --recursive
         working-directory: ./terraform/${{ matrix.folder }}
-      
+
       - name: Setup SSH private key
-        uses: webfactory/ssh-agent@e83874834305fe9a4a2997156cb26c5de65a8555 # v0.10.0
+        id: deploy-key
+        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@a2907c7c7be94301c965ace76a2cfa407ad6fc88 # v4.6.0
         with:
-          ssh-private-key: ${{ secrets.ssh_private_key }}
+          deploy_key: ${{ secrets.ssh_private_key }}
 
       - name: terraform validate ${{ inputs.workspace }}
         env:
