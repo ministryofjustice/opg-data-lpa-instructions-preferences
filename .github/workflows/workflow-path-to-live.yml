@@ -71,7 +71,7 @@ jobs:
       terraform_path: 'terraform/account'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       workspace: development
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.DEVELOPMENT_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
       use_ssh_private_key: false
@@ -91,7 +91,7 @@ jobs:
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       mock_sirius: "true"
       use_ssh_private_key: true
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.DEVELOPMENT_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
       workspace: development
@@ -120,7 +120,7 @@ jobs:
       terraform_path: 'terraform/environment'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.DEVELOPMENT_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
       workspace: development
@@ -139,7 +139,7 @@ jobs:
       terraform_path: 'terraform/account'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       workspace: preproduction
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.PREPRODUCTION_MAIN_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
       use_ssh_private_key: false
@@ -159,7 +159,7 @@ jobs:
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
       workspace: preproduction
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.PREPRODUCTION_MAIN_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
@@ -177,7 +177,7 @@ jobs:
       terraform_path: 'terraform/account'
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       workspace: production
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.PRODUCTION_MAIN_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
@@ -196,7 +196,7 @@ jobs:
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
       workspace: production
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.PRODUCTION_MAIN_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
@@ -215,7 +215,7 @@ jobs:
       image_tag: main-${{ needs.create_tags.outputs.version_tag }}
       use_ssh_private_key: true
       workspace: demo
-      oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
+      oidc_role: ${{ vars.OIDC_MAIN_ROLE }}
       default_role: ${{ vars.DEVELOPMENT_ROLE }}
       management_role: ${{ vars.MANAGEMENT_ROLE }}
     secrets:
