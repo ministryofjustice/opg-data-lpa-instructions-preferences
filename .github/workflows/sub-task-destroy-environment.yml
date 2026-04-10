@@ -78,17 +78,12 @@ jobs:
 
         run: terraform init -input=false -upgrade
 
-      # - name: Terraform Destroy
-      #   working-directory: ./${{ inputs.terraform_path }}
-      #   env:
-      #     WORKSPACE_NAME: ${{ inputs.workspace_name }}
-      #   run: |
-      #     terraform workspace select $WORKSPACE_NAME
-      #     terraform destroy -auto-approve
-      #     terraform workspace select default
-      #     terraform workspace delete $WORKSPACE_NAME
       - name: Terraform Destroy
         working-directory: ./${{ inputs.terraform_path }}
         env:
           WORKSPACE_NAME: ${{ inputs.workspace_name }}
-        run: echo "I would be destroying - $WORKSPACE_NAME"
+        run: |
+          terraform workspace select $WORKSPACE_NAME
+          terraform destroy -auto-approve
+          terraform workspace select default
+          terraform workspace delete $WORKSPACE_NAME

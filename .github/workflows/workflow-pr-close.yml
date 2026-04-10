@@ -2,12 +2,9 @@ name: PR Closed Workflow
 
 on:
   workflow_dispatch:
-  # pull_request:
-  #   types:
-  #     - closed
-  #   branches:
-  #     - main
   pull_request:
+    types:
+      - closed
     branches:
       - main
 
