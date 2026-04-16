@@ -33,7 +33,7 @@ jobs:
 
       - id: terraform_version
         name: Get terraform version
-        uses: ministryofjustice/opg-github-actions/actions/terraform-version@b8868247a908f74fafe1905701391580575a6d35 # v4.3.10
+        uses: ministryofjustice/opg-github-actions/actions/terraform-version@ceeda9d30ec7f6705c819d0b7664b9a79df99a3b # v4.8.0
         with:
           terraform_directory: "./terraform/${{ matrix.folder }}"
 
@@ -62,7 +62,7 @@ jobs:
 
       - name: Setup SSH private key
         id: deploy-key
-        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@a2907c7c7be94301c965ace76a2cfa407ad6fc88 # v4.6.0
+        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@ceeda9d30ec7f6705c819d0b7664b9a79df99a3b # v4.8.0
         with:
           deploy_key: ${{ secrets.ssh_private_key }}
 
