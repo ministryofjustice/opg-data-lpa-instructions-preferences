@@ -64,12 +64,12 @@ jobs:
 
       - name: ecr login
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@c962da2960ed15f492addc26fffa274485265950 # v2.0.2
+        uses: aws-actions/amazon-ecr-login@f2e9fc6c2b355c1890b65e6f6f0e2ac3e6e22f78 # v2.1.2
         with:
           registries: 311462405659
 
       - name: Snyk Scan
-        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@8dea82fc8b8e7ffca431f0fb83848d523147ccd8 #v4.5.0
+        uses: ministryofjustice/opg-github-actions/actions/snyk-scan@ceeda9d30ec7f6705c819d0b7664b9a79df99a3b # v4.8.0
         with:
           SNYK_TEST_IMAGE: ${{ matrix.name }}:latest
           SNYK_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
@@ -78,7 +78,7 @@ jobs:
           snyk_policy_path: ./${{ matrix.snyk_policy_path }}
 
       - name: Upload Snyk scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
+        uses: github/codeql-action/upload-sarif@c10b8064de6f491fea524254123dbe5e09572f13 # v4.35.1
         if: always()
         with:
           sarif_file: "test-results/snyk.sarif"

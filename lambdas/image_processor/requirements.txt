@@ -10,11 +10,11 @@ aws-xray-sdk==2.15.0
     # via -r lambdas/image_processor/requirements.in
 awslambdaric==3.1.1
     # via -r lambdas/image_processor/requirements.in
-awswrangler==3.15.1
+awswrangler==3.16.0
     # via
     #   -r lambdas/image_processor/requirements.in
     #   arrow-pd-parser
-boto3==1.42.68
+boto3==1.42.86
     # via
     #   -r lambdas/image_processor/requirements.in
     #   awswrangler
@@ -94,13 +94,13 @@ pandas==2.3.3
     # via
     #   arrow-pd-parser
     #   awswrangler
-parameterized==0.7.5
+parameterized==0.9.0
     # via mojap-metadata
 pdf2image==1.17.0
     # via -r lambdas/image_processor/requirements.in
 pdfminer-six==20251230
     # via -r lambdas/image_processor/requirements.in
-pillow==12.1.1
+pillow==12.2.0
     # via
     #   -r lambdas/image_processor/requirements.in
     #   imageio
@@ -119,7 +119,7 @@ pyjwt==2.12.1
     # via -r lambdas/image_processor/requirements.in
 pyopengl==3.1.10
     # via -r lambdas/image_processor/requirements.in
-pypdf==6.8.0
+pypdf==6.10.1
     # via -r lambdas/image_processor/requirements.in
 pytesseract==0.3.13
     # via -r lambdas/image_processor/requirements.in
@@ -145,7 +145,7 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.32.5
+requests==2.33.0
     # via
     #   -r lambdas/image_processor/requirements.in
     #   moto
