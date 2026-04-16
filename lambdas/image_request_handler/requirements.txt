@@ -4,7 +4,7 @@ aws-xray-sdk==2.15.0
     # via -r lambdas/image_request_handler/requirements.in
 awslambdaric==3.1.1
     # via -r lambdas/image_request_handler/requirements.in
-boto3==1.42.68
+boto3==1.42.86
     # via -r lambdas/image_request_handler/requirements.in
 botocore==1.42.89
     # via
