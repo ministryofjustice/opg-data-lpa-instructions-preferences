@@ -94,7 +94,7 @@ pandas==2.3.3
     # via
     #   arrow-pd-parser
     #   awswrangler
-parameterized==0.9.0
+parameterized==0.7.5
     # via mojap-metadata
 pdf2image==1.17.0
     # via -r lambdas/image_processor/requirements.in
