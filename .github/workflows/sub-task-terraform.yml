@@ -62,7 +62,7 @@ jobs:
       - name: Setup SSH private key
         id: deploy-key
         if: inputs.use_ssh_private_key == true #pragma: allowlist secret
-        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@a2907c7c7be94301c965ace76a2cfa407ad6fc88 # v4.6.0
+        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@ceeda9d30ec7f6705c819d0b7664b9a79df99a3b # v4.8.0
         with:
           deploy_key: ${{ secrets.ssh_private_key }}
 
