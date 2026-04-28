@@ -18,7 +18,7 @@ cryptography==46.0.7
 idna==3.11
     # via requests
 imutils==0.5.4
-    # via -r lambdas/image_processor/requirements-tests.in
+    # via -r requirements-tests.in
 iniconfig==2.3.0
     # via pytest
 jinja2==3.1.6
@@ -32,7 +32,7 @@ markupsafe==3.0.3
     #   jinja2
     #   werkzeug
 moto==5.1.22
-    # via -r lambdas/image_processor/requirements-tests.in
+    # via -r requirements-tests.in
 packaging==26.1
     # via pytest
 pluggy==1.6.0
@@ -41,15 +41,15 @@ pycparser==3.0
     # via cffi
 pygments==2.20.0
     # via pytest
-pytest==9.0.3
-    # via -r lambdas/image_processor/requirements-tests.in
+pytest==8.4.2
+    # via -r requirements-tests.in
 python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   moto
 pyyaml==6.0.3
     # via responses
-requests==2.33.1
+requests==2.33.0
     # via
     #   moto
     #   responses
