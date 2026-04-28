@@ -9,9 +9,6 @@ COPY ./package-lock.json /app/package-lock.json
 
 RUN npm ci --ignore-scripts
 
-
-RUN npm update tar lodash fast-xml-parser --save
-
 RUN npm uninstall -g npm
 
 RUN apk upgrade --no-cache zlib
