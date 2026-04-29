@@ -58,6 +58,8 @@ pluggy==1.6.0
     # via pytest
 pycparser==3.0
     # via cffi
+pygments==2.20.0
+    # via pytest
 pytest==9.0.3
     # via
     #   -r form-tools/requirements-dev.in
