@@ -41,7 +41,7 @@ pycparser==3.0
     # via cffi
 pygments==2.20.0
     # via pytest
-pytest==8.4.2
+pytest==9.0.3
     # via -r requirements-tests.in
 python-dateutil==2.9.0.post0
     # via
