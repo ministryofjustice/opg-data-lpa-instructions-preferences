@@ -13,24 +13,26 @@ defaults:
     shell: bash
 
 jobs:
-  generate-environment-workspace-name:
+  branch_name:
     runs-on: ubuntu-latest
-    steps:
-      - name: Generate workspace name
-        id: name_workspace
-        run: |
-          workspace=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]' | cut -c1-8)
-          echo "name=${workspace}" >> $GITHUB_OUTPUT
-          echo ${workspace}
+    name: Extract branch name
     outputs:
-      environment_workspace_name: ${{ steps.name_workspace.outputs.name }}
+      raw_branch: ${{ steps.extract_branch.outputs.branch_raw }}
+      formatted_branch: ${{ steps.extract_branch.outputs.branch_formatted }}
+    steps:
+      - name: Extract branch
+        shell: bash
+        run: |
+          echo "branch_raw=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}})" >> $GITHUB_OUTPUT
+          echo "branch_formatted=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]' | cut -c1-8)" >> $GITHUB_OUTPUT
+        id: extract_branch
 
   destroy-pr-env:
     name: Destroy PR Environment
-    needs: [generate-environment-workspace-name]
+    needs: [branch_name]
     uses: ./.github/workflows/sub-task-destroy-environment.yml
     with:
-      workspace_name: ${{ needs.generate-environment-workspace-name.outputs.environment_workspace_name }}
+      workspace_name: ${{ github.event.pull_request.number }}${{ needs.branch_name.outputs.formatted_branch }}
       terraform_path: "terraform/environment"
       default_role: ${{ vars.DEVELOPMENT_ROLE }}
       oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
