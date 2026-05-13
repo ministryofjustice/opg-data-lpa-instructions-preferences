@@ -30,7 +30,7 @@ markupsafe==3.0.3
     #   jinja2
     #   werkzeug
 moto==5.1.22
-    # via -r lambdas/image_request_handler/requirements-dev.in
+    # via -r requirements-dev.in
 packaging==26.1
     # via pytest
 pluggy==1.6.0
@@ -40,7 +40,7 @@ pycparser==3.0
 pygments==2.20.0
     # via pytest
 pytest==9.0.3
-    # via -r lambdas/image_request_handler/requirements-dev.in
+    # via -r requirements-dev.in
 python-dateutil==2.9.0.post0
     # via
     #   botocore
@@ -57,7 +57,7 @@ s3transfer==0.16.0
     # via boto3
 six==1.17.0
     # via python-dateutil
-urllib3==2.6.3
+urllib3==2.7.0
     # via
     #   botocore
     #   requests
