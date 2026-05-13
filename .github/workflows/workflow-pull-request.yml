@@ -62,7 +62,7 @@ jobs:
     needs: ['branch_name']
     with:
       oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
-      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+      workspace: ${{ github.event.pull_request.number }}${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       source_github_token: ${{ secrets.GITHUB_TOKEN }}
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
@@ -107,7 +107,7 @@ jobs:
       oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
       terraform_path: 'terraform/environment'
       use_ssh_private_key: true
-      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+      workspace: ${{ github.event.pull_request.number }}${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
@@ -185,7 +185,7 @@ jobs:
     uses: ./.github/workflows/sub-task-integration-tests.yml
     with:
       environment: 'development'
-      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+      workspace: ${{ github.event.pull_request.number }}${{ needs.branch_name.outputs.formatted_branch }}
 
   terraform_apply_ephemeral_environment:
     name: Terraform Plan and Apply Environment
@@ -203,7 +203,7 @@ jobs:
       oidc_role: ${{ vars.OIDC_PULL_REQUEST_ROLE }}
       terraform_path: 'terraform/environment'
       use_ssh_private_key: true
-      workspace: ${{ needs.branch_name.outputs.formatted_branch }}
+      workspace: ${{ github.event.pull_request.number }}${{ needs.branch_name.outputs.formatted_branch }}
     secrets:
       ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY_ALLOW_LIST_REPOSITORY }}
 
