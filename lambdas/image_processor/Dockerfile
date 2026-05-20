@@ -37,7 +37,7 @@ RUN apt-get update && \
     apt-get install -y libgl1 poppler-utils libtesseract-dev libleptonica-dev tesseract-ocr tesseract-ocr-eng libzbar0 libzbar-dev && \
     rm -rf /var/lib/apt/lists/*
 
-RUN apt remove -y libraw23t64 libopenexr-3-1-30 libopenexr-dev
+RUN apt remove -y libraw23t64 libopenexr-3-1-30 libopenexr-dev libgnutls30t64
 
 # Copy only the installed packages from the previous stage to the working directory
 COPY --from=builder --chown=python:python ${FUNCTION_DIR} ${FUNCTION_DIR}
