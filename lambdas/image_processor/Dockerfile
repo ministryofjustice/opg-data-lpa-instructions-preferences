@@ -1,7 +1,7 @@
 ARG FUNCTION_DIR="/function"
 
 # === BUILD IMAGE ===
-FROM python:3.14-slim@sha256:33ef7446e8c14b21cb247e23afbcdc90e98853b70812ca46b2265e769a7dfb8b AS builder
+FROM python:3.14-slim@sha256:c845af9399020c7e562969a13689e929074a10fd057acd1b1fad06a2fb068e97 AS builder
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Set the working directory to /app
@@ -23,7 +23,7 @@ COPY extraction ${FUNCTION_DIR}/extraction
 COPY form-tools/form_tools ${FUNCTION_DIR}/form_tools
 
 # === FINAL IMAGE ===
-FROM python:3.14-slim@sha256:33ef7446e8c14b21cb247e23afbcdc90e98853b70812ca46b2265e769a7dfb8b
+FROM python:3.14-slim@sha256:c845af9399020c7e562969a13689e929074a10fd057acd1b1fad06a2fb068e97
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
 # Create python user
