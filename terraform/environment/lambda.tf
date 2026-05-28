@@ -57,3 +57,24 @@ data "aws_security_group" "lambda_api_ingress" {
     values = ["integration-lambda-api-access-${local.target_environment}"]
   }
 }
+
+data "aws_ecr_repository" "lpa_iap_delete_failed_images_lambda" {
+  provider = aws.management
+  name     = "integrations/lpa-iap-delete-failed-images-lambda"
+}
+
+module "delete_failed_images_lamdba" {
+  source      = "./modules/lambda"
+  lambda_name = "lpa-iap-delete-failed-images-${local.environment}"
+  environment_variables = {
+    BUCKET_NAME        = "lpa-iap-${local.environment}"
+  }
+  image_uri          = "${data.aws_ecr_repository.lpa_iap_delete_failed_images_lambda.repository_url}:${var.image_tag}"
+  ecr_arn            = data.aws_ecr_repository.lpa_iap_delete_failed_images_lambda.arn
+  environment        = local.environment
+  timeout            = 900
+  memory             = 1024
+  aws_subnet_ids     = data.aws_subnets.private.ids
+  security_group_ids = [data.aws_security_group.lambda_api_ingress.id]
+  logs_kms_key       = data.aws_kms_key.lpa_iap_logs
+}
