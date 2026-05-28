@@ -83,6 +83,20 @@ services:
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
 
+  unit-tests-delete-failed-images:
+    image: unit-tests-delete-failed-images:latest
+    build:
+      context: lambdas/delete_failed_images
+      dockerfile: Dockerfile-tests
+    depends_on:
+      - localstack-request-handler
+    volumes:
+      - ./lambdas/delete_failed_images:/function
+    environment:
+      AWS_ACCESS_KEY_ID: fake
+      AWS_SECRET_ACCESS_KEY: fake
+      AWS_BASE_URL: "http://localstack-request-handler:4566"
+
   localstack-request-handler:
     image: localstack-request-handler:latest
     build:
