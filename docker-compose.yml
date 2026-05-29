@@ -83,6 +83,34 @@ services:
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
 
+  unit-tests-delete-failed-images:
+    image: unit-tests-delete-failed-images:latest
+    build:
+      context: lambdas/delete_failed_images
+      dockerfile: Dockerfile-tests
+    depends_on:
+      - localstack-delete-failed-images
+    volumes:
+      - ./lambdas/delete_failed_images:/function
+    environment:
+      AWS_ACCESS_KEY_ID: fake
+      AWS_SECRET_ACCESS_KEY: fake
+      AWS_BASE_URL: "http://localstack-delete-failed-images:4566"
+
+  localstack-delete-failed-images:
+    image: localstack/localstack:4.14.0
+    environment:
+      SERVICES: s3
+      AWS_ACCESS_KEY_ID: fake
+      AWS_SECRET_ACCESS_KEY: fake
+      LOCALSTACK_HOST: localstack-delete-failed-images
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 4567:4566
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:4567/_localstack/health?reload"]
+
   localstack-request-handler:
     image: localstack-request-handler:latest
     build:
