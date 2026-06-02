@@ -85,19 +85,16 @@ func TestDryRun(t *testing.T) {
 
 	slog.SetDefault(slog.New(slog.DiscardHandler))
 
-	for key, processerror := range map[string]string{
-		"good-instructions.jpg": "",
-		"good-preferences.jpg":  "",
-		"bad-instructions.jpg":  "1",
-		"bad-preferences.jpg":   "1",
+	for key, body := range map[string]string{
+		"good-instructions.jpg": "hey",
+		"good-preferences.jpg":  "hey",
+		"bad-instructions.jpg":  "",
+		"bad-preferences.jpg":   "",
 	} {
 		if _, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: new(bucketName),
 			Key:    new(key),
-			Body:   strings.NewReader("hey"),
-			Metadata: map[string]string{
-				"processerror": processerror,
-			},
+			Body:   strings.NewReader(body),
 		}); err != nil {
 			t.Fatalf("put object: %v", err)
 		}
@@ -143,17 +140,11 @@ func TestRun(t *testing.T) {
 
 	slog.SetDefault(slog.New(slog.DiscardHandler))
 
-	for key, processerror := range map[string]string{
-		"good-instructions.jpg": "",
-		"good-preferences.jpg":  "",
-	} {
+	for _, key := range []string{"good-instructions.jpg", "good-preferences.jpg"} {
 		if _, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: new(bucketName),
 			Key:    new(key),
 			Body:   strings.NewReader("hey"),
-			Metadata: map[string]string{
-				"processerror": processerror,
-			},
 		}); err != nil {
 			t.Fatalf("put object: %v", err)
 		}
@@ -163,10 +154,7 @@ func TestRun(t *testing.T) {
 		if _, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
 			Bucket: new(bucketName),
 			Key:    new(fmt.Sprintf("bad-%d.jpg", i)),
-			Body:   strings.NewReader("hey"),
-			Metadata: map[string]string{
-				"processerror": "1",
-			},
+			Body:   strings.NewReader(""),
 		}); err != nil {
 			t.Fatalf("put object: %v", err)
 		}
