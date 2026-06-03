@@ -45,9 +45,6 @@ jobs:
           - name: "lpa-iap-mock-sirius-web"
             path: "mock-services/sirius/web"
             snyk_policy_path: "mock-services/sirius/web/.snyk"
-          - name: "lpa-iap-delete-failed-images-lambda"
-            path: "lambdas/delete_failed_images"
-            snyk_policy_path: "lambdas/delete_failed_images/.snyk"
     steps:
       - name: Check out code
         id: checkout_code

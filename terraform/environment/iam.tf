@@ -146,52 +146,5 @@ data "aws_iam_policy_document" "ual_iap_processor_lambda" {
       "xray:GetSamplingStatisticSummaries"
     ]
   }
+
 }
-
-//===============Related to Delete Failed Images Lambda Task Execution Role===================
-
-resource "aws_iam_policy" "ual_iap_delete_failed_images_lambda_execution" {
-  name   = "lpa-iap-delete-failed-images-${local.environment}"
-  policy = data.aws_iam_policy_document.ual_iap_delete_failed_images_lambda.json
-}
-
-resource "aws_iam_role_policy_attachment" "ual_iap_delete_failed_images_lambda_attachment" {
-  role       = module.delete_failed_images_lamdba.lambda_execution_role.id
-  policy_arn = aws_iam_policy.ual_iap_delete_failed_images_lambda_execution.arn
-}
-
-// Access policy for the s3 bucket
-data "aws_iam_policy_document" "ual_iap_delete_failed_images_lambda" {
-  statement {
-    sid       = "AllowS3Actions"
-    effect    = "Allow"
-    resources = [module.ual_iap_s3.arn, "${module.ual_iap_s3.arn}/*"]
-    actions   = ["s3:ListBucket", "s3:GetObject", "s3:DeleteObject"]
-  }
-
-  statement {
-    sid       = "AllowKms"
-    effect    = "Allow"
-    resources = [module.ual_iap_s3.arn]
-    actions = [
-      "kms:Decrypt",
-      "kms:GenerateDataKey",
-    ]
-  }
-
-  statement {
-    sid    = "AllowXRayAccess"
-    effect = "Allow"
-    resources = [
-      "*"
-    ]
-    actions = [
-      "xray:PutTraceSegments",
-      "xray:PutTelemetryRecords",
-      "xray:GetSamplingRules",
-      "xray:GetSamplingTargets",
-      "xray:GetSamplingStatisticSummaries"
-    ]
-  }
-}
-
