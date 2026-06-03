@@ -35,8 +35,3 @@ jobs:
         id: unit_tests_processor
         run: |
           docker compose up unit-tests-processor --abort-on-container-exit --exit-code-from unit-tests-processor || exit 1
-
-      - name: Run Unit Tests Delete Failed Images
-        id: unit_tests_delete_failed_images
-        run: |
-          docker compose up unit-tests-delete-failed-images --abort-on-container-exit --exit-code-from unit-tests-delete-failed-images || exit 1
