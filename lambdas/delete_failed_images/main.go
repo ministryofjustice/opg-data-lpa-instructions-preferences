@@ -4,8 +4,8 @@
 // iterate over. By default it will log the images that it would delete, call
 // with body `{"Delete": true}` to actually delete them.
 //
-// Will continue if an error occurs when trying to delete objects, logging the
-// errors for later inspection.
+// Will continue if an error occurs when trying to retrieve an object's metadata
+// or delete an object, logging the error for later inspection.
 package main
 
 import (
@@ -18,7 +18,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 var (
@@ -80,38 +79,30 @@ func processBucket(ctx context.Context, s3Client *s3.Client, bucketName string, 
 			return err
 		}
 
-		var toDelete []types.ObjectIdentifier
-
 		for _, object := range output.Contents {
-			if *object.Size == 0 {
-				toDelete = append(toDelete, types.ObjectIdentifier{Key: object.Key})
-			}
-		}
-
-		if doDelete {
-			out, err := s3Client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+			meta, err := s3Client.HeadObject(ctx, &s3.HeadObjectInput{
 				Bucket: new(bucketName),
-				Delete: &types.Delete{
-					Objects: toDelete,
-				},
+				Key:    object.Key,
 			})
 			if err != nil {
-				for _, object := range toDelete {
-					slog.Error("error deleting object", slog.String("key", *object.Key), slog.String("err", err.Error()))
-				}
+				slog.Error("head object", slog.String("key", *object.Key), slog.String("err", err.Error()))
 				continue
 			}
 
-			for _, error := range out.Errors {
-				slog.Info("error deleting object", slog.String("key", *error.Key), slog.String("msg", *error.Message))
-			}
-
-			for _, object := range out.Deleted {
-				slog.Info("deleted", slog.String("key", *object.Key))
-			}
-		} else {
-			for _, object := range toDelete {
-				slog.Info("should delete", slog.String("key", *object.Key))
+			if meta.Metadata["processerror"] == "1" {
+				if doDelete {
+					_, err := s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+						Bucket: new(bucketName),
+						Key:    object.Key,
+					})
+					if err != nil {
+						slog.Error("delete object", slog.String("key", *object.Key), slog.String("err", err.Error()))
+						continue
+					}
+					slog.Info("deleted", slog.String("key", *object.Key))
+				} else {
+					slog.Info("should delete", slog.String("key", *object.Key))
+				}
 			}
 		}
 	}
