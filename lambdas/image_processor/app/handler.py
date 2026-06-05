@@ -40,7 +40,7 @@ class ImageProcessor:
         Main Process that receives a request triggered from SQS and extracts the
         instructions and preferences and pushes them to S3.
         """
-        bucket_manager = BucketManager(info_msg=self.info_msg)
+        bucket_manager = BucketManager(request_id=self.request_id, info_msg=self.info_msg)
         sirius_service = SiriusService(environment=self.environment)
         extraction_service = ExtractionService(
             extraction_folder_path=self.extraction_folder_path,
@@ -68,10 +68,6 @@ class ImageProcessor:
             downloaded_scan_locations = bucket_manager.download_scanned_images(
                 sirius_response_dict, self.output_folder_path
             )
-
-            # Log out recoverable failures from sirius file downloads
-            for failure in downloaded_scan_locations.failures:
-                logger.error(f"{self.request_id} Error adding scan location: {failure.redacted_location}")
 
             # Extract all relevant images relating to instructions and preferences from downloaded documents
             continuation_keys_to_use = extraction_service.run_iap_extraction(
