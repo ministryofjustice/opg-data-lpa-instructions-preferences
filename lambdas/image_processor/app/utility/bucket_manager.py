@@ -33,16 +33,13 @@ class ScanLocation:
 
 
 class ScanLocationStore:
-    def __init__(self, scans: ScanLocation = None, continuations: ScanLocation = None, failures: ScanLocation = None):
+    def __init__(self, scans: ScanLocation = None, continuations: ScanLocation = None):
         if continuations is None:
             continuations = {}
         if scans is None:
             scans = []
-        if failures is None:
-            failures = []
         self.scans = scans
         self.continuations = continuations
-        self.failures = failures
 
     def add_scan(self, scan: ScanLocation):
         self.scans.append(scan)
@@ -50,14 +47,12 @@ class ScanLocationStore:
     def add_continuation(self, key: str, continuation: ScanLocation):
         self.continuations[key] = continuation
 
-    def add_failure(self, scan: ScanLocation):
-        self.failures.append(scan)
-
 
 class BucketManager:
-    def __init__(self, info_msg):
+    def __init__(self, request_id, info_msg):
         self.environment = os.getenv("ENVIRONMENT")
         self.target_environment = os.getenv("TARGET_ENVIRONMENT")
+        self.request_id = request_id
         self.sirius_bucket = f"opg-backoffice-datastore-{self.target_environment}"
         self.iap_bucket = f"lpa-iap-{self.environment}"
         self.s3 = self.setup_s3_connection()
@@ -144,7 +139,7 @@ class BucketManager:
             )
 
             if scan_location.template is None:
-                scan_locations.add_failure(scan_location)
+                logger.error(f"{self.request_id} Error adding scan location: {scan_location.redacted_location}")
                 continue
 
             lpa_locations.append(scan_location)

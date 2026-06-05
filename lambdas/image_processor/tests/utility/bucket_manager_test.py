@@ -106,8 +106,7 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
                 "location": "/tmp/output/my_continuation_sheet2.pdf",
                 "template": "TEST",
             },
-        },
-        "failures": [{"redacted_location": "s3://my_bucket/5a980ebab6ae2_****.msg"}],
+        }
     }
 
     assert result.scans[0].template == expected_result["scans"][0]["template"]
@@ -128,10 +127,6 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
         result.continuations["continuation_2"].template
         == expected_result["continuations"]["continuation_2"]["template"]
     )
-    assert (
-        result.failures[0].redacted_location == expected_result["failures"][0]["redacted_location"]
-    )
-
 
 @mock_aws
 def test_put_images_to_bucket(bucket_manager):
