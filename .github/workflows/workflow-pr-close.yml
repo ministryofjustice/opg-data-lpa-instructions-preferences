@@ -17,15 +17,11 @@ jobs:
     runs-on: ubuntu-latest
     name: Extract branch name
     outputs:
-      raw_branch: ${{ steps.extract_branch.outputs.branch_raw }}
-      formatted_branch: ${{ steps.extract_branch.outputs.branch_formatted }}
+      formatted_branch: ${{ steps.extract_branch.outputs.safe }}
     steps:
       - name: Extract branch
-        shell: bash
-        run: |
-          echo "branch_raw=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}})" >> $GITHUB_OUTPUT
-          echo "branch_formatted=$(echo ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} | tr -cd '[:alnum:]' | tr '[:upper:]' '[:lower:]' | cut -c1-8)" >> $GITHUB_OUTPUT
         id: extract_branch
+        uses: ministryofjustice/opg-github-actions/actions/branch-name@ed64099d769e1e9439d4523f7612987618c1b6cd # v4.8.7
 
   destroy-pr-env:
     name: Destroy PR Environment
