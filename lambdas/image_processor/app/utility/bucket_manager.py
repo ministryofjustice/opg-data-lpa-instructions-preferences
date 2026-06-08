@@ -128,6 +128,9 @@ class BucketManager:
                 location=lpa_scan["location"], template=lpa_scan.get("template")
             )
 
+            if not scan_location.location.lower().endswith((".pdf", ".tiff", ".tif")):
+                continue
+
             lpa_locations.append(scan_location)
             self.info_msg.document_templates.append(scan_location.template)
 
