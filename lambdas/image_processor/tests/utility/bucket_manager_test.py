@@ -79,9 +79,14 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
     result = bucket_manager.download_scanned_images(s3_urls_dict, output_folder_path)
 
     # Check that the expected S3 files were downloaded
-    assert len(mock_download_file.mock_calls) == 3
+    assert len(mock_download_file.mock_calls) == 4
     mock_download_file.assert_any_call(
         "my_bucket", "5fbcd594bac0e_my_scan.pdf", "/tmp/output/5fbcd594bac0e_my_scan.pdf"
+    )
+    mock_download_file.assert_any_call(
+        "my_bucket",
+        "5a980ebab6ae2_additional - correspondence.msg",
+        "/tmp/output/5a980ebab6ae2_additional - correspondence.msg",
     )
     mock_download_file.assert_any_call(
         "my_bucket",
@@ -96,7 +101,10 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
 
     # Check that the function returned the expected file paths
     expected_result = {
-        "scans": [{"location": "/tmp/output/5fbcd594bac0e_my_scan.pdf", "template": "TEST"}],
+        "scans": [
+            {"location": "/tmp/output/5fbcd594bac0e_my_scan.pdf", "template": "TEST"},
+            {"location": "/tmp/output/5a980ebab6ae2_additional - correspondence.msg", "template": None},
+        ],
         "continuations": {
             "continuation_1": {
                 "location": "/tmp/output/my_continuation_sheet1.pdf",
