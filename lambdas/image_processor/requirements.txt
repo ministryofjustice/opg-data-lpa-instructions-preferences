@@ -106,7 +106,7 @@ pillow==12.2.0
     #   imageio
     #   pdf2image
     #   pytesseract
-pyarrow==22.0.0
+pyarrow==23.0.1
     # via
     #   arrow-pd-parser
     #   awswrangler
