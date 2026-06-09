@@ -1,5 +1,4 @@
 import os
-import re
 import boto3
 from app.utility.custom_logging import custom_logger
 
@@ -18,15 +17,6 @@ class ScanLocation:
     @property
     def location(self) -> str:
         return self.__location
-
-    @property
-    def redacted_location(self) -> str:
-        redacted_file_path = re.sub(
-            r"(.*/[a-f0-9]{,13}_).*(\.\w{3,4})$",
-            r"\1****\2",
-            self.__location
-        )
-        return redacted_file_path
 
     def set_location(self, location):
         self.__location = location
@@ -138,8 +128,7 @@ class BucketManager:
                 location=lpa_scan["location"], template=lpa_scan.get("template")
             )
 
-            if scan_location.template is None:
-                logger.error(f"{self.request_id} Error adding scan location: {scan_location.redacted_location}")
+            if not scan_location.location.lower().endswith((".pdf", ".tiff", ".tif")):
                 continue
 
             lpa_locations.append(scan_location)
