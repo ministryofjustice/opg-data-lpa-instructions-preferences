@@ -43,7 +43,7 @@ data "aws_iam_policy_document" "lpa_iap_ip_restriction_policy" {
 }
 
 module "allow_list" {
-  source = "git@github.com:ministryofjustice/opg-terraform-aws-moj-ip-allow-list.git?ref=v3.4.5"
+  source = "git@github.com:ministryofjustice/opg-terraform-aws-moj-ip-allow-list.git?ref=v3.5.2"
 }
 
 locals {
@@ -60,6 +60,8 @@ locals {
     production = concat(
       module.allow_list.use_an_lpa_production,
       module.allow_list.sirius_prod_allow_list,
+      module.allow_list.moj_global_protect_vpn,
+      module.allow_list.palo_alto_prisma_access,
     )
   }
   ip_restrictions_enabled = contains(["preproduction", "production"], local.account.name)
