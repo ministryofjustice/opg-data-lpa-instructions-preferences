@@ -1,5 +1,4 @@
 import os
-import re
 import boto3
 from app.utility.custom_logging import custom_logger
 
@@ -19,30 +18,18 @@ class ScanLocation:
     def location(self) -> str:
         return self.__location
 
-    @property
-    def redacted_location(self) -> str:
-        redacted_file_path = re.sub(
-            r"(.*/[a-f0-9]{,13}_).*(\.\w{3,4})$",
-            r"\1****\2",
-            self.__location
-        )
-        return redacted_file_path
-
     def set_location(self, location):
         self.__location = location
 
 
 class ScanLocationStore:
-    def __init__(self, scans: ScanLocation = None, continuations: ScanLocation = None, failures: ScanLocation = None):
+    def __init__(self, scans: ScanLocation = None, continuations: ScanLocation = None):
         if continuations is None:
             continuations = {}
         if scans is None:
             scans = []
-        if failures is None:
-            failures = []
         self.scans = scans
         self.continuations = continuations
-        self.failures = failures
 
     def add_scan(self, scan: ScanLocation):
         self.scans.append(scan)
@@ -50,14 +37,12 @@ class ScanLocationStore:
     def add_continuation(self, key: str, continuation: ScanLocation):
         self.continuations[key] = continuation
 
-    def add_failure(self, scan: ScanLocation):
-        self.failures.append(scan)
-
 
 class BucketManager:
-    def __init__(self, info_msg):
+    def __init__(self, request_id, info_msg):
         self.environment = os.getenv("ENVIRONMENT")
         self.target_environment = os.getenv("TARGET_ENVIRONMENT")
+        self.request_id = request_id
         self.sirius_bucket = f"opg-backoffice-datastore-{self.target_environment}"
         self.iap_bucket = f"lpa-iap-{self.environment}"
         self.s3 = self.setup_s3_connection()
@@ -143,8 +128,7 @@ class BucketManager:
                 location=lpa_scan["location"], template=lpa_scan.get("template")
             )
 
-            if scan_location.template is None:
-                scan_locations.add_failure(scan_location)
+            if not scan_location.location.lower().endswith((".pdf", ".tiff", ".tif")):
                 continue
 
             lpa_locations.append(scan_location)

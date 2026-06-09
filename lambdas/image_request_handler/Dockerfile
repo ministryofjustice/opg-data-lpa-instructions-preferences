@@ -1,6 +1,6 @@
 # Define function directory
 ARG FUNCTION_DIR="/function"
-FROM python:3.14-alpine3.21 AS python-alpine
+FROM python:3.14-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614 AS python-alpine
 RUN apk add libstdc++
 
 RUN apk upgrade libcrypto1.1 libcom_err ncurses-terminfo-base ncurses-libs libssl3 libcrypto3 busybox
@@ -8,7 +8,7 @@ RUN apk upgrade libcrypto1.1 libcom_err ncurses-terminfo-base ncurses-libs libss
 RUN pip install setuptools --upgrade
 
 # Build image
-FROM python-alpine as build-image
+FROM python-alpine AS build-image
 # Install aws-lambda-cpp build dependencies
 RUN apk add  --no-cache \
     build-base \
