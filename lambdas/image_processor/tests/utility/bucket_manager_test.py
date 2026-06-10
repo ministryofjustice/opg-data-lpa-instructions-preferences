@@ -15,7 +15,7 @@ def setup_environment_variables():
 @pytest.fixture
 def bucket_manager():
     info_msg = LogMessageDetails()
-    return BucketManager(info_msg)
+    return BucketManager("abc", info_msg)
 
 
 def test_extract_s3_file_path(bucket_manager):
@@ -51,10 +51,14 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
     s3_urls_dict = {
         "lpaScans": [
             {
-                "location": "s3://my_bucket/5fbcd594bac0e_my_scan.pdf", "template": "TEST"
+                "location": "s3://my_bucket/5fbcd594bac0e_my_scan.pdf",
+                "template": "TEST",
             },
             {
                 "location": "s3://my_bucket/5a980ebab6ae2_additional - correspondence.msg",
+            },
+            {
+                "location": "s3://my_bucket/5a980ebab6ae2_00001.pdf",
             },
         ],
         "continuationSheets": [
@@ -79,9 +83,16 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
     result = bucket_manager.download_scanned_images(s3_urls_dict, output_folder_path)
 
     # Check that the expected S3 files were downloaded
-    assert len(mock_download_file.mock_calls) == 3
+    assert len(mock_download_file.mock_calls) == 4
     mock_download_file.assert_any_call(
-        "my_bucket", "5fbcd594bac0e_my_scan.pdf", "/tmp/output/5fbcd594bac0e_my_scan.pdf"
+        "my_bucket",
+        "5fbcd594bac0e_my_scan.pdf",
+        "/tmp/output/5fbcd594bac0e_my_scan.pdf",
+    )
+    mock_download_file.assert_any_call(
+        "my_bucket",
+        "5a980ebab6ae2_00001.pdf",
+        "/tmp/output/5a980ebab6ae2_00001.pdf",
     )
     mock_download_file.assert_any_call(
         "my_bucket",
@@ -96,7 +107,10 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
 
     # Check that the function returned the expected file paths
     expected_result = {
-        "scans": [{"location": "/tmp/output/5fbcd594bac0e_my_scan.pdf", "template": "TEST"}],
+        "scans": [
+            {"location": "/tmp/output/5fbcd594bac0e_my_scan.pdf", "template": "TEST"},
+            {"location": "/tmp/output/5a980ebab6ae2_additional - correspondence.msg", "template": None},
+        ],
         "continuations": {
             "continuation_1": {
                 "location": "/tmp/output/my_continuation_sheet1.pdf",
@@ -106,8 +120,7 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
                 "location": "/tmp/output/my_continuation_sheet2.pdf",
                 "template": "TEST",
             },
-        },
-        "failures": [{"redacted_location": "s3://my_bucket/5a980ebab6ae2_****.msg"}],
+        }
     }
 
     assert result.scans[0].template == expected_result["scans"][0]["template"]
@@ -128,10 +141,6 @@ def test_download_scanned_images(bucket_manager, monkeypatch):
         result.continuations["continuation_2"].template
         == expected_result["continuations"]["continuation_2"]["template"]
     )
-    assert (
-        result.failures[0].redacted_location == expected_result["failures"][0]["redacted_location"]
-    )
-
 
 @mock_aws
 def test_put_images_to_bucket(bucket_manager):

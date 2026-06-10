@@ -31,24 +31,29 @@ jobs:
     runs-on: ubuntu-latest
     name: Extract branch name
     outputs:
-      raw_branch: ${{ steps.extract_branch.outputs.branch_raw }}
-      formatted_branch: ${{ steps.extract_branch.outputs.branch_formatted }}
+      formatted_branch: ${{ steps.extract_branch.outputs.safe }}
     steps:
-      - name: extract branch
-        shell: bash
-        run: |
-          echo "branch_raw=main" >> $GITHUB_OUTPUT
-          echo "branch_formatted=main" >> $GITHUB_OUTPUT
+      - name: Extract branch
         id: extract_branch
+        uses: ministryofjustice/opg-github-actions/actions/branch-name@ed64099d769e1e9439d4523f7612987618c1b6cd # v4.8.7
 
   create_tags:
     name: Create Tags
     needs: ['branch_name']
-    uses: ./.github/workflows/sub-task-tags.yml
-    with:
-      branch_name: ${{ needs.branch_name.outputs.formatted_branch }}
-    secrets:
-      source_github_token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    outputs:
+      version_tag: ${{ steps.semver.outputs.tag }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Bump version
+        id: semver
+        uses: ministryofjustice/opg-github-actions/actions/semver@ed64099d769e1e9439d4523f7612987618c1b6cd # v4.8.7
+        with:
+          prerelease: "false"
+          default_bump: minor
 
   docker_build_scan_push:
     name: Build, Scan and Push
