@@ -2,7 +2,7 @@ Pillow==12.2.0
 arrow_pd_parser==1.3.9
 aws-xray-sdk==2.15.0
 awslambdaric==3.1.1
-awswrangler==3.15.1
+awswrangler==3.16.1
 boto3==1.42.68
 charset-normalizer==2.1.1
 fuzzywuzzy[speedup]==0.18.0
