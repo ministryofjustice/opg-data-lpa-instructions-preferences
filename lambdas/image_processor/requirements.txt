@@ -36,7 +36,7 @@ charset-normalizer==2.1.1
     #   -r requirements.in
     #   pdfminer-six
     #   requests
-cryptography==46.0.7
+cryptography==48.0.1
     # via
     #   moto
     #   pdfminer-six
