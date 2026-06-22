@@ -115,7 +115,7 @@ pycparser==3.0
     # via cffi
 pydantic==1.10.26
     # via -r requirements.in
-pyjwt==2.12.1
+pyjwt==2.13.0
     # via -r requirements.in
 pyopengl==3.1.10
     # via -r requirements.in
