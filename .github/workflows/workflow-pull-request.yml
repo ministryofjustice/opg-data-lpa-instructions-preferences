@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Label PR
     steps:
-      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+      - uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
         with:
           configuration-path: ".github/labeller.yml"
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Extract branch
         id: extract_branch
-        uses: ministryofjustice/opg-github-actions/actions/branch-name@ed64099d769e1e9439d4523f7612987618c1b6cd # v4.8.7
+        uses: ministryofjustice/opg-github-actions/actions/branch-name@77bb12e7fec3bcee9a6a35cb21361195e027a12a # v4.9.0
 
   create_tags:
     name: Create Tags
@@ -50,13 +50,13 @@ jobs:
     outputs:
       version_tag: ${{ steps.semver.outputs.tag }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
           fetch-depth: 0
 
       - name: Bump version
         id: semver
-        uses: ministryofjustice/opg-github-actions/actions/semver@ed64099d769e1e9439d4523f7612987618c1b6cd # v4.8.7
+        uses: ministryofjustice/opg-github-actions/actions/semver@77bb12e7fec3bcee9a6a35cb21361195e027a12a # v4.9.0
         with:
           prerelease: "true"
           default_bump: minor
