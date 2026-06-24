@@ -14,20 +14,20 @@ awswrangler==3.16.1
     # via
     #   -r requirements.in
     #   arrow-pd-parser
-boto3==1.42.68
+boto3==1.43.32
     # via
     #   -r requirements.in
     #   awswrangler
     #   dataengineeringutils3
     #   moto
-botocore==1.42.89
+botocore==1.43.32
     # via
     #   aws-xray-sdk
     #   awswrangler
     #   boto3
     #   moto
     #   s3transfer
-certifi==2026.2.25
+certifi==2026.6.17
     # via requests
 cffi==2.0.0
     # via cryptography
@@ -40,13 +40,13 @@ cryptography==48.0.1
     # via
     #   moto
     #   pdfminer-six
-dataengineeringutils3==1.4.3
+dataengineeringutils3==1.4.5
     # via mojap-metadata
 deprecated==1.3.1
     # via dataengineeringutils3
 fuzzywuzzy==0.18.0
     # via -r requirements.in
-idna==3.15
+idna==3.18
     # via requests
 imageio==2.37.3
     # via -r requirements.in
@@ -76,9 +76,9 @@ mojap-metadata==1.16.0
     # via
     #   -r requirements.in
     #   arrow-pd-parser
-moto==5.1.22
+moto==5.2.2
     # via -r requirements.in
-numpy==2.4.4
+numpy==2.4.6
     # via
     #   awswrangler
     #   imageio
@@ -86,7 +86,7 @@ numpy==2.4.4
     #   pandas
 opencv-python==4.13.0.92
     # via -r requirements.in
-packaging==26.1
+packaging==26.2
     # via
     #   awswrangler
     #   pytesseract
@@ -94,7 +94,7 @@ pandas==2.3.3
     # via
     #   arrow-pd-parser
     #   awswrangler
-parameterized==0.7.5
+parameterized==0.9.0
     # via mojap-metadata
 pdf2image==1.17.0
     # via -r requirements.in
@@ -130,7 +130,7 @@ python-dateutil==2.9.0.post0
     #   pandas
 python-levenshtein==0.27.3
     # via fuzzywuzzy
-pytz==2026.1.post1
+pytz==2026.2
     # via pandas
 pyyaml==6.0.3
     # via
@@ -145,18 +145,18 @@ referencing==0.37.0
     # via
     #   jsonschema
     #   jsonschema-specifications
-requests==2.33.0
+requests==2.34.2
     # via
     #   -r requirements.in
     #   moto
     #   responses
-responses==0.26.0
+responses==0.26.1
     # via moto
 rpds-py==0.30.0
     # via
     #   jsonschema
     #   referencing
-s3transfer==0.16.0
+s3transfer==0.19.0
     # via boto3
 setuptools==80.10.2
     # via
@@ -176,7 +176,7 @@ typing-extensions==4.15.0
     # via
     #   awswrangler
     #   pydantic
-tzdata==2026.1
+tzdata==2026.2
     # via pandas
 urllib3==2.7.0
     # via
@@ -185,7 +185,7 @@ urllib3==2.7.0
     #   responses
 werkzeug==3.1.8
     # via moto
-wrapt==2.1.2
+wrapt==2.2.1
     # via
     #   aws-xray-sdk
     #   deprecated
