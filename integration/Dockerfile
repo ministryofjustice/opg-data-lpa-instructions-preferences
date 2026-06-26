@@ -1,4 +1,4 @@
-FROM python:3.14-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614
+FROM python:3.14-alpine3.23@sha256:54d4310f06b22ce510cf058653729b257e161e0e13e01bf934553bee6550b9a7
 
 RUN mkdir /app
 WORKDIR /app
