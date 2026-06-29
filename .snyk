@@ -1,0 +1,36 @@
+version: v1.25.0
+ignore:
+  SNYK-DEBIAN13-AOM-17385957:
+    - '*':
+        reason: "There is no fixed version for Debian:13 aom"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-AOM-17385951:
+    - '*':
+        reason: "There is no fixed version for Debian:13 aom"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-AOM-17385949:
+    - '*':
+        reason: "There is no fixed version for Debian:13 aom"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-AOM-17385941:
+    - '*':
+        reason: "There is no fixed version for Debian:13 aom"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-LIBHEIF-16895065:
+    - '*':
+        reason: "There is no fixed version for Debian:13 libheif"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-EXPAT-16650098:
+    - '*':
+        reason: "There is no fixed version for Debian:13 expat"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-LIBSSH2-17662015:
+    - '*':
+        reason: "There is no fixed version for Debian:13 libssh2"
+        expires: "2026-07-17T00:00:00.000Z"
