@@ -34,3 +34,18 @@ ignore:
     - '*':
         reason: "There is no fixed version for Debian:13 libssh2"
         expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-TIFF-17690412:
+    - '*':
+        reason: "There is no fixed version for Debian:13 tiff"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-ATTR-17678182:
+    - '*':
+        reason: "There is no fixed version for Debian:13 attr"
+        expires: "2026-07-17T00:00:00.000Z"
+
+  SNYK-DEBIAN13-ACL-17677866:
+    - '*':
+        reason: "There is no fixed version for Debian:13 acl"
+        expires: "2026-07-17T00:00:00.000Z"
