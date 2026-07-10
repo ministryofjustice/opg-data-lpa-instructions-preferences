@@ -6,10 +6,10 @@ Extracts the Instructions and Preferences for an existing LPA. If the LPA does n
 
 This script will use your AWS credentials to assume the operator role in the sirius-dev or sirius-prod environment. 
 
-Install pip modules
+Install dependencies using uv:
 
 ```bash
-pip install -r requirements.txt
+uv sync
 ```
 
 ## Running the script
@@ -23,7 +23,7 @@ The script will:
 To execute the script, use the following command. Replace `<ENVIRONMENT>` with `development`, `preproduction` or `production`. Replace `<LPA_ID>` with the ID of the LPA you're extracting the images for.
 
 ```bash
-aws-vault exec identity -- python3 post-request.py -w <ENVIRONMENT> -u <LPA_ID> | jq
+aws-vault exec identity -- uv run post-request.py -w <ENVIRONMENT> -u <LPA_ID> | jq
 ```
 
 ## Usage

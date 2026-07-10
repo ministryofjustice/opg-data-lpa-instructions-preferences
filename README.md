@@ -106,11 +106,10 @@ actions workflow to complete, amend and the run the script below to include your
 environment standardised name (so UML-1234 would be uml1234):
 
 ```commandline
-aws-vault exec sirius-dev -- python3 ./scripts/post-request.py
+aws-vault exec sirius-dev -- uv run ./scripts/post-request.py
 ```
 
-Bear in mind you will need boto3 installed. You should do this in a virtual env
-(https://docs.python.org/3/library/venv.html)
+Bear in mind you will need to install dependencies and create a venv by running uv sync first from the scripts folder.
 
 ### Run the unit tests locally
 
