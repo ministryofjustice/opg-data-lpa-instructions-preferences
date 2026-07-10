@@ -4,10 +4,12 @@ ARG FUNCTION_DIR="/function"
 FROM python:3.14-slim@sha256:b877e50bd90de10af8d82c57a022fc2e0dc731c5320d762a27986facfc3355c1 AS builder
 # Include global arg in this stage of the build
 ARG FUNCTION_DIR
+COPY --from=ghcr.io/astral-sh/uv@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 /uv /uvx /bin/
 # Set the working directory to /app
 WORKDIR ${FUNCTION_DIR}
-# Copy the requirements file to the working directory
-COPY requirements.txt requirements.txt
+# Copy the lockfile and export it to a requirements file
+COPY pyproject.toml uv.lock ./
+RUN uv export --locked -o requirements.txt
 # Install tesseract build dependencies
 RUN apt-get update && \
     apt-get upgrade expat -y && \
