@@ -26,7 +26,9 @@ ARG FUNCTION_DIR
 RUN mkdir -p ${FUNCTION_DIR}
 # Copy function code
 COPY app ${FUNCTION_DIR}/app
-COPY requirements.txt requirements.txt
+COPY --from=ghcr.io/astral-sh/uv@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 /uv /uvx /bin/
+COPY pyproject.toml uv.lock ./
+RUN uv export --locked -o requirements.txt
 # Install the runtime interface client
 RUN python -m pip install --upgrade pip
 RUN python -m pip install \
