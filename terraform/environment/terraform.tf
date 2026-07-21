@@ -14,12 +14,13 @@ terraform {
 
 locals {
   tags = {
-    business-unit          = "OPG"
     application            = "LPA-Instructions-and-Preferences"
+    business-unit          = "OPG"
     environment-name       = local.environment
-    owner                  = "OPG Supervision"
     infrastructure-support = "OPG WebOps: opgteam@digital.justice.gov.uk"
     is-production          = local.account.is_production
+    owner                  = "OPG POAS"
+    service-area           = "POAS"
     source-code            = "https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences"
   }
 }

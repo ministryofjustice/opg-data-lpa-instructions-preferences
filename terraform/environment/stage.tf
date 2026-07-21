@@ -32,7 +32,7 @@ module "deploy_v1" {
   account_name    = local.account.name
   api_name        = local.api_name
   openapi_version = "v1"
-  region_name     = data.aws_region.region.name
+  region_name     = data.aws_region.region.region
   rest_api        = aws_api_gateway_rest_api.lpa_iap
   lambda          = module.request_handler_lamdba.lambda
   logs_kms_key    = data.aws_kms_key.lpa_iap_logs
