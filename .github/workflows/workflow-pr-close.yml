@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Extract branch
         id: extract_branch
-        uses: ministryofjustice/opg-github-actions/actions/branch-name@ed64099d769e1e9439d4523f7612987618c1b6cd # v4.8.7
+        uses: ministryofjustice/opg-github-actions/actions/branch-name@722a5f955424aaba01e9ca43d68390cd4048d6e1 # v4.10.2
 
   destroy-pr-env:
     name: Destroy PR Environment
