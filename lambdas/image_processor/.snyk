@@ -65,12 +65,12 @@ ignore:
               reason: "There is no fixed version for Debian:13 libssh2"
               expires: "2026-08-30T00:00:00.000Z"
 
- SNYK-DEBIAN13-LIBSSH2-18300245:
-            - '*':
-                reason: "There is no fixed version for Debian:13 libssh2"
-                expires: "2026-08-30T00:00:00.000Z"
+  SNYK-DEBIAN13-LIBSSH2-18300245:
+          - '*':
+              reason: "There is no fixed version for Debian:13 libssh2"
+              expires: "2026-08-30T00:00:00.000Z"
 
- SNYK-DEBIAN13-LIBHEIF-17368649:
-             - '*':
-                 reason: "There is no fixed version for Debian:13 libheif"
-                 expires: "2026-08-30T00:00:00.000Z"
+  SNYK-DEBIAN13-LIBHEIF-17368649:
+          - '*':
+              reason: "There is no fixed version for Debian:13 libheif"
+              expires: "2026-08-30T00:00:00.000Z"
