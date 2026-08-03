@@ -88,7 +88,6 @@ services:
     image: localstack-request-handler:latest
     build:
       context: ./local-services/localstack-request-handler
-      dockerfile: Dockerfile
     environment:
       SERVICES: s3,lambda,apigateway
       AWS_ACCESS_KEY_ID: fake
@@ -99,7 +98,7 @@ services:
       - ./docs/openapi/image-request-handler.yml:/tmp/image-request-handler.yml
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - 4566:4566
+      - "4566:4566"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:4566/_localstack/health?reload"]
 
@@ -107,7 +106,6 @@ services:
     image: localstack-processor:latest
     build:
       context: ./local-services/localstack-processor
-      dockerfile: Dockerfile
     environment:
       SERVICES: secretsmanager,lambda,sqs
       DEBUG: 1
@@ -115,7 +113,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     ports:
-      - 4567:4566
+      - "4567:4566"
     healthcheck:
       test: ["CMD", "curl", "http://localhost:4566/_localstack/health?reload"]
 
