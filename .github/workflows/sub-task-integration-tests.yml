@@ -26,6 +26,11 @@ jobs:
           role-duration-seconds: 3600
           role-session-name: OPGUALIaPIntegrationTestsGithubAction
 
+      - name: Fetch emulator wrapper
+        run: |
+          curl -Lo ./lambdas/.aws-lambda-rie/aws-lambda-rie https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/download/v1.35/aws-lambda-rie || exit 1
+          (echo "3a3494331c212c14366c1073fdc4f0078f58a927da64479413879b0d84e21f20  ./lambdas/.aws-lambda-rie/aws-lambda-rie" | sha256sum --check) || exit 1
+
       - name: Run integration tests
         env:
           ENVIRONMENT: ${{ inputs.environment }}
