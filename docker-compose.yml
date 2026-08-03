@@ -30,9 +30,8 @@ services:
     image: image-processor:latest
     build:
       context: lambdas/image_processor
-      dockerfile: Dockerfile
     ports:
-      - 9011:8080
+      - "9011:8080"
     depends_on:
       localstack-processor:
         condition: service_healthy
@@ -54,7 +53,6 @@ services:
       AWS_LAMBDA_FUNCTION_TIMEOUT: 900
       AWS_XRAY_SDK_ENABLED: false
       LOGGER_LEVEL: DEBUG
-
     entrypoint: /aws-lambda/aws-lambda-rie /usr/local/bin/python -m awslambdaric app.handler.lambda_handler
 
   unit-tests-request-handler:
@@ -74,7 +72,7 @@ services:
     image: unit-tests-processor:latest
     build:
       context: lambdas/image_processor
-      dockerfile: Dockerfile-tests
+      target: development
     volumes:
       - ./lambdas/image_processor/app:/function/app
       - ./lambdas/image_processor/tests:/function/tests
@@ -82,6 +80,8 @@ services:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
+    command:
+      - /function/run-tests.sh
 
   localstack-request-handler:
     image: localstack-request-handler:latest
