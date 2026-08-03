@@ -3,9 +3,8 @@ services:
     image: image-request-handler:latest
     build:
       context: lambdas/image_request_handler
-      dockerfile: Dockerfile
     ports:
-      - 9010:8080
+      - "9010:8080"
     depends_on:
       localstack-request-handler:
         condition: service_healthy
@@ -59,14 +58,16 @@ services:
     image: unit-tests-request-handler:latest
     build:
       context: lambdas/image_request_handler
-      dockerfile: Dockerfile-tests
+      target: development
     volumes:
-      - ./lambdas/image_request_handler/app:/lambdas/image_request_handler/app
-      - ./lambdas/image_request_handler/tests:/lambdas/image_request_handler/tests
+      - ./lambdas/image_request_handler/app:/function/app
+      - ./lambdas/image_request_handler/tests:/function/tests
     environment:
       AWS_ACCESS_KEY_ID: FAKE
       AWS_SECRET_ACCESS_KEY: FAKE
       ENVIRONMENT: local
+    command:
+      - /function/run-tests.sh
 
   unit-tests-processor:
     image: unit-tests-processor:latest
