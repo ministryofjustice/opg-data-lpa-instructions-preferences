@@ -142,9 +142,14 @@ services:
       - 7013:4010
 
   integration-test:
+    profiles:
+      - test
     build:
       context: ./integration
     image: iap-integration-test:latest
+    depends_on:
+      - image-processor
+      - image-request-handler
     environment:
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-local}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-local}
