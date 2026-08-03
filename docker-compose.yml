@@ -155,12 +155,11 @@ services:
       WORKSPACE: ${WORKSPACE:-local}
 
   form-tools-test:
+    profiles:
+      - test
     build:
-      context: ./lambdas/image_processor
-      dockerfile: form-tools-test.Dockerfile
+      context: ./lambdas/image_processor/form-tools
     image: iap-form-tools-test:latest
-    environment:
-      PYTHONPATH: .
-      TESSDATA_PREFIX: /usr/share/tesseract-ocr/5/tessdata/
     volumes:
-      - ./lambdas/image_processor/form-tools:/app
+      - ./lambdas/image_processor/form-tools/form_tools:/app/form_tools
+      - ./lambdas/image_processor/form-tools/tests:/app/tests
