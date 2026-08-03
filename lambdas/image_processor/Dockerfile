@@ -64,6 +64,7 @@ FROM base AS development
 
 ARG FUNCTION_DIR
 ENV UV_MALWARE_CHECK=1
+ENV UV_LINK_MODE=copy
 
 # Install development dependencies (pytest, coverage etc)
 RUN --mount=from=uv,source=/uv,target=/bin/uv \

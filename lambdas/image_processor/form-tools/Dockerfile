@@ -5,6 +5,7 @@ FROM python AS development
 
 ENV UV_MALWARE_CHECK=1
 ENV PYTHONPATH="/app"
+ENV UV_LINK_MODE=copy
 
 WORKDIR /app
 
