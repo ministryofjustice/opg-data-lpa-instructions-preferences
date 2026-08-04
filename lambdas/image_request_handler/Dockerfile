@@ -1,52 +1,70 @@
-# Define function directory
 ARG FUNCTION_DIR="/function"
-FROM python:3.14-alpine3.23@sha256:5a824eb82cc75361f98611f3cfc5091ea33f10a6ccea4d4ebdabbc523b9a1614 AS python-alpine
-RUN apk add libstdc++
 
-RUN apk upgrade libcrypto1.1 libcom_err ncurses-terminfo-base ncurses-libs libssl3 libcrypto3 busybox
+FROM ghcr.io/astral-sh/uv@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 AS uv
+FROM python:3.14.6-slim@sha256:b877e50bd90de10af8d82c57a022fc2e0dc731c5320d762a27986facfc3355c1 AS python
 
-RUN pip install setuptools --upgrade
+FROM python AS builder
 
-# Build image
-FROM python-alpine AS build-image
-# Install aws-lambda-cpp build dependencies
-RUN apk add  --no-cache \
-    build-base \
-    libtool \
-    autoconf \
-    automake \
-    elfutils-dev \
-    make \
-    cmake \
-    libcurl
-
-# Include global arg in this stage of the build
 ARG FUNCTION_DIR
-# Create function directory
-RUN mkdir -p ${FUNCTION_DIR}
-# Copy function code
-COPY app ${FUNCTION_DIR}/app
-COPY --from=ghcr.io/astral-sh/uv@sha256:b46b03ddfcfbf8f547af7e9eaefdf8a39c8cebcba7c98858d3162bd28cf536f6 /uv /uvx /bin/
-COPY pyproject.toml uv.lock ./
-RUN uv export --locked -o requirements.txt
-# Install the runtime interface client
-RUN python -m pip install --upgrade pip
-RUN python -m pip install \
-        --target ${FUNCTION_DIR} \
-        --requirement requirements.txt
+ENV UV_MALWARE_CHECK=1
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_NO_INSTALLER_METADATA=1
+ENV UV_LINK_MODE=copy
 
-
-# Multi-stage build: grab a fresh copy of the base image
-FROM python-alpine
-
-# Add libzstd  library - needed for awslambdaric's runtime_client module
-RUN apk add zstd-libs
-# Include global arg in this stage of the build
-ARG FUNCTION_DIR
-# Set working directory to function root directory
 WORKDIR ${FUNCTION_DIR}
-# Copy in the build image dependencies
-COPY --from=build-image ${FUNCTION_DIR} ${FUNCTION_DIR}
 
-ENTRYPOINT [ "/usr/local/bin/python", "-m", "awslambdaric" ]
+# Bundle the dependencies into the Lambda task root via `uv pip install --target`.
+#
+# Omit any local packages (`--no-emit-workspace`) and development dependencies (`--no-dev`).
+# This ensures that the Docker layer cache is only invalidated when the `pyproject.toml` or `uv.lock`
+# files change, but remains robust to changes in the application code.
+RUN --mount=from=uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv export --frozen --no-emit-workspace --no-dev --no-editable -o requirements.txt && \
+    uv pip install -r requirements.txt --target "${FUNCTION_DIR}"
+
+
+FROM python AS base
+
+ARG FUNCTION_DIR
+ENV PYTHONPATH="/${FUNCTION_DIR}"
+
+WORKDIR ${FUNCTION_DIR}
+
+RUN groupadd -g 999 python && \
+    useradd -r -u 999 -g python python
+
+# Copy the runtime dependencies from the builder stage.
+COPY --from=builder --chown=python:python ${FUNCTION_DIR}/ .
+
+# Copy the application code.
+COPY app ${FUNCTION_DIR}/app
+
+
+FROM base AS development
+
+ARG FUNCTION_DIR
+ENV UV_MALWARE_CHECK=1
+ENV UV_LINK_MODE=copy
+
+# Install development dependencies (pytest, coverage etc)
+RUN --mount=from=uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv export --frozen --no-editable --only-dev -o requirements.txt && \
+    uv pip install -r requirements.txt --target "${FUNCTION_DIR}"
+
+COPY tests ${FUNCTION_DIR}/tests
+COPY --chmod=755 run-tests.sh run-tests.sh
+
+
+# Production as default target
+FROM base AS production
+
+USER python
+
+ENTRYPOINT [ "python", "-m", "awslambdaric" ]
 CMD [ "app.handler.lambda_handler" ]
