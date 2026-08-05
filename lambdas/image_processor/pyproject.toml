@@ -15,7 +15,6 @@ dependencies = [
     "imutils==0.5.4",
     "jsonschema==4.26.0",
     "mojap_metadata==1.16.0",
-    "moto==5.2.2",
     "opencv-python==4.13.0.92",
     "pdf2image==1.17.0",
     "pdfminer-six==20251230",
@@ -31,7 +30,9 @@ dependencies = [
 ]
 
 [dependency-groups]
-test = [
+dev = [
+    "coverage==7.2.5",
+    "moto==5.2.2",
     "pytest==9.1.1",
 ]
 
