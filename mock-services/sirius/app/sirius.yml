@@ -92,7 +92,7 @@ paths:
                 lpa0104:
                   value:
                     lpaScans: [{ 'location': 's3://opg-backoffice-datastore-local/Fake_Test_Data_553668_LP1F.pdf', 'template': 'LP1F' }]
-                    continuationSheets: [{ 'location': 's3://opg-backoffice-datastore-local/Fake_Test_Data_553668_LP1F.pdf', 'template': 'LPC' }]
+                    continuationSheets: [{ 'location': 's3://opg-backoffice-datastore-local/700000069315_20250401121101.243519_LPC.pdf', 'template': 'LPC' }]
                 lpa0105:
                   value:
                     lpaScans: [{ 'location': 's3://opg-backoffice-datastore-local/Fake_Test_Data_820042_LP1F.pdf', 'template': 'LP1F' }]
