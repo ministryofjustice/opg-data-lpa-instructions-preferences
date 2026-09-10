@@ -12,7 +12,7 @@ pwd
 opg-data-lpa-instructions-preferences/scripts
 aws-vault exec identity -- python post-request.py -w production -u <LPA ID> | jq
 ```
-Note - if this script hangs rather than showing any output, ensure that GlobalProtect VPN is switched on
+Note - if this script hangs rather than showing any output, ensure that VPN is switched on
 
 ## Viewing the images
 Once the extractions have been completed, the script will return JSON with links to download the images, e.g.:

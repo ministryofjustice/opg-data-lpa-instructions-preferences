@@ -25,7 +25,7 @@ To execute the script, use the following command. Replace `<ENVIRONMENT>` with `
 ```bash
 aws-vault exec identity -- uv run post-request.py -w <ENVIRONMENT> -u <LPA_ID> | jq
 ```
-Note - if , for production environment, this script hangs instead of producing any output, you will need to enable GlobalProtect VPN if it isn't already
+Note - if , for production environment, this script hangs instead of producing any output, you will need to enable VPN if it isn't already
 
 ## Usage
 
