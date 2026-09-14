@@ -20,3 +20,5 @@ lambdas/image_processor/extraction/fail/**
 lambdas/image_processor/extraction/pass/**
 lambdas/image_processor/extraction/LP1H-Edited.pdf
 tmp_images
+# vendor files
+node_modules
