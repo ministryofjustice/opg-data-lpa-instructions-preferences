@@ -12,6 +12,7 @@ pwd
 opg-data-lpa-instructions-preferences/scripts
 aws-vault exec identity -- python post-request.py -w production -u <LPA ID> | jq
 ```
+Note - if this script hangs rather than showing any output, ensure that VPN is switched on
 
 ## Viewing the images
 Once the extractions have been completed, the script will return JSON with links to download the images, e.g.:
@@ -33,8 +34,8 @@ This will return a JSON object containing links to the new extracts. Once downlo
 When an error happens, the status will be: `COLLECTION_ERROR`. Sometimes it can be preudent to rerun the extraction process once or twice if the image is wonky or has errors.
 
 The most common errors are:
-- `# extracted images were found to be too dark to be likely to be readable` - this could be an error with the scan itself, or the OCR has gotten itself in a mess. 
-- `Cannot find request_id. Try extending the search period further back with the -s argument.` - if the image you're searching for dates back longer than 30 days, the script is unable to find any errorsin the logs. The `-s` or `--search-time` argument overrides this. 
+- `# extracted images were found to be too dark to be likely to be readable` - this could be an error with the scan itself, or the OCR has gotten itself in a mess.
+- `Cannot find request_id. Try extending the search period further back with the -s argument.` - if the image you're searching for dates back longer than 30 days, the script is unable to find any errorsin the logs. The `-s` or `--search-time` argument overrides this.
 
 ## Troubleshooting
 If the new extracts are still distorted or unreadable after this, you will need to contact the [code owners](https://github.com/ministryofjustice/opg-data-lpa-instructions-preferences/blob/main/CODEOWNERS) to investigate further.

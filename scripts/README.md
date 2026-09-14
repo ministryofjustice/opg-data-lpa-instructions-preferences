@@ -1,10 +1,10 @@
 # Post Request
 
-Extracts the Instructions and Preferences for an existing LPA. If the LPA does not exist, running the script will begin a new image extraction. 
+Extracts the Instructions and Preferences for an existing LPA. If the LPA does not exist, running the script will begin a new image extraction.
 
-## Prerequisites 
+## Prerequisites
 
-This script will use your AWS credentials to assume the operator role in the sirius-dev or sirius-prod environment. 
+This script will use your AWS credentials to assume the operator role in the sirius-dev or sirius-prod environment.
 
 Install dependencies using uv:
 
@@ -25,6 +25,7 @@ To execute the script, use the following command. Replace `<ENVIRONMENT>` with `
 ```bash
 aws-vault exec identity -- uv run post-request.py -w <ENVIRONMENT> -u <LPA_ID> | jq
 ```
+Note - if , for production environment, this script hangs instead of producing any output, you will need to enable VPN if it isn't already
 
 ## Usage
 
