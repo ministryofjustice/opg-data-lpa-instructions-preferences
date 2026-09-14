@@ -5,6 +5,15 @@ scanned documents from our case management system, crop out the correct portions
 for 'instructions and preferences' and to display them on the Use an LPA
 frontend website.
 
+The extraction tool supports PDF and TIFF files, and supports the following
+document types:
+
+- LP1F and LP1H
+- LP-C
+- LPA114/HW114 and LPA117/PFA117
+- LPA-PA and LPA-PW
+- LPA118/PFA-C
+
 ### Working with the openapi spec
 
 The openapi spec defines what the API gateway will accept and what sort of

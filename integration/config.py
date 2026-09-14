@@ -382,4 +382,89 @@ templates = {
             },
         },
     },
+    "Fake_Test_Data_322507_LP1F": {
+        "lpa_uid": "700000000103",
+        "expected_collection_started_response": {
+            "uId": "700000000103",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000103",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000103",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000103-instructions": "",
+                "iap-700000000103-preferences": "",
+            },
+        },
+    },
+    "Fake_Test_Data_553668_LP1F": {
+        "lpa_uid": "700000000104",
+        "expected_collection_started_response": {
+            "uId": "700000000104",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000104",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000104",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000104-instructions": "",
+                "iap-700000000104-preferences": "",
+                "iap-700000000104-continuation_preferences_1": "",
+            },
+        },
+    },
+    "Fake_Test_Data_820042_LP1F": {
+        "lpa_uid": "700000000105",
+        "expected_collection_started_response": {
+            "uId": "700000000105",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000105",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000105",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000105-instructions": "",
+                "iap-700000000105-preferences": "",
+            },
+        },
+    },
+     "Fake_Test_Data_LP1H.pdf": {
+        "lpa_uid": "700000000106",
+        "expected_collection_started_response": {
+            "uId": "700000000106",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000106",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000106",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000106-instructions": "",
+                "iap-700000000106-preferences": "",
+            },
+        },
+     },
 }

@@ -128,7 +128,7 @@ def get_s3() -> boto3.client:
             aws_secret_access_key="fake",
         )
         s3_client = session.client(
-            "s3", endpoint_url="http://localhost:4566", region_name="eu-west-1"
+            "s3", endpoint_url="http://localstack-request-handler:4566", region_name="eu-west-1"
         )
     # Otherwise, use default credentials
     else:
@@ -147,7 +147,7 @@ def get_localstack_rest_api() -> str:
         region_name="eu-west-1", aws_access_key_id="fake", aws_secret_access_key="fake"
     )
     apigateway = session.client(
-        "apigateway", endpoint_url="http://localhost:4566", region_name="eu-west-1"
+        "apigateway", endpoint_url="http://localstack-request-handler:4566", region_name="eu-west-1"
     )
     response = apigateway.get_rest_apis()
 
@@ -164,7 +164,7 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
         )
 
         if env == "local":
-            url = f'http://localhost:4566{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
+            url = f'http://localstack-request-handler:4566{setup_rest_url_part}/image-request/{template_data["lpa_uid"]}'
         else:
             workspace_url_part = (
                 "dev" if workspace == "development" else f"{workspace}.dev"
