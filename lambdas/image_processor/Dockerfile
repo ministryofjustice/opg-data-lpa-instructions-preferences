@@ -15,7 +15,8 @@ WORKDIR ${FUNCTION_DIR}
 
 # Install tesseract build dependencies
 RUN apt-get update && \
-    apt-get install -y libtesseract-dev libleptonica-dev build-essential && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y libtesseract-dev libleptonica-dev build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 # Bundle the dependencies into the Lambda task root via `uv pip install --target`.
@@ -43,7 +44,8 @@ RUN groupadd -g 999 python && \
     useradd -r -u 999 -g python python
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libgl1 \
         poppler-utils \
         tesseract-ocr \
