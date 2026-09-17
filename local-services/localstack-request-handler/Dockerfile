@@ -4,6 +4,7 @@ RUN apt update && \
     DEBIAN_FRONTEND=noninteractive apt -yq install --only-upgrade perl perl-base perl-modules-5.40 && \
     DEBIAN_FRONTEND=noninteractive apt -yq install --only-upgrade libpcre2-8-0 && \
     DEBIAN_FRONTEND=noninteractive apt -yq install --only-upgrade libsqlite3-0 && \
+    DEBIAN_FRONTEND=noninteractive apt -yq install --only-upgrade gzip && \
     apt -yq install bash-completion bash jq
 
 COPY s3-uploads/ /tmp
