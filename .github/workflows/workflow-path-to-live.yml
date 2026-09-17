@@ -2,7 +2,6 @@ name: "[Workflow] Path to Live"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
 
 defaults:
   run:
@@ -117,9 +116,6 @@ jobs:
 
   development_environment_plan_apply:
     name: Development Environment Terraform Plan and Apply
-    concurrency:
-      group: ${{ github.ref }}-${{ github.workflow }}-terraform-apply
-      cancel-in-progress: false
     needs: [
       'development_integration_tests',
       'create_tags'
@@ -233,9 +229,6 @@ jobs:
 
   workflow_complete:
     name: Workflow Complete
-    concurrency:
-      group: ${{ github.ref }}-${{ github.workflow }}-workflow-complete
-      cancel-in-progress: false
     needs: ['production_environment_plan_apply', 'demo_environment_plan_apply']
     runs-on: ubuntu-latest
     steps:
