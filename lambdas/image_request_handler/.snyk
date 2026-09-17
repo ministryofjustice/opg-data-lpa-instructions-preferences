@@ -1,3 +1,55 @@
 version: v1.25.1
-ignore: {}
+ignore:
+    SNYK-DEBIAN13-PERL-17960057:
+        - '*':
+            reason: "There is no fixed version for Debian:13 perl"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-PERL-17037434:
+        - '*':
+            reason: "There is no fixed version for Debian:13 perl"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-PERL-16896261:
+        - '*':
+            reason: "There is no fixed version for Debian:13 perl"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-ACL-17677866:
+        - '*':
+            reason: "There is no fixed version for Debian:13 acl"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-ATTR-17678182:
+        - '*':
+            reason: "There is no fixed version for Debian:13 attr"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-GZIP-17681798:
+        - '*':
+            reason: "There is no fixed version for Debian:13 gzip"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-PCRE2-19685522:
+        - '*':
+            reason: "There is no fixed version for Debian:13 pcre2"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-PCRE2-19685515:
+        - '*':
+            reason: "There is no fixed version for Debian:13 pcre2"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-PERL-17960058:
+        - '*':
+            reason: "There is no fixed version for Debian:13 perl"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-PERL-17037371:
+        - '*':
+            reason: "There is no fixed version for Debian:13 perl"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-SQLITE3-17334400:
+        - '*':
+            reason: "There is no fixed version for Debian:13 sqlite3"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-SQLITE3-17334397:
+        - '*':
+            reason: "There is no fixed version for Debian:13 sqlite3"
+            expires: "2026-09-24T00:00:00.000Z"
+    SNYK-DEBIAN13-ZLIB-19520500:
+        - '*':
+            reason: "There is no fixed version for Debian:13 zlib"
+            expires: "2026-09-24T00:00:00.000Z"
 patch: {}
