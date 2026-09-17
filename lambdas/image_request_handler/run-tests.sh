@@ -2,6 +2,6 @@
 
 set -oe pipefail
 
-coverage run --source /lambdas/image_request_handler/app -m pytest /lambdas/image_request_handler/tests/
+python -m coverage run --source /function/app --module pytest /function/tests/
 
-coverage report
+python -m coverage report

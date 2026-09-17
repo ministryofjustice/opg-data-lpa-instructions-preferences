@@ -1,6 +1,6 @@
-FROM localstack/localstack:4.14.0 as localstack
+FROM localstack/localstack:4.14.0 AS localstack
 
-RUN apt -yq install bash-completion bash jq
+RUN apt update && apt -yq install bash-completion bash jq
 
 COPY localstack-init.sh /etc/localstack/init/ready.d/localstack-init.sh
 

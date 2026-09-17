@@ -1,4 +1,4 @@
-FROM node:lts-alpine3.23@sha256:595398b0081eacda8e1c4c5b97b76cd1020e4d58a8ebcb4843b9bca1e79e7436
+FROM node:lts-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491f4857e25e35a36ba7995
 COPY sirius.yml run.sh /app/
 RUN apk upgrade libcrypto1.1 libcrypto3 libssl3 busybox ssl_client zlib
 

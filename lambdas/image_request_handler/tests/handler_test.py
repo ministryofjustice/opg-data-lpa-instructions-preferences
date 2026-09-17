@@ -4,7 +4,7 @@ import pytest
 import json
 from unittest.mock import patch
 from moto import mock_aws
-from lambdas.image_request_handler.app.handler import ImageRequestHandler
+from app.handler import ImageRequestHandler
 from botocore.stub import Stubber
 
 test_uid = 700000001

@@ -2,6 +2,6 @@
 
 set -oe pipefail
 
-coverage run --source /function/app -m pytest /function/tests/
+python -m coverage run --source /function/app --module pytest /function/tests/
 
-coverage report
+python -m coverage report
