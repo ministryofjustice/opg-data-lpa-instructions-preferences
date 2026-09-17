@@ -2,7 +2,6 @@ name: "[Workflow] Pull Request Path"
 
 concurrency:
   group: ${{ github.ref }}-${{ github.workflow }}
-  cancel-in-progress: true
 
 on:
   workflow_dispatch:
@@ -196,9 +195,6 @@ jobs:
 
   terraform_apply_ephemeral_environment:
     name: Terraform Plan and Apply Environment
-    concurrency:
-      group: ${{ github.ref }}-${{ github.workflow }}-terraform-apply
-      cancel-in-progress: false
     needs: [
       'integration_tests',
       'create_tags',
@@ -219,9 +215,6 @@ jobs:
 
   workflow_complete:
     name: Workflow Complete
-    concurrency:
-      group: ${{ github.ref }}-${{ github.workflow }}-workflow-complete
-      cancel-in-progress: false
     runs-on: ubuntu-latest
     needs: ['terraform_apply_ephemeral_environment']
     steps:
