@@ -1,6 +1,6 @@
 ARG FUNCTION_DIR="/function"
 
-FROM ghcr.io/astral-sh/uv@sha256:b485bd65cc2cf1c9a93b3554012c9c3778cf7b1b5fd3d3096ce9e1226c97e1e6 AS uv
+FROM ghcr.io/astral-sh/uv@sha256:10787c682e4184e4f290de1171fd4703dc63de99221f10fe1c99002ce7fa9acc AS uv
 FROM python:3.14.6-slim@sha256:b877e50bd90de10af8d82c57a022fc2e0dc731c5320d762a27986facfc3355c1 AS python
 
 FROM python AS builder
@@ -12,6 +12,10 @@ ENV UV_NO_INSTALLER_METADATA=1
 ENV UV_LINK_MODE=copy
 
 WORKDIR ${FUNCTION_DIR}
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    rm -rf /var/lib/apt/lists/*
 
 # Bundle the dependencies into the Lambda task root via `uv pip install --target`.
 #
@@ -35,6 +39,10 @@ WORKDIR ${FUNCTION_DIR}
 
 RUN groupadd -g 999 python && \
     useradd -r -u 999 -g python python
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the runtime dependencies from the builder stage.
 COPY --from=builder --chown=python:python ${FUNCTION_DIR}/ .

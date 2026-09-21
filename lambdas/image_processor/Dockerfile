@@ -1,6 +1,6 @@
 ARG FUNCTION_DIR="/function"
 
-FROM ghcr.io/astral-sh/uv@sha256:b485bd65cc2cf1c9a93b3554012c9c3778cf7b1b5fd3d3096ce9e1226c97e1e6 AS uv
+FROM ghcr.io/astral-sh/uv@sha256:10787c682e4184e4f290de1171fd4703dc63de99221f10fe1c99002ce7fa9acc AS uv
 FROM python:3.14.6-slim@sha256:b877e50bd90de10af8d82c57a022fc2e0dc731c5320d762a27986facfc3355c1 AS python
 
 FROM python AS builder
@@ -15,7 +15,8 @@ WORKDIR ${FUNCTION_DIR}
 
 # Install tesseract build dependencies
 RUN apt-get update && \
-    apt-get install -y libtesseract-dev libleptonica-dev build-essential && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y libtesseract-dev libleptonica-dev build-essential && \
     rm -rf /var/lib/apt/lists/*
 
 # Bundle the dependencies into the Lambda task root via `uv pip install --target`.
@@ -43,7 +44,8 @@ RUN groupadd -g 999 python && \
     useradd -r -u 999 -g python python
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libgl1 \
         poppler-utils \
         tesseract-ocr \
