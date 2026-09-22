@@ -39,7 +39,7 @@ module "processor_lamdba" {
     LOGGER_LEVEL       = "INFO"
   }
   image_uri          = "${data.aws_ecr_repository.lpa_iap_processor.repository_url}:${var.image_tag}"
-  ecr_arn            = data.aws_ecr_repository.lpa_iap_request_handler.arn
+  ecr_arn            = data.aws_ecr_repository.lpa_iap_processor.arn
   environment        = local.environment
   timeout            = 600
   memory             = 8192
