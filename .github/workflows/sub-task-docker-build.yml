@@ -55,7 +55,7 @@ jobs:
         run: docker build --platform linux/amd64 --provenance=false --file ${{ matrix.path }}/Dockerfile --tag ${{ matrix.name }}:latest ${{ matrix.path }}
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@cbe3b392738ccf3f987d68400dafcf4b0624a56c # v6.2.4
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
         with:
           aws-region: eu-west-1
           role-to-assume: ${{ vars.OIDC_MANAGEMENT_ECR_ROLE }}
