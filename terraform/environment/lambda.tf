@@ -3,6 +3,12 @@ data "aws_ecr_repository" "lpa_iap_request_handler" {
   name     = "integrations/lpa-iap-request-handler-lambda"
 }
 
+data "aws_ecr_image" "lpa_iap_request_handler" {
+  provider        = aws.management
+  repository_name = data.aws_ecr_repository.lpa_iap_request_handler.name
+  image_tag       = var.image_tag
+}
+
 //Modify here for new version
 module "request_handler_lamdba" {
   source      = "./modules/lambda"
@@ -12,7 +18,7 @@ module "request_handler_lamdba" {
     VERSION      = "v1"
     LOGGER_LEVEL = "INFO"
   }
-  image_uri         = "${data.aws_ecr_repository.lpa_iap_request_handler.repository_url}:${var.image_tag}"
+  image_uri         = "${data.aws_ecr_repository.lpa_iap_request_handler.repository_url}@${data.aws_ecr_image.lpa_iap_request_handler.image_digest}"
   ecr_arn           = data.aws_ecr_repository.lpa_iap_request_handler.arn
   environment       = local.environment
   rest_api          = aws_api_gateway_rest_api.lpa_iap
@@ -24,6 +30,12 @@ module "request_handler_lamdba" {
 data "aws_ecr_repository" "lpa_iap_processor" {
   provider = aws.management
   name     = "integrations/lpa-iap-scan-processor-lambda"
+}
+
+data "aws_ecr_image" "lpa_iap_processor" {
+  provider        = aws.management
+  repository_name = data.aws_ecr_repository.lpa_iap_processor.name
+  image_tag       = var.image_tag
 }
 
 module "processor_lamdba" {
@@ -38,8 +50,8 @@ module "processor_lamdba" {
     SIRIUS_URL_PART    = "/api/public/v1"
     LOGGER_LEVEL       = "INFO"
   }
-  image_uri          = "${data.aws_ecr_repository.lpa_iap_processor.repository_url}:${var.image_tag}"
-  ecr_arn            = data.aws_ecr_repository.lpa_iap_request_handler.arn
+  image_uri          = "${data.aws_ecr_repository.lpa_iap_processor.repository_url}@${data.aws_ecr_image.lpa_iap_processor.image_digest}"
+  ecr_arn            = data.aws_ecr_repository.lpa_iap_processor.arn
   environment        = local.environment
   timeout            = 600
   memory             = 8192
