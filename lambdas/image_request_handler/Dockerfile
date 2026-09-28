@@ -14,7 +14,7 @@ ENV UV_LINK_MODE=copy
 WORKDIR ${FUNCTION_DIR}
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libexpat1 libpcre2-8-0 libsqlite3-0 gzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Bundle the dependencies into the Lambda task root via `uv pip install --target`.
@@ -41,7 +41,7 @@ RUN groupadd -g 999 python && \
     useradd -r -u 999 -g python python
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libexpat1 libpcre2-8-0 libsqlite3-0 gzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the runtime dependencies from the builder stage.
