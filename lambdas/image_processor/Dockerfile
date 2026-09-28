@@ -15,7 +15,7 @@ WORKDIR ${FUNCTION_DIR}
 
 # Install tesseract build dependencies
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libexpat1 libpcre2-8-0 libsqlite3-0 gzip && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y libtesseract-dev libleptonica-dev build-essential && \
     rm -rf /var/lib/apt/lists/*
 
@@ -44,7 +44,7 @@ RUN groupadd -g 999 python && \
     useradd -r -u 999 -g python python
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libexpat1 libpcre2-8-0 libsqlite3-0 gzip && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libgl1 \
         poppler-utils \
