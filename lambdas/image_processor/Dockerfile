@@ -1,6 +1,6 @@
 ARG FUNCTION_DIR="/function"
 
-FROM ghcr.io/astral-sh/uv@sha256:10787c682e4184e4f290de1171fd4703dc63de99221f10fe1c99002ce7fa9acc AS uv
+FROM ghcr.io/astral-sh/uv@sha256:04d046b13e60d6bcec73cbc5e1cad25d680dea90c8573340950a0ac2d1aef424 AS uv
 FROM python:3.14.6-slim@sha256:7bec7ddcddeff7975d6ba9b4be7dd6f6b2f55e7491539145e2978f7f97ce9144 AS python
 
 FROM python AS builder
@@ -15,7 +15,7 @@ WORKDIR ${FUNCTION_DIR}
 
 # Install tesseract build dependencies
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libexpat1 libpcre2-8-0 libsqlite3-0 gzip && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y libtesseract-dev libleptonica-dev build-essential && \
     rm -rf /var/lib/apt/lists/*
 
@@ -44,7 +44,7 @@ RUN groupadd -g 999 python && \
     useradd -r -u 999 -g python python
 
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libpcre2-8-0 libsqlite3-0 gzip && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade perl-base libexpat1 libpcre2-8-0 libsqlite3-0 gzip && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         libgl1 \
         poppler-utils \
