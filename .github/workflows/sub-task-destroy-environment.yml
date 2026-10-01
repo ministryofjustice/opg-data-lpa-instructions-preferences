@@ -55,7 +55,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
         with:
-          terraform_version: v1.16.2
+          terraform_version: v1.16.4
           terraform_wrapper: false
 
       - name: Configure AWS Credentials For Terraform
@@ -67,7 +67,7 @@ jobs:
           role-session-name: OPGLPACodesDestroyEnvGithubAction
 
       - id: deploy-key
-        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@722a5f955424aaba01e9ca43d68390cd4048d6e1 # v4.10.2
+        uses: ministryofjustice/opg-github-actions/actions/github-deploy-key@ae37b9b322286123971417e82b665e56e9d6aa3f # v4.10.3
         with:
           deploy_key: ${{ secrets.ssh_private_key }}
 
