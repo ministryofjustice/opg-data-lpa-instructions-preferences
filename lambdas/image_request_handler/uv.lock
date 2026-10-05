@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = "==3.14.*"
 
 [[package]]
@@ -17,18 +17,22 @@ wheels = [
 
 [[package]]
 name = "awslambdaric"
-version = "3.1.1"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "simplejson" },
     { name = "snapshot-restore-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/a3/25/9ae3c97af6dc4628cf8094dd2189a8b97388409870fba1c54f58c64d5766/awslambdaric-3.1.1.tar.gz", hash = "sha256:1c1fd30570b9a2c5cc4ccd2151c883312c5eef2dbf759c8e9d29c18cec6de2e8", size = 4500924, upload-time = "2025-05-27T16:06:05.241Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9e/58/6e209eb9a4672be587114803cd2e3fa4e08d38dc5464be50e2da0c701542/awslambdaric-4.1.0.tar.gz", hash = "sha256:73a349ce4118632ac7c63bd45999c0be476d0e14a184da682b9cd83c6c05d032", size = 4507845, upload-time = "2026-09-28T15:38:23.047Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/b0/4acb191304bb2364c88984b09fa17b435575f7a1b50d9ada79038c5e7db0/awslambdaric-3.1.1-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:537e4986f723cb981af01d031743c9ae09b9ddc497d2582a548da0d696c81809", size = 343258, upload-time = "2025-05-27T16:05:55.76Z" },
-    { url = "https://files.pythonhosted.org/packages/35/8d/7a39188d0e95fd9975deadeb56e4fba085b03a90c572a7cfa1f279b19e2d/awslambdaric-3.1.1-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a5860d96e08cc4bab5bd4d7a2cd5eeb10ea17d0269fe4c1b7c57ac8d06abbf70", size = 345840, upload-time = "2025-05-27T16:06:06.102Z" },
-    { url = "https://files.pythonhosted.org/packages/91/21/77c0d0867f263e270888c9c2fb85fa35e90b95d9d0cce32b252b3423c9c9/awslambdaric-3.1.1-cp314-cp314t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ad2ff7352517b590ca5748f75b9b9df906b111139753f35bcb069f25c14d3c94", size = 344984, upload-time = "2025-05-27T16:05:56.978Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/6d/ad856d498a037b94a96866f22ce6f244fce73976f9c064cfbff5f5c94745/awslambdaric-3.1.1-cp314-cp314t-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c8ecbcf05cf02f1bd263a0831b1acf3c29cd9296cb72e74067de71185f6c118", size = 347224, upload-time = "2025-05-27T16:06:08.408Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/34/ac1db7ba7d50bf4ac5674539782458672aaa4a8824f68d1a0d5cb50e3c94/awslambdaric-4.1.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:08191d95ebf923032364dffe1b6b56a4e9c0b9909127ae3856088141d00c11d0", size = 355866, upload-time = "2026-09-28T18:51:32.51Z" },
+    { url = "https://files.pythonhosted.org/packages/0e/49/98aef950dc671d8eb93e73cb922b20b2edb95d890aaa70188b90ba41c477/awslambdaric-4.1.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:57391ab8913fa80c76a02e76234e27621d951f91d2e3ad46389edacc0bb966ce", size = 357754, upload-time = "2026-09-28T21:07:25.613Z" },
+    { url = "https://files.pythonhosted.org/packages/6d/2e/c23b8cccd8d7ab0a66c447e6a3e934649926378531c14f974b04fd085f83/awslambdaric-4.1.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:18a88b3c959c8d863489b6e9260f433ac38cca2067dd84d792b5a4089594fa6e", size = 1332717, upload-time = "2026-09-28T18:51:34.043Z" },
+    { url = "https://files.pythonhosted.org/packages/3f/25/f7a8253c7b6c84eca99b21c7cb45e5b2143330b58de03ed91cce2a38ce6b/awslambdaric-4.1.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:919e40c7f8914f627826123d371a95fd36020c6b4e9cef3e09530d864b5457ce", size = 1387482, upload-time = "2026-09-28T21:07:27.577Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/43/1bcfb1436baf67c9326e470c02e2667cafec2ae9136c7e323a67c8b3277f/awslambdaric-4.1.0-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:7e69b1e3af67582e61ed4fcbf15db357b388675b3fdb8f4c39fd908900bf54bb", size = 357320, upload-time = "2026-09-28T18:51:35.165Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/79/9344cee0ce07e9c31ca3bcdaa469b405063293a76cb67386a0edff97b933/awslambdaric-4.1.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:5c98869643b56cfcbf12df754ac6f34bd63e3ef294d83038e0ed708166b4397f", size = 358776, upload-time = "2026-09-28T21:07:28.978Z" },
+    { url = "https://files.pythonhosted.org/packages/30/af/4cee6d981c49911636e7bd21ace669c4e7a7475e8f939a73db3a20e52fd8/awslambdaric-4.1.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:7c25ad4c55b75a38f6f7f59f3a1c417b18b1f7060268789b7e918c8932f057e5", size = 1334560, upload-time = "2026-09-28T18:51:36.448Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/8f/611565d14399b88cd58f8ea4489dbf09ae9815a7144f4bcd77ce182a50e2/awslambdaric-4.1.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:11cab8a36bfbd6ddded09c6800c89dbe34fb48adbb7818606f9a1c7bee711b91", size = 1388637, upload-time = "2026-09-28T21:07:30.337Z" },
 ]
 
 [[package]]
@@ -267,7 +271,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aws-xray-sdk", specifier = "==2.15.0" },
-    { name = "awslambdaric", specifier = "==3.1.1" },
+    { name = "awslambdaric", specifier = "==4.1.0" },
     { name = "boto3", specifier = "==1.43.102" },
     { name = "imageio", specifier = "==2.37.4" },
     { name = "setuptools", specifier = "==83.0.0" },
