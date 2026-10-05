@@ -8,10 +8,10 @@ dependencies = [
     "aws-xray-sdk==2.15.0",
     "awslambdaric==3.1.1",
     "awswrangler==3.17.1",
-    "boto3==1.43.102",
+    "boto3==1.43.103",
     "charset-normalizer==2.1.1",
     "fuzzywuzzy[speedup]==0.18.0",
-    "imageio==2.37.4",
+    "imageio==2.38.0",
     "imutils==0.5.4",
     "jsonschema==4.26.0",
     "mojap_metadata==1.16.0",
@@ -31,7 +31,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "coverage==7.16.1",
+    "coverage==7.16.2",
     "moto==5.2.3",
     "pytest==9.1.1",
 ]
