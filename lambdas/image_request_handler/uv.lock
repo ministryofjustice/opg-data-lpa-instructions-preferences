@@ -17,50 +17,50 @@ wheels = [
 
 [[package]]
 name = "awslambdaric"
-version = "4.1.0"
+version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "simplejson" },
     { name = "snapshot-restore-py" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9e/58/6e209eb9a4672be587114803cd2e3fa4e08d38dc5464be50e2da0c701542/awslambdaric-4.1.0.tar.gz", hash = "sha256:73a349ce4118632ac7c63bd45999c0be476d0e14a184da682b9cd83c6c05d032", size = 4507845, upload-time = "2026-09-28T15:38:23.047Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/94/fb/22ae3876f8576fad1e697e455897f68cfeb7ae3932d06805c9f73787c2de/awslambdaric-4.2.0.tar.gz", hash = "sha256:2f5d4831a1180f31a73ac5c9911599529e22cd1ba5b43ef15f0002276897501c", size = 4508436, upload-time = "2026-10-07T10:41:41.884Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1b/34/ac1db7ba7d50bf4ac5674539782458672aaa4a8824f68d1a0d5cb50e3c94/awslambdaric-4.1.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:08191d95ebf923032364dffe1b6b56a4e9c0b9909127ae3856088141d00c11d0", size = 355866, upload-time = "2026-09-28T18:51:32.51Z" },
-    { url = "https://files.pythonhosted.org/packages/0e/49/98aef950dc671d8eb93e73cb922b20b2edb95d890aaa70188b90ba41c477/awslambdaric-4.1.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:57391ab8913fa80c76a02e76234e27621d951f91d2e3ad46389edacc0bb966ce", size = 357754, upload-time = "2026-09-28T21:07:25.613Z" },
-    { url = "https://files.pythonhosted.org/packages/6d/2e/c23b8cccd8d7ab0a66c447e6a3e934649926378531c14f974b04fd085f83/awslambdaric-4.1.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:18a88b3c959c8d863489b6e9260f433ac38cca2067dd84d792b5a4089594fa6e", size = 1332717, upload-time = "2026-09-28T18:51:34.043Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/25/f7a8253c7b6c84eca99b21c7cb45e5b2143330b58de03ed91cce2a38ce6b/awslambdaric-4.1.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:919e40c7f8914f627826123d371a95fd36020c6b4e9cef3e09530d864b5457ce", size = 1387482, upload-time = "2026-09-28T21:07:27.577Z" },
-    { url = "https://files.pythonhosted.org/packages/cf/43/1bcfb1436baf67c9326e470c02e2667cafec2ae9136c7e323a67c8b3277f/awslambdaric-4.1.0-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:7e69b1e3af67582e61ed4fcbf15db357b388675b3fdb8f4c39fd908900bf54bb", size = 357320, upload-time = "2026-09-28T18:51:35.165Z" },
-    { url = "https://files.pythonhosted.org/packages/4c/79/9344cee0ce07e9c31ca3bcdaa469b405063293a76cb67386a0edff97b933/awslambdaric-4.1.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:5c98869643b56cfcbf12df754ac6f34bd63e3ef294d83038e0ed708166b4397f", size = 358776, upload-time = "2026-09-28T21:07:28.978Z" },
-    { url = "https://files.pythonhosted.org/packages/30/af/4cee6d981c49911636e7bd21ace669c4e7a7475e8f939a73db3a20e52fd8/awslambdaric-4.1.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:7c25ad4c55b75a38f6f7f59f3a1c417b18b1f7060268789b7e918c8932f057e5", size = 1334560, upload-time = "2026-09-28T18:51:36.448Z" },
-    { url = "https://files.pythonhosted.org/packages/c5/8f/611565d14399b88cd58f8ea4489dbf09ae9815a7144f4bcd77ce182a50e2/awslambdaric-4.1.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:11cab8a36bfbd6ddded09c6800c89dbe34fb48adbb7818606f9a1c7bee711b91", size = 1388637, upload-time = "2026-09-28T21:07:30.337Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/27/4ed77620bef143555679c3a45816d5cbc7ece888d78e2025e0a5d0c0c3c9/awslambdaric-4.2.0-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:41a10ebedef9a5a21512029bb36cefe682f88f1ffdfa3b86969867c358064fa1", size = 356342, upload-time = "2026-10-07T10:53:42.66Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/c6/a03db40ef0427f18257ee6feeb5fe267d9fc159c51719ee904100f0c90f5/awslambdaric-4.2.0-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:21e2fba9019800a3b14b1538295213d3ec3c596886ccee7d80a80bec43f928f9", size = 358228, upload-time = "2026-10-07T10:41:28.87Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/51/1394f2c83980a2ad77f9ca5b97d28959197b2a64d9a7f00627fe88b400d4/awslambdaric-4.2.0-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:2aa06a76bab2e82b217c53a933945b3c3169127a93491176c8c2b3567ec116c2", size = 1333191, upload-time = "2026-10-07T10:53:43.973Z" },
+    { url = "https://files.pythonhosted.org/packages/56/f9/c9e33182e96e51bc3d875933ead4c32d7400c68582a1254c5179dbf07811/awslambdaric-4.2.0-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:79121c593a450e4e3f0575dc382d5cf8a3ca196799733a97ccd7377a6f75a26f", size = 1387961, upload-time = "2026-10-07T10:41:30.274Z" },
+    { url = "https://files.pythonhosted.org/packages/40/15/93673e623347dd65485fbd0834ff45b09e99e0924e0788dc130ab1e5c336/awslambdaric-4.2.0-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl", hash = "sha256:6a7baef305472941975ad62967f0886498c365c78314cd9d327883b0f4c132a0", size = 357797, upload-time = "2026-10-07T10:53:45.808Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/de/a94ac487851e415208ef9c8f9ec0d650629ee26bc08def2f2e5c883b2ecc/awslambdaric-4.2.0-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl", hash = "sha256:f276fec5a1f76ea154327a47a2dbf920f63565d5b622b5a1043ad7797378ef4d", size = 359255, upload-time = "2026-10-07T10:41:31.874Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/25/07d014c78d7d5cb0041b221b42a4acb827866b33fb4cd8a442c9cdd865e4/awslambdaric-4.2.0-cp314-cp314t-musllinux_1_2_aarch64.whl", hash = "sha256:68e8310eb7b278fb05c916e3ade6236e26e2e029742a5fb28a3bd74cd43cd5b2", size = 1335034, upload-time = "2026-10-07T10:53:47.403Z" },
+    { url = "https://files.pythonhosted.org/packages/e2/c2/d77f3259bd619ff5fcb938673045d18b8f5b797f4dfa86cc7459207167dc/awslambdaric-4.2.0-cp314-cp314t-musllinux_1_2_x86_64.whl", hash = "sha256:7bfed9a07c70f0505a0d3a290b928a6e988cbef21f4d2118a75e2e31f03607f9", size = 1389108, upload-time = "2026-10-07T10:41:33.779Z" },
 ]
 
 [[package]]
 name = "boto3"
-version = "1.43.106"
+version = "1.43.109"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "botocore" },
     { name = "jmespath" },
     { name = "s3transfer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/49/01/97aaee4d3e94467983a0c1b986ed4f4da48960d7ebc948e7d739c818cb59/boto3-1.43.106.tar.gz", hash = "sha256:c11ad4c429a983493ba10014c7af9831a455c2c0eea91c1cefff74530e480277", size = 112730, upload-time = "2026-09-30T19:36:41.684Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/80/0430e16c302b0d1a4ca3c8c69ffee9e4f8f2170d56162d2761b34fd512ba/boto3-1.43.109.tar.gz", hash = "sha256:c829bc3352e1e3922d8fe1db10b697182ac411b64ce5fc3acb0a06a29837417e", size = 112661, upload-time = "2026-10-07T15:24:51.293Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/72/d8/a01764ffd32fbcd66c5575eb85764ae9ea7b7d03dc591592e132c43af1f5/boto3-1.43.106-py3-none-any.whl", hash = "sha256:fdf2e304f9e8864b8613591b18b36ee995560c9666033622eda1cb9057866880", size = 140045, upload-time = "2026-09-30T19:36:40.228Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/56/c83a8fdadf06f631d1a0c4d82fc8daa9e1a40f6354264fba20c186363f49/boto3-1.43.109-py3-none-any.whl", hash = "sha256:703a81baed186d31e27cf50065d25a9faeb704f009e7c56b0f002ca52a328896", size = 140044, upload-time = "2026-10-07T15:24:49.793Z" },
 ]
 
 [[package]]
 name = "botocore"
-version = "1.43.107"
+version = "1.43.109"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jmespath" },
     { name = "python-dateutil" },
     { name = "urllib3" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4d/22/3aed44a1e0b9820485124a9ad25e9bccd5539c547ef12827547c3cbeb25f/botocore-1.43.107.tar.gz", hash = "sha256:4a37fa072a00280c746313532d19b00e2dc53f1993222601df104d71d548d5b6", size = 16306128, upload-time = "2026-10-01T19:31:17.202Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/da/424aaef4727876f4095bd2c10e683bb8531ac3bea56b0b6efd29eeb57f91/botocore-1.43.109.tar.gz", hash = "sha256:46b15bea4d942aaea6d7ab7c4b8a3a7290305064a3b41a6cb271cde9da3ba371", size = 16301678, upload-time = "2026-10-07T15:24:46.458Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7e/39/3a0db1ba57531062cda616dae68b69faef8114939414a2a291b3aac7617b/botocore-1.43.107-py3-none-any.whl", hash = "sha256:23cbe854e815dbaccf097f7fd32b461c9e1d2ed7e0c7dcc5658218704509d840", size = 16002666, upload-time = "2026-10-01T19:31:14.463Z" },
+    { url = "https://files.pythonhosted.org/packages/7c/d7/bf9e5988baf1245f3ac373e09f3204f641e7a2db170f512f236aa90961d6/botocore-1.43.109-py3-none-any.whl", hash = "sha256:cd00edff465264fb448e36acc9ee29a828f738fff3746270b3f685a19194a5a6", size = 15998671, upload-time = "2026-10-07T15:24:43.76Z" },
 ]
 
 [[package]]
@@ -271,9 +271,9 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "aws-xray-sdk", specifier = "==2.15.0" },
-    { name = "awslambdaric", specifier = "==4.1.0" },
-    { name = "boto3", specifier = "==1.43.106" },
-    { name = "imageio", specifier = "==2.38.0" },
+    { name = "awslambdaric", specifier = "==4.2.0" },
+    { name = "boto3", specifier = "==1.43.109" },
+    { name = "imageio", specifier = "==2.38.1" },
     { name = "setuptools", specifier = "==84.0.0" },
 ]
 
@@ -286,15 +286,15 @@ dev = [
 
 [[package]]
 name = "imageio"
-version = "2.38.0"
+version = "2.38.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "numpy" },
     { name = "pillow" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/81/c8/2b56274457e4fadcfa86bf7c0fb93f19e124ab8f38f4bfa4372423052046/imageio-2.38.0.tar.gz", hash = "sha256:fe1d406862f6bc2930e8ec662d7bc40d4370cb76e3390dcd33819560d2708531", size = 403333, upload-time = "2026-09-28T07:44:08.101Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f3/cd/69e4ac55b6dafdd2b5f32075236841a3945dea7323d0232d80f28c37cea8/imageio-2.38.1.tar.gz", hash = "sha256:6769f1f01c4dd46448307863a787c9a22fa4dbe11c0c88f525c6e410fdfd7983", size = 403667, upload-time = "2026-10-08T14:35:32.961Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ba/4b/87a794e51d150f62a55715c453c9afbf6103fe24afef6db26a929a8480b7/imageio-2.38.0-py3-none-any.whl", hash = "sha256:474ea3a39e36e0e8e02d81d7f10412aaecec7a2825e5fbc4f44cbcd7bb7cebfc", size = 328055, upload-time = "2026-09-28T07:44:06.169Z" },
+    { url = "https://files.pythonhosted.org/packages/7d/8a/3b7f62b9df56460959f1b9bef094248d2a4d7f393c5b0d2da8efcdf0e40e/imageio-2.38.1-py3-none-any.whl", hash = "sha256:36d23eb7423d2fb63f637098758edb3d2df3687f7125e0a5ce8596572022dcf9", size = 328389, upload-time = "2026-10-08T14:35:31.075Z" },
 ]
 
 [[package]]
