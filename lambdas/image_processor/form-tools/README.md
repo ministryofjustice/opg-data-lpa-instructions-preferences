@@ -101,6 +101,22 @@ page assignment, not just the best page in the document, and rejects candidates
 that fail the page identifier regex. A rejected page can leave the document
 incomplete; these safeguards do not reconstruct missing or unreadable content.
 
+If normal OCR finds no confident page assignment, the image processor tries
+template-assisted OCR recovery against the filtered document types. Every
+candidate must pass the alignment safeguards, then fresh OCR on the aligned
+page must match its identifier and reach 0.7 word similarity. Competing candidates
+must differ by at least 0.05; ambiguity or conflicting document types rejects
+recovery. Repeated pages within one template with identical identifiers,
+reference text and field coordinates are treated as equivalent.
+
+Recovery allows at most 12 distinct candidate layouts and 12 alignment attempts
+per invocation, with a 30-second elapsed-time budget checked between operations.
+This is not a hard interruption of an in-progress OpenCV or OCR call. Exhausting
+either budget rejects the entire recovery result, rather than accepting an
+incompletely evaluated candidate set. Normal barcode and successful OCR paths
+are unchanged. Original scans are retained for extraction, avoiding repeated
+resampling of already aligned pages.
+
 To align the scanned image from the command line you would then run:
 
 ```
