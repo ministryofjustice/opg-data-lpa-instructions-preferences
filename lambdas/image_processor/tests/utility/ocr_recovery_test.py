@@ -197,7 +197,8 @@ def test_inline_ocr_failure_uses_recovery(recovery, monkeypatch):
     )
 
 
-def test_perspective_warped_local_lpc_is_identified_and_extracted(tmp_path):
+@pytest.mark.parametrize("perspective", [False, True])
+def test_distorted_local_lpc_recovery(tmp_path, perspective):
     from pdf2image import convert_from_path
     from app.utility.ocr import get_text_from_image_file
     from form_tools.form_operators.bounding_box_operator import BoundingBoxOperator
@@ -226,7 +227,14 @@ def test_perspective_warped_local_lpc_is_identified_and_extracted(tmp_path):
             ]
         ),
     )
-    warped = cv2.warpPerspective(image, transform, (w, h), borderValue=(255, 255, 255))
+    if perspective:
+        warped = cv2.warpPerspective(
+            image, transform, (w, h), borderValue=(255, 255, 255)
+        )
+    else:
+        transform = cv2.getRotationMatrix2D((w / 2, h / 2), 12, 0.95)
+        transform[:, 2] += [15, -10]
+        warped = cv2.warpAffine(image, transform, (w, h), borderValue=(255, 255, 255))
     path = tmp_path / "warped.png"
     assert cv2.imwrite(str(path), warped)
     service = ExtractionService(
@@ -253,6 +261,9 @@ def test_perspective_warped_local_lpc_is_identified_and_extracted(tmp_path):
     assert service.similarity_score(reference, raw_text) < 0.7
     cv2.setRNGSeed(42)
     match = service.get_ocr_matches([str(path)], operator, metas, str(path))
+    if perspective:
+        assert match.size == 0
+        return
     assert match.meta_id == "lpc"
     assert set(match.image_page_map) == {1}
     cv2.setRNGSeed(42)

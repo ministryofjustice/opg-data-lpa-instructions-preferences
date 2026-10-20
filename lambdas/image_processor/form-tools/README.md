@@ -78,6 +78,9 @@ matcher:
     - check: 50
 knn: 2
 proportion: 0.7
+similarity_options:
+  threshold: 3
+  max_rotation_degrees: 20
 pass_directory: pass_directory
 fail_directory: fail_directory
 form_metadata_directory: metadata
@@ -85,14 +88,22 @@ form_metadata_directory: metadata
 
 This config specifies that the `SIFT` algorithm should be used for keypoint detection and the `FLANN` algorithm should be used for keypoint matching, with 70% of the best keypoints kept (using KNN to decide on which of these are best). Also, note that we've put the output metadata in a `metadata` subdirectory in our working directory.
 
-Alignment rejects homographies without more than `minimum_matches` RANSAC
-inliers, a 25% inlier ratio, and inliers spanning at least 10% of both pages.
-Before warping, it also rejects non-finite transforms, perspective horizons
-crossing the page, reflections, collapsed pages, and excessive page displacement
-or distortion. In template-normalized coordinates, the projected page must be
-convex, have area between 0.25 and 4, have edge lengths between 0.5 and 2,
-and remain within the range -0.5 to 1.5 on both axes.
-These checks run even when `singular_matrix_threshold` is not configured.
+Alignment uses `cv2.estimateAffinePartial2D` with RANSAC to estimate a similarity
+transform: rotation, translation and uniform scaling only. `cv2.warpAffine`
+resamples the original scan once into template coordinates, using white outside
+the scan. Both normal extraction and template-assisted OCR recovery use this
+model; there is no homography fallback, shear or perspective correction.
+
+Alignment requires more than `minimum_matches` RANSAC inliers, a 25% inlier
+ratio, and inliers spanning at least 10% of both pages. The median inlier
+residual must not exceed `similarity_options.threshold` (default 3 template
+pixels). Fine rotation is limited to `max_rotation_degrees` (default 20);
+sideways and upside-down scans must first pass coarse orientation correction.
+Scale is checked relative to scan/template dimensions, allowing differing DPI:
+the scaled page dimensions must be between 0.5 and 2 times the template.
+The projected page must overlap at least 75% of the template, have area between
+0.25 and 4 times its area, normalized edge lengths between 0.5 and 2, and
+normalized corner coordinates within -0.5 to 1.5.
 Rejected alignments raise `RuntimeError`; they are not returned as successful
 extractions or silently replaced with unaligned crops.
 
