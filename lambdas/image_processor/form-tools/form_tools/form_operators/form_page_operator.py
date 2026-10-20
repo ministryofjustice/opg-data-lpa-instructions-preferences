@@ -266,6 +266,8 @@ class FormPageOperator(BaseModel):
         keypoint_matches: List[cv2.DMatch],
         page_image_keypoints: Tuple[cv2.KeyPoint, ...],
         page_template_image_keypoints: Tuple[cv2.KeyPoint, ...],
+        page_image_shape: Tuple[int, ...],
+        page_template_image_shape: Tuple[int, ...],
     ) -> np.ndarray:
         """Helper method to find the homography matrix between two images
 
@@ -281,6 +283,8 @@ class FormPageOperator(BaseModel):
                 keypoints for a form page image
             page_template_image_keypoints (np.ndarray):
                 keypoints for a form page template image
+            page_image_shape (Tuple[int, ...]): Scanned page dimensions
+            page_template_image_shape (Tuple[int, ...]): Template dimensions
 
         Returns:
             (np.ndarray): A homography matrix
@@ -305,9 +309,59 @@ class FormPageOperator(BaseModel):
         else:
             homography_kwargs = {"method": cv2.RANSAC}
 
-        H, _ = cv2.findHomography(src_pts, dst_pts, **homography_kwargs)
+        H, mask = cv2.findHomography(src_pts, dst_pts, **homography_kwargs)
+
+        if H is None or mask is None or not np.isfinite(H).all():
+            raise RuntimeError("Failed to generate a valid homography matrix")
+
+        inliers = mask.ravel().astype(bool)
+        if np.count_nonzero(inliers) <= self.minimum_matches or np.mean(inliers) < 0.25:
+            raise RuntimeError("Insufficient inlier support for page alignment")
+
+        for points, shape in (
+            (src_pts, page_image_shape),
+            (dst_pts, page_template_image_shape),
+        ):
+            coverage = cv2.contourArea(cv2.convexHull(points[inliers])) / (
+                shape[0] * shape[1]
+            )
+            if coverage < 0.1:
+                raise RuntimeError("Alignment inliers cover too little of the page")
 
         return H
+
+    @staticmethod
+    def _check_homography_geometry(
+        homography_matrix: np.ndarray,
+        page_image_shape: Tuple[int, ...],
+        page_template_image_shape: Tuple[int, ...],
+    ) -> None:
+        h, w = page_image_shape[:2]
+        corners = np.float64([[0, 0], [w, 0], [w, h], [0, h]])
+        projected = np.column_stack((corners, np.ones(4))) @ homography_matrix.T
+        denominators = projected[:, 2]
+        if not np.isfinite(projected).all() or not (
+            np.all(denominators > 0) or np.all(denominators < 0)
+        ):
+            raise RuntimeError("Page alignment crosses the perspective horizon")
+
+        projected = (projected[:, :2] / denominators[:, None]).astype(np.float32)
+        th, tw = page_template_image_shape[:2]
+        normalized = projected / np.float32([tw, th])
+        if not np.isfinite(normalized).all():
+            raise RuntimeError("Page alignment has non-finite page coordinates")
+        area = cv2.contourArea(normalized, oriented=True)
+        edges = np.roll(normalized, -1, axis=0) - normalized
+        lengths = np.linalg.norm(edges, axis=1)
+        if (
+            not cv2.isContourConvex(normalized)
+            or not 0.25 <= area <= 4
+            or np.any(lengths < 0.5)
+            or np.any(lengths > 2)
+            or np.any(normalized < -0.5)
+            or np.any(normalized > 1.5)
+        ):
+            raise RuntimeError("Page alignment would excessively distort the image")
 
     def _check_homography_singular(
         self,
@@ -447,12 +501,21 @@ class FormPageOperator(BaseModel):
         good = self._return_matches(descs_img, descs_tmpt)
 
         if len(good) > self.minimum_matches:
-            H = self._find_homography(good, kps_img, kps_tmpt)
+            H = self._find_homography(
+                good,
+                kps_img,
+                kps_tmpt,
+                page_image.shape,
+                page_template_image.shape,
+            )
             singular = self._check_homography_singular(H)
 
             if singular:
                 raise RuntimeError("Failed to generate a valid homography matrix")
 
+            self._check_homography_geometry(
+                H, page_image.shape, page_template_image.shape
+            )
             h, w = page_template_image.shape[:2]
 
             aligned = cv2.warpPerspective(page_image, H, (w, h))
