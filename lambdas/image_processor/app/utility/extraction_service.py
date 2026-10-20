@@ -2,6 +2,8 @@ import datetime
 import copy
 import os
 import tempfile
+import time
+from pathlib import Path
 
 import cv2
 import re
@@ -692,6 +694,13 @@ class ExtractionService:
         # We are only interested in first element for this one
         matched_item = matched_items[0]
 
+        if matched_item.size == 0:
+            recovered = self.recover_ocr_matches(
+                processed_image_locations, form_operator, metastore.filtered_metastore
+            )
+            if recovered:
+                matched_item = recovered[0]
+
         if matched_item.size > 0:
             scan_and_continuation_matches.append(matched_item)
 
@@ -738,6 +747,13 @@ class ExtractionService:
             form_image_locations=processed_image_locations,
             inline_continuation=True,
         )
+        if not matched_items:
+            matched_items = self.recover_ocr_matches(
+                processed_image_locations,
+                form_operator,
+                metastore.filtered_continuation_metastore,
+                inline_continuation=True,
+            )
         logger.debug(f"Total continuation matched based on OCR: {len(matched_items)}")
 
         scan_and_continuation_matches.extend(matched_items)
@@ -753,6 +769,140 @@ class ExtractionService:
                 return matched_image
 
         return scan_and_continuation_matches[0]
+
+    def recover_ocr_matches(
+        self,
+        image_locations: List[str],
+        form_operator: FormOperator,
+        metastore: dict,
+        inline_continuation: bool = False,
+    ) -> List[MatchingMetaToImages]:
+        """Verify template-assisted alignment with fresh OCR, within a work budget."""
+        deadline = time.monotonic() + 30
+        attempts = 0
+        candidates = {}
+        for meta_id, meta in metastore.items():
+            for page in meta.form_pages:
+                text = self.get_meta_page_text(page)
+                boxes = tuple(
+                    sorted(
+                        field.bounding_box.to_tuple(bb_format="ltrb")
+                        for field in meta.form_fields
+                        if field.page_number == page.page_number
+                    )
+                )
+                # Repeated continuation pages can differ only in their printed page number.
+                key = (meta_id, page.identifier, text, boxes)
+                if key in candidates:
+                    candidates[key]["pages"].append(page.page_number)
+                    continue
+                if len(candidates) >= 12 or time.monotonic() >= deadline:
+                    logger.warning(
+                        "Template-assisted OCR recovery exhausted its candidate or time budget"
+                    )
+                    return []
+                paths = list(Path(meta.form_template).glob(f"*_{page.page_number}.*"))
+                if len(paths) != 1:
+                    raise ValueError(
+                        f"Expected one template for {meta_id} page {page.page_number}"
+                    )
+                template = cv2.imread(str(paths[0]))
+                if template is None:
+                    raise ValueError(f"Cannot read alignment template {paths[0]}")
+                candidates[key] = {
+                    "meta": meta_id,
+                    "page": page,
+                    "text": text,
+                    "template": template,
+                    "pages": [page.page_number],
+                }
+
+        recovered = []
+        messages = []
+        selected_meta = None
+        used_pages = set()
+        page_operator = form_operator.form_page_operator
+        with tempfile.TemporaryDirectory() as directory:
+            for scan_page, location in enumerate(image_locations, start=1):
+                image = cv2.imread(location)
+                if image is None:
+                    raise ValueError(f"Cannot read recovery image {location}")
+                verified = []
+                for candidate in candidates.values():
+                    if attempts >= 12 or time.monotonic() >= deadline:
+                        logger.warning(
+                            "Template-assisted OCR recovery exhausted its work budget"
+                        )
+                        return []
+                    attempts += 1
+                    try:
+                        aligned = page_operator.align_image_to_template(
+                            image, candidate["template"]
+                        )
+                    except (RuntimeError, cv2.error) as error:
+                        logger.debug(
+                            f"Recovery alignment rejected for scan page {scan_page}, "
+                            f"{candidate['meta']}: {error}"
+                        )
+                        continue
+                    if time.monotonic() >= deadline:
+                        logger.warning(
+                            "Template-assisted OCR recovery exhausted its time budget"
+                        )
+                        return []
+                    path = os.path.join(directory, "aligned.png")
+                    if not cv2.imwrite(path, aligned):
+                        raise OSError("Cannot write aligned OCR recovery image")
+                    text = get_text_from_image_file([path])[0]
+                    if time.monotonic() >= deadline:
+                        logger.warning(
+                            "Template-assisted OCR recovery exhausted its time budget"
+                        )
+                        return []
+                    if not self.calculate_similarity_ratio(
+                        candidate["page"], text, candidate["text"]
+                    ):
+                        continue
+                    similarity = self.similarity_score(candidate["text"], text)
+                    if similarity >= 0.7:
+                        verified.append((similarity, candidate))
+
+                verified.sort(key=lambda item: item[0], reverse=True)
+                if not verified:
+                    continue
+                if len(verified) > 1 and verified[0][0] - verified[1][0] < 0.05:
+                    logger.warning(
+                        f"Ambiguous template-assisted OCR match for scan page {scan_page}"
+                    )
+                    return []
+                score, candidate = verified[0]
+                if selected_meta is not None and selected_meta != candidate["meta"]:
+                    logger.warning(
+                        "Conflicting document types in template-assisted OCR recovery"
+                    )
+                    return []
+                selected_meta = candidate["meta"]
+                pages = [pn for pn in candidate["pages"] if pn not in used_pages]
+                if not inline_continuation and not pages:
+                    continue
+                pn = candidate["pages"][0] if inline_continuation else pages[0]
+                used_pages.add(pn)
+                # Retain the original scan; extraction performs the accepted alignment once.
+                recovered.append(MatchingMetaToImages(selected_meta, {pn: [image]}))
+                message = (
+                    f"Template-assisted OCR recovered scan page {scan_page} as "
+                    f"{selected_meta} page {pn}, similarity {score:.3f}"
+                )
+                messages.append(message)
+        for message in messages:
+            logger.info(message)
+            self.info_msg.matched_templates.append(message)
+        if inline_continuation or not recovered:
+            return recovered
+        mapping = {}
+        for match in recovered:
+            mapping.update(match.image_page_map)
+        return [MatchingMetaToImages(selected_meta, mapping)]
 
     @staticmethod
     def match_combination_conditions_correct(matched_meta_ids):
@@ -1015,6 +1165,8 @@ class ExtractionService:
             key=lambda x: (-x["distance"], x["scan_page_no"], x["template_page_no"]),
         )
 
+        if not sorted_scan_template_entities:
+            return [] if inline_continuation else [MatchingMetaToImages()]
         similarity_score = self.get_similarity_score(sorted_scan_template_entities)
         meta_id_to_use = self.get_meta_id_to_use(sorted_scan_template_entities)
         if not inline_continuation:
