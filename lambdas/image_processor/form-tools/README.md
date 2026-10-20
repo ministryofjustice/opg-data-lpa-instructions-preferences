@@ -78,12 +78,55 @@ matcher:
     - check: 50
 knn: 2
 proportion: 0.7
+similarity_options:
+  threshold: 3
+  max_rotation_degrees: 20
 pass_directory: pass_directory
 fail_directory: fail_directory
 form_metadata_directory: metadata
 ```
 
 This config specifies that the `SIFT` algorithm should be used for keypoint detection and the `FLANN` algorithm should be used for keypoint matching, with 70% of the best keypoints kept (using KNN to decide on which of these are best). Also, note that we've put the output metadata in a `metadata` subdirectory in our working directory.
+
+Alignment uses `cv2.estimateAffinePartial2D` with RANSAC to estimate a similarity
+transform: rotation, translation and uniform scaling only. `cv2.warpAffine`
+resamples the original scan once into template coordinates, using white outside
+the scan. Both normal extraction and template-assisted OCR recovery use this
+model; there is no homography fallback, shear or perspective correction.
+
+Alignment requires more than `minimum_matches` RANSAC inliers, a 25% inlier
+ratio, and inliers spanning at least 10% of both pages. The median inlier
+residual must not exceed `similarity_options.threshold` (default 3 template
+pixels). Fine rotation is limited to `max_rotation_degrees` (default 20);
+sideways and upside-down scans must first pass coarse orientation correction.
+Scale is checked relative to scan/template dimensions, allowing differing DPI:
+the scaled page dimensions must be between 0.5 and 2 times the template.
+The projected page must overlap at least 75% of the template, have area between
+0.25 and 4 times its area, normalized edge lengths between 0.5 and 2, and
+normalized corner coordinates within -0.5 to 1.5.
+Rejected alignments raise `RuntimeError`; they are not returned as successful
+extractions or silently replaced with unaligned crops.
+
+The image processor also applies its 0.7 word-similarity threshold to every OCR
+page assignment, not just the best page in the document, and rejects candidates
+that fail the page identifier regex. A rejected page can leave the document
+incomplete; these safeguards do not reconstruct missing or unreadable content.
+
+If normal OCR finds no confident page assignment, the image processor tries
+template-assisted OCR recovery against the filtered document types. Every
+candidate must pass the alignment safeguards, then fresh OCR on the aligned
+page must match its identifier and reach 0.7 word similarity. Competing candidates
+must differ by at least 0.05; ambiguity or conflicting document types rejects
+recovery. Repeated pages within one template with identical identifiers,
+reference text and field coordinates are treated as equivalent.
+
+Recovery allows at most 12 distinct candidate layouts and 12 alignment attempts
+per invocation, with a 30-second elapsed-time budget checked between operations.
+This is not a hard interruption of an in-progress OpenCV or OCR call. Exhausting
+either budget rejects the entire recovery result, rather than accepting an
+incompletely evaluated candidate set. Normal barcode and successful OCR paths
+are unchanged. Original scans are retained for extraction, avoiding repeated
+resampling of already aligned pages.
 
 To align the scanned image from the command line you would then run:
 
