@@ -8,6 +8,9 @@ matcher:
     - check: 50
 knn: 2
 proportion: 0.7
+similarity_options:
+  threshold: 3
+  max_rotation_degrees: 20
 pass_directory: pass
 fail_directory: fail
 form_metadata_directory: metadata

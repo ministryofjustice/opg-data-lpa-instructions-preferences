@@ -11,7 +11,7 @@ from typing import Union, List, Tuple, Optional
 
 from .operator_configs import (
     FormOperatorConfig,
-    HomographyConfig,
+    SimilarityConfig,
 )
 from . import __name__ as module_name
 from ..form_meta.form_meta import FormPage
@@ -34,8 +34,7 @@ class FormPageOperator(BaseModel):
         proportion (float): Proportion of keypoint matches
             to keep or to use in KNN ratio test
         minimum_matches (int): The minimum number of
-            good keypoint matches to allow homography
-            matrix to be computed
+            good keypoint matches to estimate page registration
     """
 
     config: FormOperatorConfig
@@ -107,8 +106,8 @@ class FormPageOperator(BaseModel):
         return self.config.minimum_matches
 
     @property
-    def homography_options(self) -> Union[HomographyConfig, None]:
-        return self.config.homography_options
+    def similarity_options(self) -> SimilarityConfig:
+        return self.config.similarity_options
 
     @classmethod
     def create_from_config(
@@ -227,12 +226,16 @@ class FormPageOperator(BaseModel):
         k = self.knn
         p = self.proportion
 
+        if page_image_descriptions is None or page_template_image_descriptions is None:
+            raise RuntimeError("No image features available for page alignment")
         if k is not None and k > 1:
             matches = matcher.knnMatch(
                 page_image_descriptions, page_template_image_descriptions, k=k
             )
             good = []
             for match in matches:
+                if len(match) < 2:
+                    continue
                 m = match[0]
                 n = match[1]
                 if m.distance < p * n.distance:
@@ -261,7 +264,7 @@ class FormPageOperator(BaseModel):
 
         return good
 
-    def _find_homography(
+    def _find_similarity(
         self,
         keypoint_matches: List[cv2.DMatch],
         page_image_keypoints: Tuple[cv2.KeyPoint, ...],
@@ -269,26 +272,7 @@ class FormPageOperator(BaseModel):
         page_image_shape: Tuple[int, ...],
         page_template_image_shape: Tuple[int, ...],
     ) -> np.ndarray:
-        """Helper method to find the homography matrix between two images
-
-        Takes keypoints for a form page image and it's template, as well
-        as keypoint matches, and calculates the homography matrix
-        required to align the image with it's template.
-
-        Params:
-            keypoint_matches (List[cv2.DMatch]): A list
-                of keypoint match objects between the two
-                images
-            page_image_keypoints (np.ndarray):
-                keypoints for a form page image
-            page_template_image_keypoints (np.ndarray):
-                keypoints for a form page template image
-            page_image_shape (Tuple[int, ...]): Scanned page dimensions
-            page_template_image_shape (Tuple[int, ...]): Template dimensions
-
-        Returns:
-            (np.ndarray): A homography matrix
-        """
+        """Estimate rotation, translation and uniform scale, never shear or perspective."""
         src_pts = np.float32(
             [page_image_keypoints[m.queryIdx].pt for m in keypoint_matches]
         ).reshape(-1, 1, 2)
@@ -297,22 +281,15 @@ class FormPageOperator(BaseModel):
             [page_template_image_keypoints[m.trainIdx].pt for m in keypoint_matches]
         ).reshape(-1, 1, 2)
 
-        if self.homography_options is not None:
-            homography_kwargs = {
-                "method": cv2.RANSAC
-                if self.homography_options.method is None
-                else self.homography_options.method,
-                "ransacReprojThreshold": 3
-                if self.homography_options.threshold is None
-                else self.homography_options.threshold,
-            }
-        else:
-            homography_kwargs = {"method": cv2.RANSAC}
+        matrix, mask = cv2.estimateAffinePartial2D(
+            src_pts,
+            dst_pts,
+            method=cv2.RANSAC,
+            ransacReprojThreshold=self.similarity_options.threshold,
+        )
 
-        H, mask = cv2.findHomography(src_pts, dst_pts, **homography_kwargs)
-
-        if H is None or mask is None or not np.isfinite(H).all():
-            raise RuntimeError("Failed to generate a valid homography matrix")
+        if matrix is None or mask is None or not np.isfinite(matrix).all():
+            raise RuntimeError("Failed to generate a valid similarity transform")
 
         inliers = mask.ravel().astype(bool)
         if np.count_nonzero(inliers) <= self.minimum_matches or np.mean(inliers) < 0.25:
@@ -328,31 +305,46 @@ class FormPageOperator(BaseModel):
             if coverage < 0.1:
                 raise RuntimeError("Alignment inliers cover too little of the page")
 
-        return H
+        residuals = np.linalg.norm(
+            cv2.transform(src_pts[inliers], matrix) - dst_pts[inliers], axis=2
+        )
+        if np.median(residuals) > self.similarity_options.threshold:
+            raise RuntimeError("Page alignment residuals exceed the allowed tolerance")
+        return matrix
 
-    @staticmethod
-    def _check_homography_geometry(
-        homography_matrix: np.ndarray,
+    def _check_similarity_geometry(
+        self,
+        matrix: np.ndarray,
         page_image_shape: Tuple[int, ...],
         page_template_image_shape: Tuple[int, ...],
     ) -> None:
         h, w = page_image_shape[:2]
-        corners = np.float64([[0, 0], [w, 0], [w, h], [0, h]])
-        projected = np.column_stack((corners, np.ones(4))) @ homography_matrix.T
-        denominators = projected[:, 2]
-        if not np.isfinite(projected).all() or not (
-            np.all(denominators > 0) or np.all(denominators < 0)
-        ):
-            raise RuntimeError("Page alignment crosses the perspective horizon")
-
-        projected = (projected[:, :2] / denominators[:, None]).astype(np.float32)
+        if matrix.shape != (2, 3) or not np.isfinite(matrix).all():
+            raise RuntimeError("Invalid similarity transform")
+        linear = matrix[:, :2]
+        a, b = linear[0]
+        if not np.allclose(linear, [[a, b], [-b, a]], rtol=1e-6, atol=1e-9):
+            raise RuntimeError("Page alignment must not contain shear or reflection")
+        scale = np.hypot(a, b)
+        rotation = abs(np.degrees(np.arctan2(b, a)))
+        if rotation > self.similarity_options.max_rotation_degrees:
+            raise RuntimeError("Page alignment rotation exceeds the allowed limit")
         th, tw = page_template_image_shape[:2]
+        if not (0.5 <= scale * w / tw <= 2 and 0.5 <= scale * h / th <= 2):
+            raise RuntimeError("Page alignment scale exceeds the allowed limit")
+        corners = np.float64([[0, 0], [w, 0], [w, h], [0, h]])
+        projected = (np.column_stack((corners, np.ones(4))) @ matrix.T).astype(
+            np.float32
+        )
         normalized = projected / np.float32([tw, th])
         if not np.isfinite(normalized).all():
             raise RuntimeError("Page alignment has non-finite page coordinates")
         area = cv2.contourArea(normalized, oriented=True)
         edges = np.roll(normalized, -1, axis=0) - normalized
         lengths = np.linalg.norm(edges, axis=1)
+        overlap, _ = cv2.intersectConvexConvex(
+            projected, np.float32([[0, 0], [tw, 0], [tw, th], [0, th]])
+        )
         if (
             not cv2.isContourConvex(normalized)
             or not 0.25 <= area <= 4
@@ -360,44 +352,9 @@ class FormPageOperator(BaseModel):
             or np.any(lengths > 2)
             or np.any(normalized < -0.5)
             or np.any(normalized > 1.5)
+            or overlap / (tw * th) < 0.75
         ):
             raise RuntimeError("Page alignment would excessively distort the image")
-
-    def _check_homography_singular(
-        self,
-        homography_matrix: np.ndarray,
-    ) -> bool:
-        """Helper to determine if a homography matrix is degenerate
-
-        Takes a homography matrix and checks whether it's determinant
-        is near enough to 0 to be considered singular. Whether the
-        determinant is 'near enough' is determined by the
-        `singular_matrix_threshold` provided in the `homography_options`
-        in the config.
-
-        Params:
-            homography_matrix (ndarray): A
-                ndarray representing a
-                homography matrix between an
-                image and it's template
-
-        Returns:
-            (bool): Whether the matrix is considered degenerate
-        """
-        abs_detH = np.absolute(np.linalg.det(homography_matrix))
-
-        homography_options = self.homography_options
-        degenerate_threshold = (
-            None
-            if homography_options is None
-            else homography_options.dict().get("singular_matrix_threshold")
-        )
-
-        check = (
-            False if degenerate_threshold is None else abs_detH < degenerate_threshold
-        )
-
-        return check
 
     def _show_debug_images(
         self,
@@ -408,23 +365,7 @@ class FormPageOperator(BaseModel):
         keypoint_matches: List[cv2.DMatch],
         aligned_page_image: np.ndarray,
     ):
-        """Helper to determine if a homography matrix is degenerate
-
-        Takes a homography matrix and checks whether it's determinant
-        is near enough to 0 to be considered singular. Whether the
-        determinant is 'near enough' is determined by the
-        `singular_matrix_threshold` provided in the `homography_options`
-        in the config.
-
-        Params:
-            homography_matrix (ndarray): A
-                ndarray representing a
-                homography matrix between an
-                image and it's template
-
-        Returns:
-            (bool): Whether the matrix is considered degenerate
-        """
+        """Display feature matches and the aligned page overlay."""
         if "PYTEST_TEST_ENV" not in os.environ:
             cv2.startWindowThread()
 
@@ -495,30 +436,32 @@ class FormPageOperator(BaseModel):
         page_template_image = convert_img_to_grayscale(page_template_image)
 
         detector = self.detector
-        kps_img, descs_img = detector.detectAndCompute(page_image, None)
+        kps_img, descs_img = detector.detectAndCompute(
+            convert_img_to_grayscale(page_image), None
+        )
         kps_tmpt, descs_tmpt = detector.detectAndCompute(page_template_image, None)
 
         good = self._return_matches(descs_img, descs_tmpt)
 
         if len(good) > self.minimum_matches:
-            H = self._find_homography(
+            matrix = self._find_similarity(
                 good,
                 kps_img,
                 kps_tmpt,
                 page_image.shape,
                 page_template_image.shape,
             )
-            singular = self._check_homography_singular(H)
-
-            if singular:
-                raise RuntimeError("Failed to generate a valid homography matrix")
-
-            self._check_homography_geometry(
-                H, page_image.shape, page_template_image.shape
+            self._check_similarity_geometry(
+                matrix, page_image.shape, page_template_image.shape
             )
             h, w = page_template_image.shape[:2]
 
-            aligned = cv2.warpPerspective(page_image, H, (w, h))
+            aligned = cv2.warpAffine(
+                page_image,
+                matrix,
+                (w, h),
+                borderValue=255 if page_image.ndim == 2 else (255, 255, 255),
+            )
 
             if debug:
                 self._show_debug_images(
