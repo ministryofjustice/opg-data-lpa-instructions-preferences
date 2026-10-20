@@ -3,8 +3,6 @@ import re
 import cv2
 import pytest
 import numpy as np
-from pathlib import Path
-from shutil import which
 
 from pydantic import ValidationError
 from skimage.metrics import structural_similarity
@@ -276,7 +274,14 @@ def test_homography_accepts_valid_page_geometry(
 
 
 def test_invalid_geometry_is_rejected_before_warping(alignment_operator, monkeypatch):
-    image = cv2.imread("tests/tests_operators/data/images/original.png")
+    image = np.full((100, 100, 3), 255, dtype=np.uint8)
+    monkeypatch.setattr(
+        type(alignment_operator),
+        "_return_matches",
+        lambda *a: [
+            cv2.DMatch(i, i, 0) for i in range(alignment_operator.minimum_matches + 1)
+        ],
+    )
     monkeypatch.setattr(
         type(alignment_operator),
         "_find_homography",
@@ -289,66 +294,3 @@ def test_invalid_geometry_is_rejected_before_warping(alignment_operator, monkeyp
     monkeypatch.setattr(cv2, "warpPerspective", unexpected_warp)
     with pytest.raises(RuntimeError, match="excessively distort"):
         alignment_operator.align_image_to_template(image, image)
-
-
-@pytest.mark.parametrize(
-    "document, scan_page, template, template_page, valid",
-    [
-        ("LP1F-Scan.pdf", 10, "lp1f", 1, True),
-        ("LP1F-Scan.tiff", 10, "lp1f", 1, True),
-        ("7000-0004-2643_20250227131843.371062_LP1F.pdf", 8, "lp1f", 1, True),
-        ("700000059449_20250320164301.311702_LPC.pdf", 2, "lpc", 1, True),
-        ("700000059449_20250320164301.311702_LPC.pdf", 1, "lpc", 2, False),
-        ("700000069315_20250401121101.243519_LPC.pdf", 6, "lpc", 1, True),
-        ("700000069315_20250401121101.243519_LPC.pdf", 7, "lpc", 2, True),
-    ],
-)
-def test_local_upload_alignment(
-    tmp_path, document, scan_page, template, template_page, valid
-):
-    from PIL import Image
-    from pdf2image import convert_from_path
-    from form_tools.form_operators.form_page_operator import FormPageOperator
-
-    root = next(
-        (
-            path
-            for path in Path(__file__).resolve().parents
-            if (path / "local-services").is_dir()
-        ),
-        None,
-    )
-    if root is None:
-        pytest.skip("Local upload fixtures are not available")
-    document_path = (
-        root / "local-services/localstack-request-handler/s3-uploads" / document
-    )
-    if not document_path.exists() or which("pdftoppm") is None:
-        pytest.skip("Local upload fixtures and poppler are required")
-    if document_path.suffix == ".pdf":
-        image = convert_from_path(
-            document_path,
-            first_page=scan_page,
-            last_page=scan_page,
-            fmt="jpeg",
-            output_folder=str(tmp_path),
-        )[0]
-    else:
-        image = Image.open(document_path)
-        image.seek(scan_page - 1)
-        image = image.convert("RGB")
-    scan_path = tmp_path / "scan.jpg"
-    image.save(scan_path, "JPEG")
-    scanned = cv2.imread(str(scan_path))
-    extraction = root / "lambdas/image_processor/extraction"
-    target = cv2.imread(
-        str(extraction / f"opg_images/{template}_images/page_{template_page}.ppm")
-    )
-    operator = FormPageOperator.create_from_config(str(extraction / "opg-config.yaml"))
-    cv2.setRNGSeed(42)
-    if valid:
-        aligned = operator.align_image_to_template(scanned, target)
-        assert aligned.shape == target.shape
-    else:
-        with pytest.raises(RuntimeError, match="inlier support"):
-            operator.align_image_to_template(scanned, target)

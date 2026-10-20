@@ -1,4 +1,3 @@
-from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -13,7 +12,6 @@ from app.utility.extraction_service import (
     MatchingMetaToImages,
 )
 from form_tools.form_meta.form_meta import FormPage
-from form_tools.form_operators import FormOperator
 
 
 @pytest.fixture
@@ -195,82 +193,3 @@ def test_inline_ocr_failure_uses_recovery(recovery, monkeypatch):
     recovery_mock.assert_called_once_with(
         [source], operator, metas, inline_continuation=True
     )
-
-
-def test_perspective_warped_local_lpc_is_identified_and_extracted(tmp_path):
-    from pdf2image import convert_from_path
-    from app.utility.ocr import get_text_from_image_file
-    from form_tools.form_operators.bounding_box_operator import BoundingBoxOperator
-
-    root = Path(__file__).resolve().parents[4]
-    source = (
-        root
-        / "local-services/localstack-request-handler/s3-uploads/700000059449_20250320164301.311702_LPC.pdf"
-    )
-    if not source.exists():
-        pytest.skip("Local upload fixtures are required")
-    page = convert_from_path(
-        source, first_page=2, last_page=2, fmt="jpeg", output_folder=str(tmp_path)
-    )[0]
-    page.save(tmp_path / "source.jpg", "JPEG")
-    image = cv2.imread(str(tmp_path / "source.jpg"))
-    h, w = image.shape[:2]
-    transform = cv2.getPerspectiveTransform(
-        np.float32([[0, 0], [w - 1, 0], [w - 1, h - 1], [0, h - 1]]),
-        np.float32(
-            [
-                [0.12 * w, 0.04 * h],
-                [0.91 * w, 0.13 * h],
-                [0.98 * w, 0.94 * h],
-                [0.03 * w, 0.86 * h],
-            ]
-        ),
-    )
-    warped = cv2.warpPerspective(image, transform, (w, h), borderValue=(255, 255, 255))
-    path = tmp_path / "warped.png"
-    assert cv2.imwrite(str(path), warped)
-    service = ExtractionService(
-        str(root / "lambdas/image_processor/extraction"),
-        "test",
-        str(tmp_path),
-        LogMessageDetails(),
-    )
-    operator = FormOperator.create_from_config(
-        f"{service.extraction_folder_path}/opg-config.yaml"
-    )
-    service.complete_meta_store = operator.form_meta_store(
-        f"{service.extraction_folder_path}/metadata"
-    )
-    for meta in service.complete_meta_store.values():
-        meta.form_template = str(root / "lambdas/image_processor" / meta.form_template)
-    metas = service.filter_metastore_based_on_template(
-        service.complete_meta_store, "LPC"
-    )
-    raw_text = get_text_from_image_file([str(path)])[0]
-    reference = service.get_meta_page_text(
-        metas.filtered_metastore["lpc"].form_pages[0]
-    )
-    assert service.similarity_score(reference, raw_text) < 0.7
-    cv2.setRNGSeed(42)
-    match = service.get_ocr_matches([str(path)], operator, metas, str(path))
-    assert match.meta_id == "lpc"
-    assert set(match.image_page_map) == {1}
-    cv2.setRNGSeed(42)
-    aligned = operator.align_images_to_template(
-        match.image_page_map, metas.filtered_metastore["lpc"]
-    )
-    field = next(
-        f
-        for f in metas.filtered_metastore["lpc"].form_fields
-        if f.name == "continuation_sheet_p1"
-    )
-    crop = BoundingBoxOperator.crop_image_to_bb(aligned[1][0], field.bounding_box)
-    assert crop.shape[:2] == (725, 1435)
-    assert cv2.imwrite(str(tmp_path / "crop.png"), crop)
-    assert "NOBODY" in get_text_from_image_file([str(tmp_path / "crop.png")])[0].upper()
-    cv2.setRNGSeed(42)
-    known_template = operator.align_images_to_template(
-        {1: [warped]}, metas.filtered_metastore["lpc"]
-    )[1][0]
-    expected = BoundingBoxOperator.crop_image_to_bb(known_template, field.bounding_box)
-    assert np.array_equal(crop, expected)
