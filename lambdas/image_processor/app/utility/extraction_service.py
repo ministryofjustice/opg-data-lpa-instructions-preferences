@@ -1131,6 +1131,17 @@ class ExtractionService:
                 and scan_page_no not in scan_pages_used
                 and meta_id == meta_id_to_use
             ):
+                page_similarity = self.similarity_score(
+                    scan_template_entity["meta_page_text"],
+                    scan_template_entity["form_image_as_string"],
+                )
+                if scan_template_entity["distance"] == 0 or page_similarity < 0.7:
+                    logger.warning(
+                        f"Rejecting weak OCR page match for {meta_id}: scan page "
+                        f"{scan_page_no}, template page {template_page_no}, "
+                        f"similarity {page_similarity}"
+                    )
+                    continue
                 scan_pages_used.add(scan_page_no)
                 template_pages_used.add(template_page_no)
                 templates_to_keep.append(scan_template_entity)

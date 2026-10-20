@@ -85,6 +85,22 @@ form_metadata_directory: metadata
 
 This config specifies that the `SIFT` algorithm should be used for keypoint detection and the `FLANN` algorithm should be used for keypoint matching, with 70% of the best keypoints kept (using KNN to decide on which of these are best). Also, note that we've put the output metadata in a `metadata` subdirectory in our working directory.
 
+Alignment rejects homographies without more than `minimum_matches` RANSAC
+inliers, a 25% inlier ratio, and inliers spanning at least 10% of both pages.
+Before warping, it also rejects non-finite transforms, perspective horizons
+crossing the page, reflections, collapsed pages, and excessive page displacement
+or distortion. In template-normalized coordinates, the projected page must be
+convex, have area between 0.25 and 4, have edge lengths between 0.5 and 2,
+and remain within the range -0.5 to 1.5 on both axes.
+These checks run even when `singular_matrix_threshold` is not configured.
+Rejected alignments raise `RuntimeError`; they are not returned as successful
+extractions or silently replaced with unaligned crops.
+
+The image processor also applies its 0.7 word-similarity threshold to every OCR
+page assignment, not just the best page in the document, and rejects candidates
+that fail the page identifier regex. A rejected page can leave the document
+incomplete; these safeguards do not reconstruct missing or unreadable content.
+
 To align the scanned image from the command line you would then run:
 
 ```
