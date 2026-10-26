@@ -1,4 +1,4 @@
-FROM nginx:alpine3.24-slim@sha256:ebd058041a732a2b2dc0b606e34572dd8e0034de6a4aa4d50d8c13a240ac6005
+FROM nginx:alpine3.24-slim@sha256:f45171d36c76a8b2f5ef97108a3a8a2294248a6578a0a180edc2d78f7d2edc26
 
 RUN apk upgrade curl libcurl openssl libssl3 libcrypto3 zlib
 
