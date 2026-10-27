@@ -9,6 +9,5 @@ matcher:
 knn: 0
 proportion: 1
 minimum_matches: 5
-homography_options:
+similarity_options:
   threshold: 5.0
-  singular_matrix_threshold: 0.05
