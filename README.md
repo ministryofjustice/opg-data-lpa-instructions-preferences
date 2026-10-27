@@ -135,6 +135,17 @@ You can start up the full stack, then run integration tests
 make integration-test
 ```
 
+The OCR recovery case pairs the existing `LP1F-Scan.pdf` with 
+`LPC-Perspective-Scan.pdf`. It runs through the normal integration request, 
+download, extraction and upload flow using the mock Sirius responses and 
+`integration/config.py`.
+
+`LPC-Perspective-Scan.pdf` contains two copies of page 2 of
+`700000059449_20250320164301.311702_LPC.pdf`, rasterized at 200 DPI, aligned to
+the template with the barcode removed and instructions checkbox marked, then
+perspective-warped to exercise template-assisted OCR recovery and repeated
+continuation sheets.
+
 ### Issues to be aware of when running integration tests in CI
 
 In CI/CD, be sure to upload any new or updated test files in s3-uploads, to the
