@@ -21,7 +21,7 @@ dependencies = [
     "pydantic==1.10.26",
     "pyjwt==2.15.1",
     "pyopengl==3.1.10",
-    "pypdf==6.19.0",
+    "pypdf==6.21.2",
     "pytesseract==0.3.13",
     "pyzbar==0.1.9",
     "requests==2.34.2",
