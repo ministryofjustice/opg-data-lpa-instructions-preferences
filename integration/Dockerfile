@@ -23,4 +23,4 @@ RUN --mount=from=uv,source=/uv,target=/bin/uv \
 COPY config.py config.py
 COPY test_end_to_end.py test_end_to_end.py
 
-CMD ["python", "-m", "pytest", "-vv", "--capture=tee-sys", "."]
+CMD ["python", "-m", "pytest", "-vv", "--log-cli-level=INFO", "."]
