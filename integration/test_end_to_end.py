@@ -1,5 +1,6 @@
 # Tests to perform
 import json
+import logging
 import time
 import os
 
@@ -9,6 +10,8 @@ import requests
 import pytest
 from requests_aws4auth import AWS4Auth
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger()
 
 env = os.environ.get("ENVIRONMENT", "local")
 workspace = os.environ.get("WORKSPACE", "local")
@@ -213,7 +216,7 @@ def test_collection_completed(setup_rest_url_part):
     poll_interval_seconds = 20
     deadline = time.monotonic() + timeout_seconds
 
-    print(f"Waiting {initial_wait_seconds}s before polling for completion...")
+    logger.info(f"Waiting {initial_wait_seconds}s before polling for completion...")
     time.sleep(initial_wait_seconds)
 
     last_error = None
@@ -225,7 +228,7 @@ def test_collection_completed(setup_rest_url_part):
             return
         except AssertionError as e:
             last_error = e
-            print(f"Not all templates complete yet, retrying in {poll_interval_seconds}s")
+            logger.info(f"Not all templates complete yet, retrying in {poll_interval_seconds}s")
             time.sleep(poll_interval_seconds)
 
     raise last_error
