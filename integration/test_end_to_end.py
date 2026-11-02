@@ -209,7 +209,7 @@ def test_collection_in_progress(setup_rest_url_part):
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
     timeout_seconds = 15 * 60 
-    initial_wait_seconds = 5 * 60  # processing usually completes after 5mins, so don't bother polling until then
+    initial_wait_seconds = 4 * 60  # processing usually completes after 4mins, so don't bother polling until then
     poll_interval_seconds = 20
     deadline = time.monotonic() + timeout_seconds
 
