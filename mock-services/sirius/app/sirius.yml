@@ -99,6 +99,10 @@ paths:
                 lpa0106:
                   value:
                     lpaScans: [ { 'location': 's3://opg-backoffice-datastore-integration/Fake_Test_Data_LP1H.pdf', 'template': 'LP1H' } ]
+                lpa0110:
+                  value:
+                    lpaScans: [{'location': 's3://opg-backoffice-datastore-integration/LP1F-Scan.pdf', 'template': 'LP1F'}]
+                    continuationSheets: [{'location': 's3://opg-backoffice-datastore-integration/LPC-Perspective-Scan.pdf', 'template': 'LPC'}]
               schema:
                 type: object
                 properties:

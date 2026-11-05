@@ -12,7 +12,7 @@ class TestFormPageOperator:
     ATTRIBUTES_PASSED_FROM_CONFIG = [
         "knn",
         "proportion",
-        "homography_options",
+        "similarity_options",
     ]
     STRUCTURAL_SIMILARITY_THRESHOLD = 0.95
 
@@ -179,7 +179,8 @@ class TestFormPageOperator:
 
         else:
             with pytest.raises(
-                RuntimeError, match="Failed to generate a valid homography matrix"
+                RuntimeError,
+                match="valid similarity transform|inlier support|too little of the page|excessively distort|allowed limit",
             ):
                 aligned_image = operator.align_image_to_template(
                     form_page=form_page,
@@ -190,3 +191,117 @@ class TestFormPageOperator:
 
         os.environ.clear()
         os.environ.update(old_environ)
+
+
+@pytest.fixture
+def alignment_operator():
+    from form_tools.form_operators.form_page_operator import FormPageOperator
+
+    return FormPageOperator.create_from_config(
+        {"detector": {"name": "SIFT"}, "matcher": {"id": "BF"}}
+    )
+
+
+@pytest.mark.parametrize(
+    "matrix, mask, source_scale, target_scale, error",
+    [
+        (None, None, 1, 1, "valid similarity"),
+        (np.full((2, 3), np.nan), np.ones((20, 1)), 1, 1, "valid similarity"),
+        (np.eye(2, 3), np.zeros((20, 1)), 1, 1, "inlier support"),
+        (
+            np.eye(2, 3),
+            np.r_[np.ones((10, 1)), np.zeros((10, 1))],
+            1,
+            1,
+            "inlier support",
+        ),
+        (np.eye(2, 3), np.ones((20, 1)), 0.01, 1, "too little"),
+        (np.eye(2, 3), np.ones((20, 1)), 1, 0.01, "too little"),
+    ],
+)
+def test_similarity_rejects_unsupported_alignment(
+    alignment_operator, monkeypatch, matrix, mask, source_scale, target_scale, error
+):
+    points = [(x, y) for x in range(10, 100, 20) for y in range(10, 100, 25)]
+    source = [cv2.KeyPoint(x * source_scale, y * source_scale, 1) for x, y in points]
+    target = [cv2.KeyPoint(x * target_scale, y * target_scale, 1) for x, y in points]
+    matches = [cv2.DMatch(i, i, 0) for i in range(len(points))]
+    monkeypatch.setattr(cv2, "estimateAffinePartial2D", lambda *a, **kw: (matrix, mask))
+
+    with pytest.raises(RuntimeError, match=error):
+        alignment_operator._find_similarity(
+            matches, source, target, (100, 100), (100, 100)
+        )
+
+
+def test_similarity_rejects_low_inlier_ratio(alignment_operator, monkeypatch):
+    points = [
+        cv2.KeyPoint(float(i % 10) * 10, float(i // 10) * 10, 1) for i in range(100)
+    ]
+    matches = [cv2.DMatch(i, i, 0) for i in range(100)]
+    mask = np.r_[np.ones((24, 1)), np.zeros((76, 1))]
+    monkeypatch.setattr(
+        cv2, "estimateAffinePartial2D", lambda *a, **kw: (np.eye(2, 3), mask)
+    )
+    with pytest.raises(RuntimeError, match="inlier support"):
+        alignment_operator._find_similarity(
+            matches, points, points, (100, 100), (100, 100)
+        )
+
+
+@pytest.mark.parametrize(
+    "matrix",
+    [
+        np.array([[1e-6, 0, 0], [0, 1e-6, 0]]),
+        np.array([[1, 10, 0], [0, 1, 0]]),
+        np.array([[-1, 0, 100], [0, 1, 0]]),
+        np.array([[1, 0, 10000], [0, 1, 0]]),
+        np.array([[1, 0, 40], [0, 1, 0]]),
+        np.array([[1, 0, 0], [0, 1.1, 0]]),
+        cv2.getRotationMatrix2D((50, 50), 21, 1),
+        cv2.getRotationMatrix2D((50, 50), 180, 1),
+        np.array([[1, 0, 0], [0, 1, 0], [-0.02, 0, 1]]),
+        np.array([[1, 0, 0], [0, 1, 0], [-0.01, 0, 1]]),
+    ],
+)
+def test_similarity_rejects_corrupt_page_geometry(alignment_operator, matrix):
+    with pytest.raises(RuntimeError):
+        alignment_operator._check_similarity_geometry(matrix, (100, 100), (100, 100))
+
+
+@pytest.mark.parametrize(
+    "matrix, source_shape, target_shape",
+    [
+        (np.eye(2, 3), (100, 100), (100, 100)),
+        (np.array([[2, 0, 0], [0, 2, 0]]), (100, 100), (200, 200)),
+        (cv2.getRotationMatrix2D((50, 50), 15, 1), (100, 100), (100, 100)),
+        (np.array([[1, 0, 5], [0, 1, -5]]), (100, 100), (100, 100)),
+    ],
+)
+def test_similarity_accepts_valid_page_geometry(
+    alignment_operator, matrix, source_shape, target_shape
+):
+    alignment_operator._check_similarity_geometry(matrix, source_shape, target_shape)
+
+
+def test_invalid_geometry_is_rejected_before_warping(alignment_operator, monkeypatch):
+    image = np.full((100, 100, 3), 255, dtype=np.uint8)
+    monkeypatch.setattr(
+        type(alignment_operator),
+        "_return_matches",
+        lambda *a: [
+            cv2.DMatch(i, i, 0) for i in range(alignment_operator.minimum_matches + 1)
+        ],
+    )
+    monkeypatch.setattr(
+        type(alignment_operator),
+        "_find_similarity",
+        lambda *a: np.array([[1, 10, 0], [0, 1, 0]], dtype=float),
+    )
+
+    def unexpected_warp(*args, **kwargs):
+        pytest.fail("An invalid alignment must not be applied to the image")
+
+    monkeypatch.setattr(cv2, "warpAffine", unexpected_warp)
+    with pytest.raises(RuntimeError, match="shear"):
+        alignment_operator.align_image_to_template(image, image)
