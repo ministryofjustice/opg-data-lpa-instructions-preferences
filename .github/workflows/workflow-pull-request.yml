@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Extract branch
         id: extract_branch
-        uses: ministryofjustice/opg-github-actions/actions/branch-name@ae37b9b322286123971417e82b665e56e9d6aa3f # v4.10.3
+        uses: ministryofjustice/opg-github-actions/actions/branch-name@12bdbe54f92af873347bc0cd6f4e7769265c1a90 # v4.10.5
 
   create_tags:
     name: Create Tags
@@ -56,7 +56,7 @@ jobs:
 
       - name: Bump version
         id: semver
-        uses: ministryofjustice/opg-github-actions/actions/semver@ae37b9b322286123971417e82b665e56e9d6aa3f # v4.10.3
+        uses: ministryofjustice/opg-github-actions/actions/semver@12bdbe54f92af873347bc0cd6f4e7769265c1a90 # v4.10.5
         with:
           prerelease: "true"
           default_bump: minor

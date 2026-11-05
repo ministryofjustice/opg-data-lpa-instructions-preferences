@@ -67,6 +67,19 @@
       "prCreation": "immediate",
       "prPriority": 4,
       "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Block Python minor version bumps (e.g. 3.14 -> 3.15); these need requires-python and uv.lock updates and wheel availability checks, so are done manually",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "enabled": false
     }
   ],
   "major": {
