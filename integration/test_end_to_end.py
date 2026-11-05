@@ -1,5 +1,6 @@
 # Tests to perform
 import json
+import logging
 import time
 import os
 
@@ -9,6 +10,8 @@ import requests
 import pytest
 from requests_aws4auth import AWS4Auth
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger()
 
 env = os.environ.get("ENVIRONMENT", "local")
 workspace = os.environ.get("WORKSPACE", "local")
@@ -190,6 +193,7 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
             f"Actual: {actual_keys}"
         )
 
+
 @pytest.mark.order(1)
 def test_collection_started(setup_rest_url_part, cleanup_iap_buckets):
     print(f"Buckets cleaned up: {cleanup_iap_buckets}")
@@ -207,15 +211,24 @@ def test_collection_in_progress(setup_rest_url_part):
 
 @pytest.mark.order(3)
 def test_collection_completed(setup_rest_url_part):
-    print(f"Waiting for 15 minutes...")
+    timeout_seconds = 15 * 60 
+    initial_wait_seconds = 4 * 60  # processing usually completes after 4mins, so don't bother polling until then
+    poll_interval_seconds = 20
+    deadline = time.monotonic() + timeout_seconds
 
-    time_remaining = (
-        15 * 60
-    )  # countdown from 15 mins, tests should complete in this time
+    logger.info(f"Waiting {initial_wait_seconds}s before polling for completion...")
+    time.sleep(initial_wait_seconds)
 
-    while time_remaining > 0:
-        time.sleep(30)  # sleep for 30 seconds
-        time_remaining -= 30
-    make_calls_and_assertions(
-        "expected_collection_completed_response", setup_rest_url_part
-    )
+    last_error = None
+    while time.monotonic() <= deadline:
+        try:
+            make_calls_and_assertions(
+                "expected_collection_completed_response", setup_rest_url_part
+            )
+            return
+        except AssertionError as e:
+            last_error = e
+            logger.info(f"Not all templates complete yet, retrying in {poll_interval_seconds}s")
+            time.sleep(poll_interval_seconds)
+
+    raise last_error
