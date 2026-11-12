@@ -74,7 +74,7 @@ jobs:
           SNYK_TEST_IMAGE: ${{ matrix.name }}:latest
           SNYK_TOKEN: ${{ secrets.SNYK_OPG_ORG_TOKEN }}
           snyk_test_args: >
-            --severity-threshold=high --fail-on=upgradable
+            --severity-threshold=high
           snyk_policy_path: ./${{ matrix.snyk_policy_path }}
 
       - name: Upload Snyk scan results to GitHub Security tab
