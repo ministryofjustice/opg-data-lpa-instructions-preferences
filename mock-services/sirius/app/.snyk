@@ -1,3 +1,10 @@
 version: v1.25.1
-ignore: {}
-patch: {}
+ignore:
+  SNYK-JS-BRACES-19963945:
+    - '*':
+        reason: "Transitive dependency via @stoplight/prism-cli > chokidar > braces, no upgrade or patch available"
+        expires: "2026-12-12T00:00:00.000Z"
+  SNYK-JS-FAKERJSFAKER-18674671:
+    - '*':
+        reason: "Transitive dependency via @stoplight/prism-cli > postman-collection > @faker-js/faker, fix pending upstream bump (renovate tracked)"
+        expires: "2026-12-12T00:00:00.000Z"
