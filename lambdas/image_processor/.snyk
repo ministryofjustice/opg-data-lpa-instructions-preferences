@@ -133,3 +133,27 @@ ignore:
     - '*':
         reason: "There is no fixed version for Debian:13 cyrus-sasl2"
         expires: "2027-01-12T00:00:00.000Z"
+  SNYK-DEBIAN13-KRB5-22384443:
+    - '*':
+        reason: "There is no fixed version for Debian:13 krb5"
+        expires: "2027-01-12T00:00:00.000Z"
+  SNYK-DEBIAN13-KRB5-22384445:
+    - '*':
+        reason: "There is no fixed version for Debian:13 krb5"
+        expires: "2027-01-12T00:00:00.000Z"
+  SNYK-DEBIAN13-KRB5-22384446:
+    - '*':
+        reason: "There is no fixed version for Debian:13 krb5"
+        expires: "2027-01-12T00:00:00.000Z"
+  SNYK-DEBIAN13-KRB5-22384456:
+    - '*':
+        reason: "There is no fixed version for Debian:13 krb5"
+        expires: "2027-01-12T00:00:00.000Z"
+  SNYK-DEBIAN13-KRB5-22398894:
+    - '*':
+        reason: "There is no fixed version for Debian:13 krb5"
+        expires: "2027-01-12T00:00:00.000Z"
+  SNYK-DEBIAN13-KRB5-22398919:
+    - '*':
+        reason: "There is no fixed version for Debian:13 krb5"
+        expires: "2027-01-12T00:00:00.000Z"
