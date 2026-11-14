@@ -467,4 +467,27 @@ templates = {
             },
         },
      },
+    "LPC-perspective-ocr-recovery": {
+        "lpa_uid": "700000000110",
+        "expected_collection_started_response": {
+            "uId": "700000000110",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000110",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000110",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000110-instructions": "",
+                "iap-700000000110-preferences": "",
+                "iap-700000000110-continuation_instructions_1": "",
+                "iap-700000000110-continuation_instructions_2": "",
+            },
+        },
+    },
 }

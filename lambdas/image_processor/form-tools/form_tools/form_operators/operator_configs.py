@@ -1,6 +1,4 @@
-import cv2
-
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, Field, validator
 from typing import Dict, List, Optional, Any, Union
 
 
@@ -58,26 +56,14 @@ class MatcherConfig(BaseModel):
         return v
 
 
-class HomographyConfig(BaseModel):
-    """Config for opencv homography matrix creator
+class SimilarityConfig(BaseModel):
+    """RANSAC tolerance in template pixels and maximum fine rotation in degrees."""
 
-    Attributes:
-        method (Optional[int]): A valid
-            homography method to pass to
-            `cv2.findHomography`
-        threshold (Optional[Union[float, None]]):
-            A homography threshold to pass
-            to `cv2.findHomography`
-        singular_matrix_threshold (Optional[Union[float, None]]):
-            A threshold to determine whether a given
-            homography matrix is degenerate - the threshold
-            is compared against the absolute value of the
-            determinant of the matrix
-    """
+    threshold: float = Field(default=3, gt=0, allow_inf_nan=False)
+    max_rotation_degrees: float = Field(default=20, gt=0, le=45, allow_inf_nan=False)
 
-    method: Optional[int] = cv2.RANSAC
-    threshold: Optional[Union[float, None]] = None
-    singular_matrix_threshold: Optional[Union[float, None]] = None
+    class Config:
+        extra = "forbid"
 
 
 class FormOperatorConfig(BaseModel):
@@ -95,7 +81,7 @@ class FormOperatorConfig(BaseModel):
         minimum_matches (int):
             An integer representing the minimum
             number of keypoint matches for proceeding
-            to calculate a homography matrix
+            to calculate a similarity transform
         proportion (float): The proportion
             of keypoint matches to keep or
             the proportion to use in a KNN ratio
@@ -107,6 +93,6 @@ class FormOperatorConfig(BaseModel):
     detector: DetectorConfig
     matcher: MatcherConfig
     minimum_matches: Optional[int] = 10
-    homography_options: Optional[Union[HomographyConfig, None]] = None
+    similarity_options: SimilarityConfig = Field(default_factory=SimilarityConfig)
     proportion: Optional[float] = 1.0
     knn: Optional[int] = 2

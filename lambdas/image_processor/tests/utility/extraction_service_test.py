@@ -487,8 +487,8 @@ def test_mixed_mode_page_identifier(
             "distance": 80,
             "scan_page_no": 1,
             "template_page_no": 1,
-            "form_image_as_string": "",
-            "meta_page_text": "",
+            "form_image_as_string": "matching text",
+            "meta_page_text": "matching text",
         },
     ]
     monkeypatch.setattr(
@@ -657,10 +657,14 @@ def test_get_matching_image_results(extraction_service, monkeypatch):
     meta_id_to_use = "meta_1"
     similarity_score = 0.8
     sorted_scan_template_entities = [
-        {"template_page_no": 1, "scan_page_no": 1, "meta": "meta_1"},
-        {"template_page_no": 2, "scan_page_no": 2, "meta": "meta_1"},
-        {"template_page_no": 3, "scan_page_no": 3, "meta": "meta_1"},
+        {"template_page_no": 1, "scan_page_no": 1, "meta": "meta_1", "distance": 95},
+        {"template_page_no": 2, "scan_page_no": 2, "meta": "meta_1", "distance": 90},
+        {"template_page_no": 3, "scan_page_no": 3, "meta": "meta_1", "distance": 80},
     ]
+    for candidate in sorted_scan_template_entities:
+        candidate.update(
+            meta_page_text="matching text", form_image_as_string="matching text"
+        )
     form_images = ["image1", "image2", "image3"]
 
     expected_matching_image_results = MatchingMetaToImages(
@@ -684,6 +688,47 @@ def test_get_matching_image_results(extraction_service, monkeypatch):
         matching_image_results.image_page_map
         == expected_matching_image_results.image_page_map
     )
+
+
+@pytest.mark.parametrize(
+    "distance, page_similarity, accepted",
+    [(0, 0.9, False), (57, 0.69, False), (57, 0.7, True)],
+)
+def test_get_matching_image_results_rejects_each_weak_page(
+    extraction_service, monkeypatch, caplog, distance, page_similarity, accepted
+):
+    monkeypatch.setattr(cv2, "imread", lambda path: path)
+    monkeypatch.setattr(
+        extraction_service,
+        "similarity_score",
+        lambda template, text: 0.9 if text == "good" else page_similarity,
+    )
+    candidates = [
+        {
+            "template_page_no": 1,
+            "scan_page_no": 1,
+            "meta": "meta_1",
+            "distance": 95,
+            "meta_page_text": "template",
+            "form_image_as_string": "good",
+        },
+        {
+            "template_page_no": 2,
+            "scan_page_no": 2,
+            "meta": "meta_1",
+            "distance": distance,
+            "meta_page_text": "template",
+            "form_image_as_string": "candidate",
+        },
+    ]
+    result = extraction_service.get_matching_image_results(
+        "meta_1", 0.9, candidates, ["good.jpg", "wrong.jpg"]
+    )
+    expected = {1: ["good.jpg"]}
+    if accepted:
+        expected[2] = ["wrong.jpg"]
+    assert result.image_page_map == expected
+    assert ("Rejecting weak OCR page match" in caplog.text) is not accepted
 
 
 # def test_extract_instructions_and_preferences(extraction_service, monkeypatch):
