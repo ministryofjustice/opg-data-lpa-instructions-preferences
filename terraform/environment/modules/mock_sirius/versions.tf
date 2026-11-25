@@ -1,11 +1,11 @@
 terraform {
 
-  required_version = "<= 1.16.5"
+  required_version = "<= 1.17.2"
 
   required_providers {
     aws = {
       source                = "hashicorp/aws"
-      version               = "~> 6.68.0"
+      version               = "~> 6.73.0"
       configuration_aliases = [aws, aws.management]
     }
   }
