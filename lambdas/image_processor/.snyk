@@ -157,7 +157,7 @@ ignore:
     - '*':
         reason: "There is no fixed version for Debian:13 krb5"
         expires: "2026-12-12T00:00:00.000Z"
-  CVE-2026-88048:
+  SNYK-DEBIAN13-TESSERACT-19685770:
     - '*':
-        reason: "There is no fixed version available for CVE-2026-88048"
+        reason: "There is no fixed version for Debian:13 tesseract"
         expires: "2027-01-08T00:00:00.000Z"
