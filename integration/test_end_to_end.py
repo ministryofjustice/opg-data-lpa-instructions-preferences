@@ -202,6 +202,11 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
             f"Actual: {actual_keys}"
         )
 
+        logger.info(
+            f"SUCCESS: LPA {lpa_uid} (template {template}) returned "
+            f"{response_object['status']} for {response_type}"
+        )
+
 
 @pytest.mark.order(1)
 def test_collection_started(setup_rest_url_part, cleanup_iap_buckets):
