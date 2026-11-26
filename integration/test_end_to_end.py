@@ -181,14 +181,23 @@ def make_calls_and_assertions(response_type, setup_rest_url_part) -> None:
         response = call_api_gateway(url)
         response_object = json.loads(response.text)
 
-        assert response.status_code == 200
-        assert response_object["status"] == template_data[response_type]["status"]
+        lpa_uid = template_data["lpa_uid"]
+
+        assert response.status_code == 200, (
+            f"Unexpected status code for LPA {lpa_uid} (template {template}): "
+            f"{response.status_code}"
+        )
+        assert response_object["status"] == template_data[response_type]["status"], (
+            f"Unexpected status for LPA {lpa_uid} (template {template}): "
+            f"expected {template_data[response_type]['status']}, "
+            f"got {response_object['status']}"
+        )
 
         actual_keys = set(response_object["signedUrls"].keys())
         expected_keys = set(template_data[response_type]["signedUrls"].keys())
 
         assert expected_keys.issubset(actual_keys), (
-            f"\nMissing expected keys for template {template}\n"
+            f"\nMissing expected keys for LPA {lpa_uid} (template {template})\n"
             f"Expected: {expected_keys}\n"
             f"Actual: {actual_keys}"
         )
