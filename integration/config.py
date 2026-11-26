@@ -467,4 +467,212 @@ templates = {
             },
         },
      },
+     # TODO 107 throws an error, this is something we will fix but the test is here for now
+    "5542_LP1H_redacted.pdf": {
+        "lpa_uid": "700000000107",
+        "expected_collection_started_response": {
+            "uId": "700000000107",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000107",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000107",
+            "status": "COLLECTION_ERROR",
+            "signedUrls": {},
+        },
+    },
+    "6235_LP1F_redacted.pdf": {
+        "lpa_uid": "700000000108",
+        "expected_collection_started_response": {
+            "uId": "700000000108",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000108",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000108",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000108-instructions": "",
+                "iap-700000000108-preferences": "",
+            },
+        },
+    },
+    "6480_LP1F_redacted.pdf": {
+        "lpa_uid": "700000000109",
+        "expected_collection_started_response": {
+            "uId": "700000000109",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000109",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000109",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000109-instructions": "",
+                "iap-700000000109-preferences": "",
+            },
+        },
+    },
+    "7829_LP1F_redacted.pdf": {
+        "lpa_uid": "700000000110",
+        "expected_collection_started_response": {
+            "uId": "700000000110",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000110",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000110",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000110-instructions": "",
+                "iap-700000000110-preferences": "",
+            },
+        },
+    },
+    "7881_LP1F_REDACTED.pdf": {
+        "lpa_uid": "700000000111",
+        "expected_collection_started_response": {
+            "uId": "700000000111",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000111",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000111",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000111-instructions": "",
+                "iap-700000000111-preferences": "",
+            },
+        },
+    },
+    "8327_LP1H_redacted.pdf": {
+        "lpa_uid": "700000000112",
+        "expected_collection_started_response": {
+            "uId": "700000000112",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000112",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000112",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000112-instructions": "",
+                "iap-700000000112-preferences": "",
+            },
+        },
+    },
+    "9979_LP1H_redacted.pdf": {
+        "lpa_uid": "700000000113",
+        "expected_collection_started_response": {
+            "uId": "700000000113",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000113",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000113",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000113-instructions": "",
+                "iap-700000000113-preferences": "",
+            },
+        },
+    },
+    "LP1F_redacted.pdf": {
+        "lpa_uid": "700000000114",
+        "expected_collection_started_response": {
+            "uId": "700000000114",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000114",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000114",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000114-instructions": "",
+                "iap-700000000114-preferences": "",
+            },
+        },
+    },
+    "lp1Fredacted.pdf": {
+        "lpa_uid": "700000000115",
+        "expected_collection_started_response": {
+            "uId": "700000000115",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000115",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000115",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000115-instructions": "",
+                "iap-700000000115-preferences": "",
+            },
+        },
+    },
+    "redacted_LPAF_2.pdf": {
+        "lpa_uid": "700000000116",
+        "expected_collection_started_response": {
+            "uId": "700000000116",
+            "status": "COLLECTION_NOT_STARTED",
+            "signedUrls": {},
+        },
+        "expected_collection_in_progress_response": {
+            "uId": "700000000116",
+            "status": "COLLECTION_IN_PROGRESS",
+            "signedUrls": {},
+        },
+        "expected_collection_completed_response": {
+            "uId": "700000000116",
+            "status": "COLLECTION_COMPLETE",
+            "signedUrls": {
+                "iap-700000000116-instructions": "",
+                "iap-700000000116-preferences": "",
+            },
+        },
+    },
 }
